@@ -1,0 +1,102 @@
+
+import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { Database } from "../../database";
+import * as config from "../../config";
+
+export const command = new SlashCommandBuilder()
+    .setName('antilink')
+    .setDescription('Configure the anti-link system.')
+    .addSubcommand(subcommand => subcommand
+        .setName('enable')
+        .setDescription('Enable the anti-link filter.')
+    )
+    .addSubcommand(subcommand => subcommand
+        .setName('disable')
+        .setDescription('Disable the anti-link filter.')
+    )
+    .addSubcommand(subcommand => subcommand
+        .setName('status')
+        .setDescription('Check the current status of the anti-link filter.')
+    );
+
+export async function run(interaction: ChatInputCommandInteraction, database: Database) {
+    console.log(`[DEBUG] Antilink run. Command: ${interaction.commandName}, Sub: ${interaction.options.getSubcommand()}`);
+    if (!interaction.inCachedGuild()) return;
+
+    let guildData = await database.retrieveGuild(interaction.guild.id);
+    if (!guildData) {
+        await database.defaultGuild(interaction.guild);
+        guildData = await database.retrieveGuild(interaction.guild.id);
+    }
+    if (!guildData) return;
+
+    if (!guildData.extraOwners) guildData.extraOwners = [];
+    if (!guildData.extraAdmins) guildData.extraAdmins = [];
+
+    const isOwner = interaction.user.id === interaction.guild.ownerId;
+    const isExtraOwner = guildData.extraOwners.includes(interaction.user.id);
+    const isExtraAdmin = guildData.extraAdmins.includes(interaction.user.id);
+    const isBotOwner = interaction.user.id === process.env.OWNER_ID;
+
+    if (!isOwner && !isExtraOwner && !isExtraAdmin && !isBotOwner) {
+        await interaction.reply({ content: `${config.emojis.error} **Only the Server Owner, Trustable Admins, or Bot Owner can manage anti-link settings.**`, ephemeral: true });
+        return;
+    }
+
+    const sub = interaction.options.getSubcommand();
+    await interaction.deferReply();
+
+    try {
+
+        if (sub === 'enable') {
+            if (guildData.messageFilters.links) {
+                await interaction.editReply({ content: `${config.emojis.error} **Anti-Link is already enabled!**` });
+                return;
+            }
+            guildData.messageFilters.links = true;
+            await database.insertGuild(interaction.guild.id, guildData);
+            await interaction.editReply({ content: `${config.emojis.success} **Anti-Link filter has been Enabled.**` });
+        } else if (sub === 'disable') {
+            if (!guildData.messageFilters.links) {
+                await interaction.editReply({ content: `${config.emojis.error} **Anti-Link is already disabled!**` });
+                return;
+            }
+            guildData.messageFilters.links = false;
+            await database.insertGuild(interaction.guild.id, guildData);
+            await interaction.editReply({ content: `${config.emojis.success} **Anti-Link filter has been DISABLED.**` });
+        } else if (sub === 'status') {
+            const statusEmoji = guildData.messageFilters.links ? config.emojis.success : config.emojis.error;
+            const statusText = guildData.messageFilters.links ? "Enabled" : "Disabled";
+
+            let description = `**Anti-Link System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Links`;
+
+            if (!guildData.messageFilters.links) {
+                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antilink enable\` to activate security and protect your server! <:6581lockkey:1461100873479487559>`;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor(config.colors.primary)
+                .setDescription(`**${config.emojis.automod} Anti-Link Panel**\n\n${description}`)
+                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+
+            await interaction.editReply({ embeds: [embed] });
+        } else {
+            // Subcommand not found (likely prefix command empty call)
+            const embed = new EmbedBuilder()
+                .setColor(config.colors.primary)
+                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+                .setDescription(
+                    '`?antilink enable`\n' +
+                    '`?antilink disable`\n' +
+                    '`?antilink status`'
+                )
+                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+                .setFooter({ text: 'Xeon • Automated Security', iconURL: interaction.client.user?.displayAvatarURL() || undefined });
+            await interaction.editReply({ embeds: [embed] });
+        }
+    } catch (error) {
+        console.error(error);
+        await interaction.editReply({ content: `${config.emojis.error} **Failed to update settings.**` });
+    }
+}
