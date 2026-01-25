@@ -262,15 +262,14 @@ client.on("messageCreate", async message => {
         const embed = new EmbedBuilder()
             .setColor(0x5865F2)
             .setAuthor({ name: "Xeon Security", iconURL: client.user!.displayAvatarURL() })
-            .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\n**Quick Links:**\n[Support Server](https://discord.gg/yourserver) • [Invite Me](https://discord.com/api/oauth2/authorize?client_id=${client.user!.id}&permissions=8&scope=bot%20applications.commands) • [Docs](https://docs.xeon.bot)\n\nType \`${prefix}help\` to see my commands!`)
+            .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\nType \`${prefix}help\` to see my commands!`)
             .setFooter({ text: "Protected by Xeon Security System", iconURL: message.guild.iconURL() || undefined })
             .setTimestamp();
         
         const row = {
             type: 1,
             components: [
-                { type: 2, style: 5, label: "Invite Me", url: `https://discord.com/api/oauth2/authorize?client_id=${client.user!.id}&permissions=8&scope=bot%20applications.commands` },
-                { type: 2, style: 5, label: "Support", url: "https://discord.gg/yourserver" }
+                { type: 2, style: 5, label: "Invite Me", url: `https://discord.com/api/oauth2/authorize?client_id=${client.user!.id}&permissions=8&scope=bot%20applications.commands` }
             ]
         };
 
