@@ -1,5 +1,16 @@
 
 console.log(`[DEBUG] Starting bot process... PID: ${process.pid} | Instance: ${Math.floor(Math.random() * 10000)}`);
+import express from 'express';
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('Xeon is Online!');
+});
+
+app.listen(port, () => {
+    console.log(`[Express] Keeping alive on port ${port}`);
+});
 import { Database } from "./database";
 import { log } from "./logging";
 import 'dotenv/config';
