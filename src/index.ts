@@ -257,6 +257,27 @@ client.on("messageCreate", async message => {
 
     console.log(`[DEBUG] User Message: '${message.content}' | Command 'antilink' loaded: ${commandHandler.has('antilink')}`);
 
+    /* Mention Reply */
+    if (message.content === `<@${client.user!.id}>` || message.content === `<@!${client.user!.id}>`) {
+        const embed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setAuthor({ name: "Xeon Security", iconURL: client.user!.displayAvatarURL() })
+            .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\n**Quick Links:**\n[Support Server](https://discord.gg/yourserver) • [Invite Me](https://discord.com/api/oauth2/authorize?client_id=${client.user!.id}&permissions=8&scope=bot%20applications.commands) • [Docs](https://docs.xeon.bot)\n\nType \`${prefix}help\` to see my commands!`)
+            .setFooter({ text: "Protected by Xeon Security System", iconURL: message.guild.iconURL() || undefined })
+            .setTimestamp();
+        
+        const row = {
+            type: 1,
+            components: [
+                { type: 2, style: 5, label: "Invite Me", url: `https://discord.com/api/oauth2/authorize?client_id=${client.user!.id}&permissions=8&scope=bot%20applications.commands` },
+                { type: 2, style: 5, label: "Support", url: "https://discord.gg/yourserver" }
+            ]
+        };
+
+        await message.reply({ embeds: [embed], components: [row as any] });
+        return;
+    }
+
     // AFK Check
     const guildData = await database.retrieveGuild(message.guild.id);
     if (guildData?.afk) {
