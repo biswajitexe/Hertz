@@ -28,17 +28,25 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     let botConfig = await database.getBotConfig();
 
+    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+        return new EmbedBuilder()
+            .setColor(color)
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+    };
+
     if (sub === 'add') {
         if (type === 'user') {
-            if (botConfig.premiumUsers.includes(id)) return interaction.reply({ content: `${config.emojis.error} User is already premium.`, ephemeral: true });
+            if (botConfig.premiumUsers.includes(id)) return interaction.reply({ embeds: [embedStyle('Premium Error', `> User is already premium.`, config.colors.error)], ephemeral: true });
             botConfig.premiumUsers.push(id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} User <@${id}> added to **Premium Users**.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('User Added', `> User <@${id}> added to **Premium Users**.`, config.colors.success)], ephemeral: true });
         } else {
-            if (botConfig.premiumGuilds.includes(id)) return interaction.reply({ content: `${config.emojis.error} Server is already premium.`, ephemeral: true });
+            if (botConfig.premiumGuilds.includes(id)) return interaction.reply({ embeds: [embedStyle('Premium Error', `> Server is already premium.`, config.colors.error)], ephemeral: true });
             botConfig.premiumGuilds.push(id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} Server \`${id}\` added to **Premium Servers**.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Server Added', `> Server \`${id}\` added to **Premium Servers**.`, config.colors.success)], ephemeral: true });
         }
     }
 
@@ -46,11 +54,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         if (type === 'user') {
             botConfig.premiumUsers = botConfig.premiumUsers.filter(u => u !== id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} User <@${id}> removed from Premium.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('User Removed', `> User <@${id}> removed from Premium.`, config.colors.success)], ephemeral: true });
         } else {
             botConfig.premiumGuilds = botConfig.premiumGuilds.filter(g => g !== id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} Server \`${id}\` removed from Premium.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Server Removed', `> Server \`${id}\` removed from Premium.`, config.colors.success)], ephemeral: true });
         }
     }
 }

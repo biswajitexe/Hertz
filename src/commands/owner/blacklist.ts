@@ -28,35 +28,43 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     let botConfig = await database.getBotConfig();
 
+    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+        return new EmbedBuilder()
+            .setColor(color)
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+    };
+
     if (sub === 'user') {
         if (remove) {
             if (!botConfig.blacklistedUsers.includes(id)) {
-                return interaction.reply({ content: `${config.emojis.error} User is not blacklisted.`, ephemeral: true });
+                return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> User is not blacklisted.`, config.colors.error)], ephemeral: true });
             }
             botConfig.blacklistedUsers = botConfig.blacklistedUsers.filter(u => u !== id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} User ${id} removed from blacklist.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('User Removed', `> User \`${id}\` removed from blacklist.`)], ephemeral: true });
         } else {
             if (botConfig.blacklistedUsers.includes(id)) {
-                return interaction.reply({ content: `${config.emojis.error} User is already blacklisted.`, ephemeral: true });
+                return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> User is already blacklisted.`, config.colors.error)], ephemeral: true });
             }
             botConfig.blacklistedUsers.push(id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} User ${id} added to global blacklist.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('User Blacklisted', `> User \`${id}\` added to global blacklist.`)], ephemeral: true });
         }
     }
 
     if (sub === 'server') {
         if (remove) {
             if (!botConfig.blacklistedGuilds.includes(id)) {
-                return interaction.reply({ content: `${config.emojis.error} Server is not blacklisted.`, ephemeral: true });
+                return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> Server is not blacklisted.`, config.colors.error)], ephemeral: true });
             }
             botConfig.blacklistedGuilds = botConfig.blacklistedGuilds.filter(g => g !== id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply({ content: `${config.emojis.success} Server ${id} removed from blacklist.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Server Removed', `> Server \`${id}\` removed from blacklist.`)], ephemeral: true });
         } else {
             if (botConfig.blacklistedGuilds.includes(id)) {
-                return interaction.reply({ content: `${config.emojis.error} Server is already blacklisted.`, ephemeral: true });
+                return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> Server is already blacklisted.`, config.colors.error)], ephemeral: true });
             }
             botConfig.blacklistedGuilds.push(id);
             await database.insertBotConfig(botConfig);
@@ -65,10 +73,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const guild = interaction.client.guilds.cache.get(id);
             if (guild) {
                 await guild.leave().catch(() => { });
-                return interaction.reply({ content: `${config.emojis.success} Server ${id} blacklisted and forced left.`, ephemeral: true });
+                return interaction.reply({ embeds: [embedStyle('Server Blacklisted', `> Server \`${id}\` blacklisted and forced left.`)], ephemeral: true });
             }
 
-            return interaction.reply({ content: `${config.emojis.success} Server ${id} added to global blacklist.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Server Blacklisted', `> Server \`${id}\` added to global blacklist.`)], ephemeral: true });
         }
     }
 }

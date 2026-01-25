@@ -15,15 +15,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const sub = interaction.options.getSubcommand();
 
+    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+        return new EmbedBuilder()
+            .setColor(color)
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+    };
+
     if (sub === 'list') {
         const guilds = interaction.client.guilds.cache.sort((a, b) => b.memberCount - a.memberCount).first(10);
 
-        const description = guilds.map((g, i) => `\`${i + 1}.\` **${g.name}** \nID: \`${g.id}\` | Members: \`${g.memberCount}\` | Owner: <@${g.ownerId}>`).join('\n\n');
+        const description = guilds.map((g, i) => `> \`${i + 1}.\` **${g.name}** \n> ID: \`${g.id}\` | Members: \`${g.memberCount}\` | Owner: <@${g.ownerId}>`).join('\n\n');
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setTitle(`Top 10 Servers (${interaction.client.guilds.cache.size} Total)`)
-            .setDescription(description);
+        const embed = embedStyle(`Top 10 Servers (${interaction.client.guilds.cache.size} Total)`, description);
 
         return interaction.reply({ embeds: [embed], ephemeral: true });
     }
@@ -31,16 +36,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (sub === 'leave') {
         const id = interaction.options.getString('id', true);
         const guild = interaction.client.guilds.cache.get(id);
-        if (!guild) return interaction.reply({ content: `${config.emojis.error} Bot is not in that server.`, ephemeral: true });
+        if (!guild) return interaction.reply({ embeds: [embedStyle('Server Error', '> Bot is not in that server.', config.colors.error)], ephemeral: true });
 
         await guild.leave();
-        return interaction.reply({ content: `${config.emojis.success} Left **${guild.name}** (${id}).`, ephemeral: true });
+        return interaction.reply({ embeds: [embedStyle('Left Server', `> Left **${guild.name}** (\`${id}\`).`, config.colors.success)], ephemeral: true });
     }
 
     if (sub === 'invite') {
         const id = interaction.options.getString('id', true);
         const guild = interaction.client.guilds.cache.get(id);
-        if (!guild) return interaction.reply({ content: `${config.emojis.error} Bot is not in that server.`, ephemeral: true });
+        if (!guild) return interaction.reply({ embeds: [embedStyle('Server Error', '> Bot is not in that server.', config.colors.error)], ephemeral: true });
 
         // Find a Text Channel with CreateInvite permission
         const channel = guild.channels.cache.find(c =>
@@ -49,15 +54,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         );
 
         if (!channel) {
-            return interaction.reply({ content: `${config.emojis.error} Could not find a channel to create invite in **${guild.name}**. Missing permissions?`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Invite Error', `> Could not find a channel to create invite in **${guild.name}**. Missing permissions?`, config.colors.error)], ephemeral: true });
         }
 
         try {
             // @ts-ignore - channel is text based
             const invite = await channel.createInvite({ maxAge: 0, maxUses: 1 });
-            return interaction.reply({ content: `**Invite for ${guild.name}:**\n${invite.url}`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle(`Invite for ${guild.name}`, `> [Click to Join](${invite.url})`)], ephemeral: true });
         } catch (e) {
-            return interaction.reply({ content: `${config.emojis.error} Failed to create invite.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Invite Error', '> Failed to create invite.', config.colors.error)], ephemeral: true });
         }
     }
 }

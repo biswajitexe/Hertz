@@ -31,6 +31,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const sub = interaction.options.getSubcommand();
 
+    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+        return new EmbedBuilder()
+            .setColor(color)
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+    };
+
     if (sub === 'set') {
         const typeStr = interaction.options.getString('type', true);
         const text = interaction.options.getString('text', true);
@@ -46,7 +54,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             status: 'online'
         });
 
-        return interaction.reply({ content: `${config.emojis.success} Status updated to **${typeStr} ${text}**.`, ephemeral: true });
+        return interaction.reply({ embeds: [embedStyle('Status Updated', `> Status updated to **${typeStr} ${text}**.`, config.colors.success)], ephemeral: true });
     }
 
     if (sub === 'maintenance') {
@@ -58,10 +66,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (state) {
             interaction.client.user.setPresence({ status: 'dnd', activities: [{ name: 'Maintenance Mode', type: ActivityType.Watching }] });
-            return interaction.reply({ content: `${config.emojis.warning} **Maintenance Mode ENABLED.** Users cannot use commands.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Maintenance Enabled', `> **Maintenance Mode ENABLED.** Users cannot use commands.`, config.colors.warning)], ephemeral: true });
         } else {
             interaction.client.user.setPresence({ status: 'online', activities: [{ name: 'Ready', type: ActivityType.Playing }] });
-            return interaction.reply({ content: `${config.emojis.success} **Maintenance Mode DISABLED.** Bot is live.`, ephemeral: true });
+            return interaction.reply({ embeds: [embedStyle('Maintenance Disabled', `> **Maintenance Mode DISABLED.** Bot is live.`, config.colors.success)], ephemeral: true });
         }
     }
 }

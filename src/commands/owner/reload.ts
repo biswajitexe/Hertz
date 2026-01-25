@@ -1,5 +1,5 @@
 
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 
@@ -12,11 +12,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
     }
 
-    await interaction.reply({ content: `${config.emojis.success} **Reloading bot logic...** (This may take a moment)`, ephemeral: true });
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setDescription(`**<:74658vipglow:1465051133704798435> Reloading Bot**\n\n> **Reloading bot logic...** (This may take a moment)`)
+        .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+        .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
-    // In a real process manager (PM2), we would exit. 
-    // internal reload logic depends on structure. 
-    // For now we just kill process to let wrapper restart it.
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+
     console.log("[Reload] Triggered by owner. Exiting...");
     process.exit(0);
 }

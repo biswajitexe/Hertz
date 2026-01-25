@@ -18,6 +18,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const code = interaction.options.getString('code', true);
 
+    const embedStyle = (title: string, description: string | null, color: number, fields: any[]) => {
+        const embed = new EmbedBuilder()
+            .setColor(color)
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**${description ? `\n\n${description}` : ''}`)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .addFields(fields)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+        return embed;
+    };
+
     try {
         let evaled = eval(code);
 
@@ -26,26 +36,18 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         let output = inspect(evaled, { depth: 0 });
         if (output.length > 2000) output = output.slice(0, 1990) + "...";
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.success)
-            .setTitle('Evaluation Successful')
-            .addFields(
-                { name: 'Input', value: `\`\`\`js\n${code}\n\`\`\`` },
-                { name: 'Output', value: `\`\`\`js\n${output}\n\`\`\`` }
-            )
-            .setTimestamp();
+        const embed = embedStyle('Evaluation Successful', null, config.colors.success, [
+            { name: 'Input', value: `> \`\`\`js\n${code}\n\`\`\`` },
+            { name: 'Output', value: `> \`\`\`js\n${output}\n\`\`\`` }
+        ]);
 
         await interaction.reply({ embeds: [embed], ephemeral: true });
 
     } catch (error: any) {
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.error)
-            .setTitle('Evaluation Failed')
-            .addFields(
-                { name: 'Input', value: `\`\`\`js\n${code}\n\`\`\`` },
-                { name: 'Error', value: `\`\`\`js\n${error.message}\n\`\`\`` }
-            )
-            .setTimestamp();
+        const embed = embedStyle('Evaluation Failed', null, config.colors.error, [
+            { name: 'Input', value: `> \`\`\`js\n${code}\n\`\`\`` },
+            { name: 'Error', value: `> \`\`\`js\n${error.message}\n\`\`\`` }
+        ]);
 
         await interaction.reply({ embeds: [embed], ephemeral: true });
     }

@@ -259,10 +259,13 @@ client.on("messageCreate", async message => {
 
     /* Mention Reply */
     if (message.content === `<@${client.user!.id}>` || message.content === `<@!${client.user!.id}>`) {
+        const guildData = await database.retrieveGuild(message.guild.id);
+        const currentPrefix = guildData?.prefix || prefix;
+
         const embed = new EmbedBuilder()
             .setColor(0x5865F2)
             .setAuthor({ name: "Xeon Security", iconURL: client.user!.displayAvatarURL() })
-            .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\nType \`${prefix}help\` to see my commands!`)
+            .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\nType \`${currentPrefix}help\` to see my commands!`)
             .setFooter({ text: "Protected by Xeon Security System", iconURL: message.guild.iconURL() || undefined })
             .setTimestamp();
 
@@ -565,15 +568,17 @@ client.on("messageCreate", async message => {
     // ... (After all filters) ...
 
     // Note: I will insert the log right before "let commandName;" which is line 427 in original
+    const currentPrefix = guildData?.prefix || prefix;
+
     console.log("[DEBUG] Filters passed. Checking Prefix...");
-    try { fs.appendFileSync('debug.log', `[DEBUG] Filters passed. Checking Prefix match with '${prefix}'...\n`); } catch { }
+    try { fs.appendFileSync('debug.log', `[DEBUG] Filters passed. Checking Prefix match with '${currentPrefix}'...\n`); } catch { }
     let commandName: string | undefined;
     let args: string[] = [];
     let isNoPrefixAction = false;
     const botConfig = await database.getBotConfig(); // Fetch Global Config
 
-    if (message.content.startsWith(prefix)) {
-        args = message.content.slice(prefix.length).trim().split(/ +/);
+    if (message.content.startsWith(currentPrefix)) {
+        args = message.content.slice(currentPrefix.length).trim().split(/ +/);
         commandName = args.shift()?.toLowerCase();
     } else if (botConfig.noPrefixUsers?.includes(message.author.id)) { // Global Check
         const tempArgs = message.content.trim().split(/ +/);
@@ -598,6 +603,12 @@ client.on("messageCreate", async message => {
         fs.appendFileSync('debug.log', `[DEBUG] Command matched: ${commandName}\n`);
 
         /* Legacy ?help Handler */
+        if (commandName === 'help') {
+            const helpArgs = args[0] ? args[0].toLowerCase() : null;
+            if (helpArgs) {
+                // ... (Logic remains same, just ensure we pass context correctly if needed)
+            }
+        }
         if (commandName === 'help' && !args.length) {
             // Let generic handler handle it
         }

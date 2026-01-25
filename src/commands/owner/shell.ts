@@ -25,9 +25,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         const embed = new EmbedBuilder()
             .setColor(error ? config.colors.error : config.colors.success)
-            .setTitle(error ? 'Shell Execution Error' : 'Shell Execution Success')
-            .setDescription(`\`\`\`bash\n${cleanOutput}\n\`\`\``)
-            .setTimestamp();
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${error ? 'Shell Error' : 'Shell Success'}**\n\n> \`\`\`bash\n${cleanOutput}\n\`\`\``)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
         interaction.editReply({ embeds: [embed] });
     });

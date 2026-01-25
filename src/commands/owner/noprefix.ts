@@ -25,6 +25,8 @@ export const command = new SlashCommandBuilder()
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+export const aliases = ['np'];
+
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.inCachedGuild()) return;
 

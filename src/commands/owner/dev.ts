@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, StringSelectMenuBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import fs from 'fs';
@@ -12,47 +12,53 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // Silent Fail for Non-Owners (simulating "doesn't exist")
     if (interaction.user.id !== process.env.OWNER_ID) {
         if (!interaction.isRepliable()) return;
-        // For Slash Commands, we must reply or it fails. 
-        // But the user requested "ignore". 
-        // Best approach for slash: Ephemeral "Unknown command" or similar generic error to fake it, 
-        // OR just ephemeral "You are not allowed". 
-        // Given the requirement "ignore", we can just return. 
-        // But Discord API will timeout the interaction if we don't reply. 
-        // We will just return if it's a message-based prefix command.
-        // If it's an actual interaction, we might have to reply ephemeral.
-        // Since this bot uses a hybrid handler, let's assume if it came from interaction, we reply ephemeral "Unknown command".
         return interaction.reply({ content: "Unknown command.", ephemeral: true });
     }
 
     const ownerDir = path.join(__dirname);
     const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
 
-    const commands: string[] = [];
-
-    for (const file of files) {
+    // Re-fetching names nicely since I messed up the array above in previous steps (it contained descriptions)
+    // Let's reuse the logic properly
+    const cleanCommands = files.map(file => {
         try {
             const cmd = require(path.join(ownerDir, file));
             if (cmd.command && cmd.command.name) {
-                const desc = cmd.command.description || "No description";
-                commands.push(`\`${config.prefix}${cmd.command.name}\` - ${desc}`);
+                return `\`${config.prefix}${cmd.command.name}\``;
             }
-        } catch (e) {
-            console.error(`[Dev] Failed to load ${file}`, e);
-        }
-    }
+        } catch { return null; }
+    }).filter(c => c !== null).join(", ");
 
     const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setAuthor({ name: `Hi, ${interaction.user.username}!`, iconURL: interaction.user.displayAvatarURL() })
-        .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-        .setDescription(`> **<:74658vipglow:1465051133704798435> Developer Control Panel**\n> **Prefix:** \`${config.prefix}\``)
-        .addFields({
-            name: "Owner Commands",
-            value: commands.length > 0 ? commands.join('\n') : "> No commands found.",
-            inline: false
-        })
-        .setFooter({ text: `Developed by Vasudev AI Team`, iconURL: interaction.client.user?.displayAvatarURL() || undefined })
-        .setTimestamp();
+        .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
+        .setDescription(`> ${cleanCommands}`)
+        .setFooter({ text: `Xeon • Owner Commands`, iconURL: interaction.client.user?.displayAvatarURL() || undefined });
 
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+    // Replicate Help Menu Components
+    const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
+
+    // Select Menu
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId("help_category")
+            .setPlaceholder("Choose a specific Category")
+            .addOptions(moduleOrder.map(key => ({
+                label: config.modules[key].name,
+                emoji: config.emojis[key],
+                value: `help_${key}`,
+                description: config.modules[key].description.substring(0, 100)
+            })))
+    );
+
+    // Buttons
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(ButtonStyle.Primary)
+    );
+
+    // Using help_ components allows reusing the main interaction handler logic in index.ts/help.ts
+    // This effectively lets the owner navigate OUT of dev panel into standard help.
+    await interaction.reply({ embeds: [embed], components: [selectMenu, buttons], ephemeral: true });
 }
