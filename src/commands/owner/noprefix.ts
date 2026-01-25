@@ -28,12 +28,8 @@ export const command = new SlashCommandBuilder()
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.inCachedGuild()) return;
 
-    // Strict Owner Check (As requested: "main isko du") - allowing Server Owner and Extra Owners defined in DB would be ideal, 
-    // but for now let's enforce Server Owner or Extra Owners.
-    // Fetch Guild Data first
-    let guildData = await database.retrieveGuild(interaction.guild.id);
-    if (!guildData) return interaction.reply({ content: "Database error.", ephemeral: true });
-
+    // Global Config
+    const botConfig = await database.getBotConfig();
     const isBotOwner = interaction.user.id === process.env.OWNER_ID;
 
     if (!isBotOwner) {
@@ -45,67 +41,81 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const subcommand = interaction.options.getSubcommand();
 
+    const embedStyle = (title: string, description: string) => {
+        return new EmbedBuilder()
+            .setColor(config.colors.primary)
+            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+    };
+
+    // Ensure array exists
+    if (!botConfig.noPrefixUsers) botConfig.noPrefixUsers = [];
+
     if (subcommand === 'add') {
         const user = interaction.options.getUser('user', true);
 
-        if (guildData.noPrefixUsers.includes(user.id)) {
+        if (botConfig.noPrefixUsers.includes(user.id)) {
             return interaction.reply({
                 embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${user.tag}** is already in the No-Prefix list.`)]
                 , ephemeral: true
             });
         }
 
-        guildData.noPrefixUsers.push(user.id);
-        await database.insertGuild(interaction.guild.id, guildData);
+        botConfig.noPrefixUsers.push(user.id);
+        await database.updateBotConfig(botConfig); // Assuming this method exists or similar logic
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.success)
-            .setAuthor({ name: "No-Prefix Added", iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`${config.emojis.success} Successfully added **${user.tag}** to the No-Prefix list.\n${config.emojis.dot} They can now use commands without a prefix in this server.`)
-            .setTimestamp();
 
+        const embed = embedStyle('No Prefix Added', `> Added **${user.tag}** to the No-Prefix list.\n> They can now use commands without a prefix in this server.`);
         return interaction.reply({ embeds: [embed] });
     }
 
     if (subcommand === 'remove') {
         const user = interaction.options.getUser('user', true);
 
-        if (!guildData.noPrefixUsers.includes(user.id)) {
+        if (!botConfig.noPrefixUsers.includes(user.id)) {
             return interaction.reply({
                 embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${user.tag}** is not in the No-Prefix list.`)]
                 , ephemeral: true
             });
         }
 
-        guildData.noPrefixUsers = guildData.noPrefixUsers.filter(id => id !== user.id);
-        await database.insertGuild(interaction.guild.id, guildData);
+        botConfig.noPrefixUsers = botConfig.noPrefixUsers.filter(id => id !== user.id);
+        await database.updateBotConfig(botConfig);
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.error) // Red for removal
-            .setAuthor({ name: "No-Prefix Removed", iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`${config.emojis.delete} Successfully removed **${user.tag}** from the No-Prefix list.`)
-            .setTimestamp();
-
+        const embed = embedStyle('No Prefix Removed', `> Removed **${user.tag}** from the No-Prefix list.`);
         return interaction.reply({ embeds: [embed] });
     }
 
     if (subcommand === 'list') {
-        const users = guildData.noPrefixUsers;
+        const users = botConfig.noPrefixUsers;
 
         if (users.length === 0) {
             return interaction.reply({
-                embeds: [new EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} There are no No-Prefix users in this server.`)]
+                embeds: [new EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} There are no No-Prefix users.`)]
                 , ephemeral: true
             });
         }
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setAuthor({ name: `No-Prefix Users [${users.length}]`, iconURL: interaction.guild.iconURL() || undefined })
-            .setDescription(users.map((id, index) => `${index + 1}. <@${id}> (\`${id}\`)`).join('\n'))
-            .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL() || undefined })
-            .setTimestamp();
+        const names = await Promise.all(users.map(async id => {
+            try {
+                const user = await interaction.client.users.fetch(id);
+                return user.username;
+            } catch {
+                return `Unknown (${id})`;
+            }
+        }));
 
+        const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
+        const embed = embedStyle('No Prefix Users', list);
         return interaction.reply({ embeds: [embed] });
     }
+
+    // Default: Help Menu (if no subcommand matches or is provided)
+    const embed = embedStyle('No Prefix Commands',
+        `\`${config.prefix}noprefix add <user>\`\n` +
+        `\`${config.prefix}noprefix remove <user>\`\n` +
+        `\`${config.prefix}noprefix list\``
+    );
+    return interaction.reply({ embeds: [embed] });
 }

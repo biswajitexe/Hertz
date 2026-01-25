@@ -265,7 +265,7 @@ client.on("messageCreate", async message => {
             .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\nType \`${prefix}help\` to see my commands!`)
             .setFooter({ text: "Protected by Xeon Security System", iconURL: message.guild.iconURL() || undefined })
             .setTimestamp();
-        
+
         const row = {
             type: 1,
             components: [
@@ -273,7 +273,7 @@ client.on("messageCreate", async message => {
             ]
         };
 
-        await message.reply({ embeds: [embed], components: [row as any] });
+        await message.reply({ embeds: [embed], components: [row as any], allowedMentions: { repliedUser: false } });
         return;
     }
 
@@ -570,11 +570,12 @@ client.on("messageCreate", async message => {
     let commandName: string | undefined;
     let args: string[] = [];
     let isNoPrefixAction = false;
+    const botConfig = await database.getBotConfig(); // Fetch Global Config
 
     if (message.content.startsWith(prefix)) {
         args = message.content.slice(prefix.length).trim().split(/ +/);
         commandName = args.shift()?.toLowerCase();
-    } else if (guildData?.noPrefixUsers?.includes(message.author.id)) {
+    } else if (botConfig.noPrefixUsers?.includes(message.author.id)) { // Global Check
         const tempArgs = message.content.trim().split(/ +/);
         const tempCommandName = tempArgs[0].toLowerCase();
 

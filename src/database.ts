@@ -123,6 +123,7 @@ export interface BotConfig {
     blacklistedGuilds: string[];
     premiumUsers: string[];
     premiumGuilds: string[];
+    noPrefixUsers: string[]; // Global No Prefix Users
 }
 
 
@@ -262,7 +263,7 @@ export class Database {
             whitelist: { users: [], roles: [], channels: [] },
 
             customEmbeds: {},
-            noPrefixUsers: [],
+            noPrefixUsers: [], // Server-scoped but kept for legacy/fallback
             autoroles: [],
             autorolesBots: []
         });
@@ -304,10 +305,14 @@ export class Database {
                     blacklistedUsers: [],
                     blacklistedGuilds: [],
                     premiumUsers: [],
-                    premiumGuilds: []
+                    premiumGuilds: [],
+                    noPrefixUsers: []
                 };
                 await this.insertBotConfig(config);
             }
+            // Ensure new fields exist for existing configs
+            if (!config.noPrefixUsers) config.noPrefixUsers = [];
+
             return config;
         } catch (e) {
             console.error(`[Database] Failed to retrieve bot config:`, e);
@@ -316,9 +321,15 @@ export class Database {
                 blacklistedUsers: [],
                 blacklistedGuilds: [],
                 premiumUsers: [],
-                premiumGuilds: []
+                premiumGuilds: [],
+                noPrefixUsers: []
             };
         }
+    }
+
+    // Alias for update
+    async updateBotConfig(config: BotConfig) {
+        await this.insertBotConfig(config);
     }
 
     async insertBotConfig(config: BotConfig) {
