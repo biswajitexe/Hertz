@@ -132,7 +132,7 @@ export class Database {
     inner: Keyv<Guild>
 
     constructor() {
-        const mongoUrl = process.env.MONGO_URL?.trim();
+        const mongoUrl = (process.env.MONGO_URL || process.env.MONGO_URI)?.trim();
         if (mongoUrl) {
             try {
                 // Append SSL bypass option to existing URL
