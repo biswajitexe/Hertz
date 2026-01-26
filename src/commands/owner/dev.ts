@@ -50,28 +50,13 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
 
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle(`Owner Command: ${foundCmd.command.name}`)
-                .setDescription(foundCmd.command.description || "No description provided.")
+                .setTitle(`Command: ${config.prefix}${foundCmd.command.name}`)
                 .addFields(
-                    { name: "Usage", value: `\`${config.prefix}${foundCmd.command.name}\``, inline: true },
-                    { name: "Description", value: foundCmd.command.description || "N/A", inline: true }
+                    { name: "Description", value: foundCmd.command.description || "No description provided." },
+                    { name: "Usage", value: `\`${config.prefix}${foundCmd.command.name}\`` },
+                    { name: "Module", value: "Owner Commands" }
                 )
                 .setFooter({ text: "Xeon • Owner Panel", iconURL: interaction.client.user?.displayAvatarURL() });
-
-            // Navigation Buttons
-            const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger) // Reuse help_delete (handled in help.ts or we need to handle it?)
-                // help_delete is handled in help.ts, but index.ts routes dev_ first.
-                // We should handle dev_delete or reuse help_delete IF index.ts routes correctly.
-                // index.ts routes dev_ to handleDevInteraction.
-                // If we use help_delete, index.ts routes to handleHelpInteraction (lines 956 vs 962).
-                // So help_delete works! But we lose context if we want to return to dev menu? No, delete deletes.
-            );
-            
-            // Re-render select menu to allow quick switching?
-            // Or remove it in detail view? help.ts KEEPS the select menu.
-            const selectMenu = await createOwnerSelectMenu();
 
             await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
 
