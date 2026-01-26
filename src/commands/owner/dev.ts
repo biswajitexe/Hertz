@@ -53,8 +53,7 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                 .setTitle(`Command: ${config.prefix}${foundCmd.command.name}`)
                 .addFields(
                     { name: "Description", value: foundCmd.command.description || "No description provided." },
-                    { name: "Usage", value: `\`${config.prefix}${foundCmd.command.name}\`` },
-                    { name: "Module", value: "Owner Commands" }
+                    { name: "Module", value: "Owner" }
                 )
                 .setFooter({ text: "Xeon • Owner Panel", iconURL: interaction.client.user?.displayAvatarURL() });
 
