@@ -57,6 +57,14 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                 )
                 .setFooter({ text: "Xeon • Owner Panel", iconURL: interaction.client.user?.displayAvatarURL() });
 
+            // Navigation Buttons
+            const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
+            );
+
+            const selectMenu = await createOwnerSelectMenu();
+
             await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
 
         } catch (error) {
