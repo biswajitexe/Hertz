@@ -160,23 +160,19 @@ export async function handleStart(interaction: ChatInputCommandInteraction) {
     const embed = giveawayHandler.createGiveawayEmbed({ ...giveawayData, participants: [], paused: false });
     const button = giveawayHandler.createGiveawayButton();
 
-    const successEmbed = embedStyle(interaction, 'Giveaway Started', `${config.emojis.success} Giveaway has been started successfully!\n\n**Prize:** ${prize}\n**Winners:** ${winners}\n**Time:** ${timeArg}`);
-    await interaction.reply({ embeds: [successEmbed], ephemeral: true });
+    const giveawayMessage = await interaction.reply({
+        embeds: [embed],
+        components: [button],
+        fetchReply: true
+    });
 
-    if (interaction.channel?.isTextBased()) {
-        const giveawayMessage = await (interaction.channel as any).send({
-            embeds: [embed],
-            components: [button]
-        });
-
-        if (giveawayMessage) {
-            giveawayHandler.createGiveaway(
-                interaction.guildId!,
-                interaction.channelId,
-                giveawayMessage.id,
-                giveawayData
-            );
-        }
+    if (giveawayMessage) {
+        giveawayHandler.createGiveaway(
+            interaction.guildId!,
+            interaction.channelId,
+            giveawayMessage.id,
+            giveawayData
+        );
     }
 }
 
