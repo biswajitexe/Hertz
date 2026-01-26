@@ -37,19 +37,19 @@ export async function pagination(interaction: ChatInputCommandInteraction, title
 
         const prev = new ButtonBuilder()
             .setCustomId('prev')
-            .setEmoji('⬅️')
+            .setEmoji('1465399219623039038') // Custom Left Arrow
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(page === 0);
 
         const next = new ButtonBuilder()
             .setCustomId('next')
-            .setEmoji('➡️')
+            .setEmoji('1465399275805741292') // Custom Right Arrow
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(page === totalPages - 1);
 
         const stop = new ButtonBuilder()
             .setCustomId('stop')
-            .setEmoji('🗑️')
+            .setEmoji('1465399171799453706') // Custom Delete/Purge
             .setStyle(ButtonStyle.Danger);
 
         row.addComponents(prev, stop, next);
