@@ -48,10 +48,30 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                 return interaction.reply({ content: `Command information not found for \`${commandName}\`.`, ephemeral: true });
             }
 
+            let description = `> ${foundCmd.command.description || "No description provided."}`;
+            
+            // Check for Subcommands to mimic help category view
+            // Assuming SlashCommandBuilder options structure (toJSON or direct)
+            const rawData = typeof foundCmd.command.toJSON === 'function' ? foundCmd.command.toJSON() : foundCmd.command;
+            if (rawData.options && rawData.options.some((opt: any) => opt.type === 1 || opt.type === 2)) {
+                // Has subcommands
+                const subcommands = rawData.options
+                    .filter((opt: any) => opt.type === 1 || opt.type === 2)
+                    .map((opt: any) => `\`${foundCmd.command.name} ${opt.name}\``)
+                    .join(", ");
+                
+                if (subcommands) {
+                    description = `> ${subcommands}`;
+                }
+            } else {
+                 // No subcommands, just listing the command itself like help does (?command)
+                 description = `> \`${foundCmd.command.name}\``;
+            }
+
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle(`${config.prefix}${foundCmd.command.name}`)
-                .setDescription(`> ${foundCmd.command.description || "No description provided."}`)
+                .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`) // Capitalize Title, No Prefix (?)
+                .setDescription(description)
                 .setFooter({ text: "Xeon • Owner Command", iconURL: interaction.client.user?.displayAvatarURL() });
 
             // Navigation Buttons
