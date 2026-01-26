@@ -3,6 +3,8 @@ import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, Permiss
 import { Database } from "../../database";
 import * as config from "../../config";
 
+import { pagination } from "../../utilities/pagination";
+
 export const command = new SlashCommandBuilder()
     .setName('list')
     .setDescription('List roles, bots, admins, or members in a role.')
@@ -64,67 +66,52 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     await interaction.deferReply();
 
-    const embed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
-
     // Helper for list display (Whitelist Style)
     // Format: `「1」` | `Name「ID」`
-    const formatList = (items: { name: string, id: string, extra?: string }[], typeName: string, iconUrl: string) => {
-        embed.setAuthor({ name: `list ${typeName}`, iconURL: iconUrl });
-
-        if (items.length === 0) {
-            embed.setDescription(`**No ${typeName} found.**`);
-        } else {
-            const list = items.map((item, i) => `\`「${i + 1}」\` | \`${item.name}「${item.id}」\`${item.extra ? ` (${item.extra})` : ''}`).join('\n');
-
-            if (list.length > 4000) {
-                embed.setDescription(list.slice(0, 4000) + `\n...and **${items.length}** more items.`); // Approximate
-            } else {
-                embed.setDescription(list);
-            }
-        }
+    const getFormattedList = (items: { name: string, id: string, extra?: string }[]) => {
+        return items.map((item, i) => `\`「${i + 1}」\` | \`${item.name}「${item.id}」\`${item.extra ? ` (${item.extra})` : ''}`);
     };
 
     // Generic Icon (Purple Shield style from WL)
     const icon = 'https://cdn.discordapp.com/emojis/1461641597476274332.png';
 
     try {
+        let items: { name: string, id: string, extra?: string }[] = [];
+        let title = '';
+
         if (subcommand === 'roles') {
-            const roles = interaction.guild.roles.cache
+            title = 'Server Roles';
+            items = interaction.guild.roles.cache
                 .sort((a, b) => b.position - a.position)
                 .map(r => ({ name: r.name, id: r.id, extra: `${r.members.size} members` }));
 
-            formatList(roles, 'roles', icon);
-
         } else if (subcommand === 'bots') {
-            const bots = (await interaction.guild.members.fetch())
+            title = 'Server Bots';
+            const fetchedMembers = await interaction.guild.members.fetch();
+            items = fetchedMembers
                 .filter(m => m.user.bot)
                 .map(m => ({ name: m.user.username, id: m.id }));
 
-            formatList(bots, 'bots', icon);
-
         } else if (subcommand === 'admins') {
-            const admins = (await interaction.guild.members.fetch())
+            title = 'Server Admins';
+            const fetchedMembers = await interaction.guild.members.fetch();
+            items = fetchedMembers
                 .filter(m => m.permissions.has(PermissionFlagsBits.Administrator) && !m.user.bot)
                 .map(m => ({ name: m.user.username, id: m.id }));
-
-            formatList(admins, 'admins', icon);
 
         } else if (subcommand === 'inrole') {
             if (!targetRole) {
                 await interaction.editReply({ content: `${config.emojis.error} **Please specify a valid role.**` });
                 return;
             }
-
+            title = `Members in ${targetRole.name}`;
             // Ensure members are fetched
             await interaction.guild.members.fetch();
-
-            const members = targetRole.members.map(m => ({ name: m.user.username, id: m.id }));
-            formatList(members, `members in ${targetRole.name}`, icon);
+            items = targetRole.members.map(m => ({ name: m.user.username, id: m.id }));
         }
 
-        await interaction.editReply({ embeds: [embed] });
+        const formattedLines = getFormattedList(items);
+        await pagination(interaction, title, formattedLines, 10, icon);
 
     } catch (err) {
         console.error(err);
