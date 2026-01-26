@@ -18,6 +18,108 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Fetch Data
     let userProfile = await database.getUser(targetUser.id);
+
+    const safeProfile = userProfile || {
+        id: targetUser.id,
+        bio: null,
+        reps: 0,
+        lastRepDate: 0,
+        partnerId: null,
+        marryDate: null,
+        color: null
+    };
+
+    const botConfig = await database.getBotConfig();
+
+    // --- Badges Logic ---
+    const badges: string[] = [];
+    if (targetUser.id === process.env.OWNER_ID) badges.push(`${config.emojis.owner} **Owner**`);
+    if (botConfig.premiumUsers.includes(targetUser.id)) badges.push(`${config.emojis.noprefix} **Premium User**`);
+    if (botConfig.noPrefixUsers?.includes(targetUser.id)) badges.push(`${config.emojis.staff} **Staff**`);
+    if (member && member.permissions.has("Administrator")) badges.push(`${config.emojis.admin} **Admin**`);
+
+    // Default badge if none
+    if (badges.length === 0) badges.push(`${config.emojis.member || "👤"} **Member**`);
+
+    const badgesString = badges.join("\n> "); // Vertical list
+
+    // --- Spotify & Status Logic ---
+    let spotifyStatus = "\n\n**<:spotify:1380769677332058183> Spotify**\n> Not listening to anything.";
+    let spotifyImage = null;
+    let spotifyUrl = null;
+
+    if (member && member.presence) {
+        const spotifyActivity = member.presence.activities.find(act => act.name === 'Spotify' || act.type === ActivityType.Listening);
+        if (spotifyActivity) {
+            const trackName = spotifyActivity.details;
+            const artist = spotifyActivity.state;
+            const album = spotifyActivity.assets?.largeText;
+            spotifyImage = spotifyActivity.assets?.largeImageURL();
+            spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
+
+            spotifyStatus = `\n\n**<:spotify:1380769677332058183> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+        }
+    }
+
+    // --- Embed Construction ---
+    const embed = new EmbedBuilder()
+        .setColor(safeProfile.color || config.colors.primary)
+        .setTitle(`<:74658vipglow:1465051133704798435> ${targetUser.username}'s Profile`)
+        .setThumbnail(targetUser.displayAvatarURL({ size: 1024 }))
+        .setDescription(
+            `> **Badges**\n> ${badgesString}\n\n` +
+            `> **About Me**\n> ${safeProfile.bio || "No bio set. Use `/bio` to set one!"}` +
+            `${spotifyStatus}`
+        )
+        .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+        .setTimestamp();
+
+    if (spotifyImage) {
+        embed.setImage(spotifyImage);
+    }
+
+    // --- Buttons ---
+    const row = new ActionRowBuilder<ButtonBuilder>();
+
+    // Avatar Button
+    const avatarBtn = new ButtonBuilder()
+        .setLabel('Avatar')
+        .setStyle(ButtonStyle.Link)
+        .setURL(targetUser.displayAvatarURL({ size: 1024 }));
+
+    row.addComponents(avatarBtn);
+
+    // Banner Logic
+    const fetchedUser = await targetUser.fetch();
+    if (fetchedUser.bannerURL()) {
+        const bannerBtn = new ButtonBuilder()
+            .setLabel('Banner')
+            .setStyle(ButtonStyle.Link)
+            .setURL(fetchedUser.bannerURL({ size: 1024 })!);
+        row.addComponents(bannerBtn);
+    }
+
+    if (spotifyUrl) {
+        const spotifyBtn = new ButtonBuilder()
+            .setLabel('Play on Spotify')
+            .setStyle(ButtonStyle.Link)
+            .setURL(spotifyUrl);
+        row.addComponents(spotifyBtn);
+    }
+
+    await interaction.editReply({ embeds: [embed], components: [row] });
+}
+
+export async function run(interaction: ChatInputCommandInteraction, database: Database) {
+    if (!interaction.inCachedGuild()) return;
+
+    await interaction.deferReply();
+
+    const targetUser = interaction.options.getUser('user') || interaction.user;
+    const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+
+    // Fetch Data
+    let userProfile = await database.getUser(targetUser.id);
     if (!userProfile) {
         // Init if not exists (though getUser usually handles it or returns null, assuming safe access)
     }
