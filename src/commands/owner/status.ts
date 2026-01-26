@@ -43,6 +43,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const typeStr = interaction.options.getString('type', true);
         const text = interaction.options.getString('text', true);
 
+        if (!typeStr || !text) {
+             return interaction.reply({ content: `Usage: \`${config.prefix}status set <type> <text>\`\nTypes: Playing, Watching, Listening, Competing, Streaming`, ephemeral: true });
+        }
+
         let type = ActivityType.Playing;
         if (typeStr === 'Watching') type = ActivityType.Watching;
         if (typeStr === 'Listening') type = ActivityType.Listening;
