@@ -208,6 +208,10 @@ export const modules: { [key: string]: { name: string, description: string, comm
             { name: "botinfo", description: "Display bot information" },
             { name: "serverinfo", description: "Display server information" },
             { name: "userinfo", description: "Display user information" },
+            { name: "bio", usage: "bio <set/view>", description: "Manage your bio" },
+            { name: "marry", usage: "marry <user>", description: "Marry a user" },
+            { name: "divorce", usage: "divorce", description: "Divorce your partner" },
+            { name: "rep", usage: "rep <user>", description: "Give reputation to a user" },
             { name: "membercount", description: "Check member count" }
         ]
     }
