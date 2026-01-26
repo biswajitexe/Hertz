@@ -33,7 +33,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         .setColor(config.colors.primary)
         .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
         .setDescription(`> ${cleanCommands}`)
-        .setFooter({ text: `Xeon • Owner Commands`, iconURL: interaction.client.user?.displayAvatarURL() || undefined });
+        .setFooter({ text: `Xeon • Owner Commands (PID: ${process.pid})`, iconURL: interaction.client.user?.displayAvatarURL() || undefined });
 
     // Replicate Help Menu Components
     // Select Menu - Dynamic Owner Commands
