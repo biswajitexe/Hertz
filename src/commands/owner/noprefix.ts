@@ -36,8 +36,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     if (!isBotOwner) {
         return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Only the **Bot Owner** can manage No-Prefix users.`)]
-            , ephemeral: true
+            embeds: [new EmbedBuilder()
+                .setColor(config.colors.error)
+                .setDescription(`${config.emojis.error} Only the **Bot Owner** can manage No-Prefix users.`)
+                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+            ],
+            ephemeral: true
         });
     }
 
@@ -59,8 +63,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (botConfig.noPrefixUsers.includes(user.id)) {
             return interaction.reply({
-                embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${user.tag}** is already in the No-Prefix list.`)]
-                , ephemeral: true
+                embeds: [new EmbedBuilder()
+                    .setColor(config.colors.error)
+                    .setDescription(`${config.emojis.error} **${user.tag}** is already in the No-Prefix list.`)
+                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+                ],
+                ephemeral: true
             });
         }
 
@@ -77,8 +85,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (!botConfig.noPrefixUsers.includes(user.id)) {
             return interaction.reply({
-                embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${user.tag}** is not in the No-Prefix list.`)]
-                , ephemeral: true
+                embeds: [new EmbedBuilder()
+                    .setColor(config.colors.error)
+                    .setDescription(`${config.emojis.error} **${user.tag}** is not in the No-Prefix list.`)
+                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+                ],
+                ephemeral: true
             });
         }
 
@@ -94,8 +106,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (users.length === 0) {
             return interaction.reply({
-                embeds: [new EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} There are no No-Prefix users.`)]
-                , ephemeral: true
+                embeds: [new EmbedBuilder()
+                    .setColor(config.colors.warning)
+                    .setDescription(`${config.emojis.warning} There are no No-Prefix users.`)
+                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+                ],
+                ephemeral: true
             });
         }
 
