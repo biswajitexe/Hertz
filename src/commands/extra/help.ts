@@ -151,7 +151,7 @@ async function sendAllCommands(interaction: any) {
         .setFooter({ text: `Xeon • Total Commands: ${Object.values(config.modules).reduce((acc: any, mod: any) => acc + (mod.commands.length || 0), 0)}`, iconURL: interaction.client.user?.displayAvatarURL() })
         .setTimestamp();
 
-    const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "social", "extra"];
+    const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
     moduleOrder.forEach(key => {
         const module = config.modules[key];
         if (module) {
@@ -201,7 +201,7 @@ async function sendCommandHelp(interaction: any, commandName: string) {
 }
 
 function createModuleSelectMenu(placeholder: string) {
-    const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "social", "extra"];
+    const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
     return new StringSelectMenuBuilder()
         .setCustomId("help_category")
         .setPlaceholder(placeholder)
