@@ -125,6 +125,7 @@ export interface BotConfig {
     premiumUsers: string[];
     premiumGuilds: string[];
     noPrefixUsers: string[]; // Global No Prefix Users
+    staffUsers: string[]; // Bot Staff Members
 }
 
 
@@ -299,11 +300,13 @@ export class Database {
                     blacklistedGuilds: [],
                     premiumUsers: [],
                     premiumGuilds: [],
-                    noPrefixUsers: []
+                    noPrefixUsers: [],
+                    staffUsers: []
                 };
                 await this.insertBotConfig(config);
             }
             if (!config.noPrefixUsers) config.noPrefixUsers = [];
+            if (!config.staffUsers) config.staffUsers = [];
             return config;
         } catch (e) {
             console.error(`[Database] Failed to retrieve bot config:`, e);
@@ -313,7 +316,8 @@ export class Database {
                 blacklistedGuilds: [],
                 premiumUsers: [],
                 premiumGuilds: [],
-                noPrefixUsers: []
+                noPrefixUsers: [],
+                staffUsers: []
             };
         }
     }

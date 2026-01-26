@@ -212,7 +212,19 @@ export const modules: { [key: string]: { name: string, description: string, comm
             { name: "marry", usage: "marry <user>", description: "Marry a user" },
             { name: "divorce", usage: "divorce", description: "Divorce your partner" },
             { name: "rep", usage: "rep <user>", description: "Give reputation to a user" },
+            { name: "bio", usage: "bio <set/view>", description: "Manage your bio" },
+            { name: "marry", usage: "marry <user>", description: "Marry a user" },
+            { name: "divorce", usage: "divorce", description: "Divorce your partner" },
+            { name: "rep", usage: "rep <user>", description: "Give reputation to a user" },
             { name: "membercount", description: "Check member count" }
+        ]
+    },
+    botroles: {
+        name: "Bot Roles",
+        description: "Information about bot roles.",
+        commands: [
+            { name: "botroles", description: "Displays information about special bot roles" },
+            { name: "manage", usage: "manage <premium/staff/noprefix> <add/remove> <user>", description: "Manage bot roles (Owner Only)" }
         ]
     }
 };

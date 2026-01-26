@@ -142,8 +142,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // --- Badges Logic ---
     const badgesList: string[] = [];
     if (targetUser.id === process.env.OWNER_ID) badgesList.push(config.emojis.owner); // Owner
-    if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(config.emojis.noprefix); // Premium
-    if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(config.emojis.staff); // No Prefix / Staff
+    if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(`${config.emojis.noprefix} **Premium User**`);
+    if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(`<:z_premium:1385210766457831434> **No Prefix**`);
+    if (botConfig.staffUsers?.includes(targetUser.id)) badgesList.push(`${config.emojis.staff} **Staff**`);
     if (member && member.permissions.has("Administrator")) badgesList.push(config.emojis.admin);
 
     const badgesString = badgesList.length > 0 ? badgesList.join(" ") : "None";
