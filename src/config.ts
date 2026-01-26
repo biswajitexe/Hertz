@@ -184,23 +184,14 @@ export const modules: { [key: string]: { name: string, description: string, comm
             { name: "glist", usage: "glist", description: "List active giveaways" }
         ]
     },
-    social: {
-        name: "Social",
-        description: "Social and profile commands.",
-        commands: [
-            { name: "profile", usage: "profile [user]", description: "View user profile" },
-            { name: "bio", usage: "bio <set/color>", description: "Customize your profile" },
-            { name: "rep", usage: "rep <user>", description: "Give reputation point" },
-            { name: "marry", usage: "marry <user>", description: "Propose to someone" },
-            { name: "divorce", usage: "divorce", description: "Divorce your partner" }
-        ]
-    },
+
 
     extra: {
         name: "Extra",
         description: "Extra commands and settings.",
         commands: [
             { name: "prefix", usage: "prefix <set/reset>", description: "Manage custom prefix" },
+            { name: "profile", usage: "profile [user]", description: "View user profile" },
             { name: "prefix set", usage: "prefix set <new_prefix>", description: "Set server prefix" },
             { name: "prefix reset", usage: "prefix reset", description: "Reset server prefix" },
             // Roles Commands
