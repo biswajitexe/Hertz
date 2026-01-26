@@ -42,7 +42,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
 
         if (i.customId === 'marry_reject') {
-            await i.update({ content: null, embeds: [], components: [], content: `💔 **${targetUser.username}** rejected the proposal.` });
+            await i.update({ embeds: [], components: [], content: `💔 **${targetUser.username}** rejected the proposal.` });
             return;
         }
 
@@ -59,7 +59,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             await database.updateUser(proposerProfile);
             await database.updateUser(targetProfile);
 
-            await i.update({ content: null, embeds: [], components: [], content: `💍 **Congratulations!** **${interaction.user.username}** and **${targetUser.username}** are now married! 🎉` });
+            await i.update({ embeds: [], components: [], content: `💍 **Congratulations!** **${interaction.user.username}** and **${targetUser.username}** are now married! 🎉` });
         }
     });
 

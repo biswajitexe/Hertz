@@ -179,30 +179,17 @@ export class Database {
     }
 
     async defaultGuild(guild: DiscordGuild) {
-        // ... (No changes here, kept existing logic implicitly via not touching it, 
-        // BUT wait, I am replacing the whole class file? No, replace_file_content works on chunks. 
-        // I need to be careful not to delete defaultGuild logic if I target the whole class.)
-        // I will use specific chunks. I cannot target "class Database" start without providing EndLine correctly.
-        // Actually, the previous view_file showed Lines 1 to 338.
-        // I will rewrite the Constructor and add User methods at the end.
-    }
-    // ...
-}
-// Wait, I cannot use multiple chunks without `multi_replace`.
-// Let me use `multi_replace_file_content` to add interface AND update class.
-// Or just 1 chunk if they are adjacent? They are not really adjacent (Interface at top, Class at bottom).
-// UserProfile interface should go below BotConfig (Line 127).
-const webhooksWhiteList: string[] = [];
+        const webhooksWhiteList: string[] = [];
 
-/* All webhooks when the bot is added to the guild are whitelisted */
-try {
-    const webhooks = await guild.fetchWebhooks();
-    for (const webhook of webhooks) {
-        webhooksWhiteList.push(webhook[1].id);
-    }
-} catch (e) {
-    console.warn(`[Database] Failed to fetch webhooks for guild ${guild.id} (Missing Permissions?)`);
-}
+        /* All webhooks when the bot is added to the guild are whitelisted */
+        try {
+            const webhooks = await guild.fetchWebhooks();
+            for (const webhook of webhooks) {
+                webhooksWhiteList.push(webhook[1].id);
+            }
+        } catch (e) {
+            console.warn(`[Database] Failed to fetch webhooks for guild ${guild.id} (Missing Permissions?)`);
+        }
 
 await this.insertGuild(guild.id, {
     moderators: [],
