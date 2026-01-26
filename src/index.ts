@@ -960,7 +960,7 @@ client.on("interactionCreate", async (interaction) => {
         } else if (interaction.customId.startsWith('color_') || interaction.customId.startsWith('colored_')) {
             await handleColorInteraction(interaction as any, database);
         } else if (interaction.customId.startsWith('dev_')) {
-            await handleDevInteraction(interaction, database);
+            await handleDevInteraction(interaction as any, database);
         }
         // else if (interaction.customId.startsWith('embed_')) {
         //     await handleEmbedInteraction(interaction as any, database);

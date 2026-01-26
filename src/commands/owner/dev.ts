@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, StringSelectMenuBuilder } from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, StringSelectMenuBuilder, ButtonInteraction, StringSelectMenuInteraction } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import fs from 'fs';
@@ -9,76 +9,29 @@ export const command = new SlashCommandBuilder()
     .setDescription('Owner Only Control Panel');
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
-    // Silent Fail for Non-Owners (simulating "doesn't exist")
     if (interaction.user.id !== process.env.OWNER_ID) {
         if (!interaction.isRepliable()) return;
         return interaction.reply({ content: "Unknown command.", ephemeral: true });
     }
-
-    const ownerDir = path.join(__dirname);
-    const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
-
-    // Re-fetching names nicely since I messed up the array above in previous steps (it contained descriptions)
-    // Let's reuse the logic properly
-    const cleanCommands = files.map(file => {
-        try {
-            const cmd = require(path.join(ownerDir, file));
-            if (cmd.command && cmd.command.name) {
-                return `\`${config.prefix}${cmd.command.name}\``;
-            }
-        } catch { return null; }
-    }).filter(c => c !== null).join(", ");
-
-    const embed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
-        .setDescription(`> ${cleanCommands}`)
-        .setFooter({ text: `Xeon • Owner Commands (PID: ${process.pid})`, iconURL: interaction.client.user?.displayAvatarURL() || undefined });
-
-    // Replicate Help Menu Components
-    // Select Menu - Dynamic Owner Commands
-    const selectOptions = files.map(file => {
-        try {
-            const cmd = require(path.join(ownerDir, file));
-            if (cmd.command && cmd.command.name) {
-                return {
-                    label: cmd.command.name,
-                    description: cmd.command.description ? cmd.command.description.substring(0, 100) : 'No description',
-                    value: cmd.command.name,
-                    emoji: config.emojis.owner || '👑'
-                };
-            }
-        } catch { return null; }
-    }).filter(opt => opt !== null) as any[];
-
-    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-        new StringSelectMenuBuilder()
-            .setCustomId("dev_select")
-            .setPlaceholder("Select a Command")
-            .addOptions(selectOptions)
-    );
-
-    // Buttons
-    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
-    );
-
-    // Using help_ components allows reusing the main interaction handler logic in index.ts/help.ts
-    // This effectively lets the owner navigate OUT of dev panel into standard help.
-    await interaction.reply({ embeds: [embed], components: [selectMenu, buttons], ephemeral: true });
+    await sendOwnerPanel(interaction);
 }
 
-export async function handleInteraction(interaction: any, database: Database) {
+export async function handleInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction, database: Database) {
     if (!interaction.customId.startsWith('dev_')) return;
 
-    if (interaction.isStringSelectMenu() && interaction.customId === 'dev_select') {
+    if (interaction.user.id !== process.env.OWNER_ID) {
+        return interaction.reply({ content: "You cannot use this menu.", ephemeral: true });
+    }
+
+    if (interaction.isButton() && interaction.customId === 'dev_home') {
+        await sendOwnerPanel(interaction, true);
+    } 
+    else if (interaction.isStringSelectMenu() && interaction.customId === 'dev_select') {
         const commandName = interaction.values[0];
         
         try {
-            // Try to find the command file
             const ownerDir = path.join(__dirname);
-            const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')));
+            const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
             
             let foundCmd: any = null;
             for(const file of files) {
@@ -101,15 +54,89 @@ export async function handleInteraction(interaction: any, database: Database) {
                 .setDescription(foundCmd.command.description || "No description provided.")
                 .addFields(
                     { name: "Usage", value: `\`${config.prefix}${foundCmd.command.name}\``, inline: true },
-                    { name: "Type", value: "Owner Only", inline: true }
+                    { name: "Description", value: foundCmd.command.description || "N/A", inline: true }
                 )
                 .setFooter({ text: "Xeon • Owner Panel", iconURL: interaction.client.user?.displayAvatarURL() });
 
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            // Navigation Buttons
+            const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger) // Reuse help_delete (handled in help.ts or we need to handle it?)
+                // help_delete is handled in help.ts, but index.ts routes dev_ first.
+                // We should handle dev_delete or reuse help_delete IF index.ts routes correctly.
+                // index.ts routes dev_ to handleDevInteraction.
+                // If we use help_delete, index.ts routes to handleHelpInteraction (lines 956 vs 962).
+                // So help_delete works! But we lose context if we want to return to dev menu? No, delete deletes.
+            );
+            
+            // Re-render select menu to allow quick switching?
+            // Or remove it in detail view? help.ts KEEPS the select menu.
+            const selectMenu = await createOwnerSelectMenu();
+
+            await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
 
         } catch (error) {
             console.error(error);
             await interaction.reply({ content: "Error retrieving command details.", ephemeral: true });
         }
     }
+}
+
+async function sendOwnerPanel(interaction: any, isUpdate = false) {
+    const ownerDir = path.join(__dirname);
+    const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
+
+    const cleanCommands = files.map(file => {
+        try {
+            const cmd = require(path.join(ownerDir, file));
+            if (cmd.command && cmd.command.name) {
+                return `\`${config.prefix}${cmd.command.name}\``;
+            }
+        } catch { return null; }
+    }).filter(c => c !== null).join(", ");
+
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
+        .setDescription(`> ${cleanCommands}`)
+        .setFooter({ text: `Xeon • Owner Commands`, iconURL: interaction.client.user?.displayAvatarURL() || undefined });
+
+    const selectMenu = await createOwnerSelectMenu();
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary).setDisabled(true), // Disabled on Home
+        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
+    );
+
+    if (isUpdate) {
+        await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
+    } else {
+        await interaction.reply({ embeds: [embed], components: [selectMenu, buttons], ephemeral: true });
+    }
+}
+
+async function createOwnerSelectMenu() {
+    const ownerDir = path.join(__dirname);
+    const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
+
+    const selectOptions = files.map(file => {
+        try {
+            const cmd = require(path.join(ownerDir, file));
+            if (cmd.command && cmd.command.name) {
+                return {
+                    label: cmd.command.name,
+                    description: cmd.command.description ? cmd.command.description.substring(0, 100) : 'No description',
+                    value: cmd.command.name,
+                    emoji: config.emojis.owner || '👑'
+                };
+            }
+        } catch { return null; }
+    }).filter(opt => opt !== null) as any[];
+
+    return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId("dev_select")
+            .setPlaceholder("Select a Command")
+            .addOptions(selectOptions)
+    );
 }
