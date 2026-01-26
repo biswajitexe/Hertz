@@ -88,7 +88,7 @@ async function sendHelpMenu(context: any, isUpdate = false) {
         .addFields(
             {
                 name: "Modules",
-                value: ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "social", "extra"]
+                value: ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
                     .map(key => `> [${config.modules[key]?.name || key}](https://discord.gg/xeon)`)
                     .join("\n"),
                 inline: false

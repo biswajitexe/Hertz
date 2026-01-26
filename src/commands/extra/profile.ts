@@ -57,7 +57,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     }
 
     // --- Spotify & Status Logic ---
-    let spotifyStatus = "";
+    let spotifyStatus = "\n\n**<:spotify:1380769677332058183> Spotify**\n> Not listening to anything.";
     let spotifyImage = null;
     let spotifyUrl = null;
 
@@ -70,7 +70,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             spotifyImage = spotifyActivity.assets?.largeImageURL();
             spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`; // Fallback search URL or syncID if available
 
-            spotifyStatus = `\n\n**<:spotify:1380769677332058183> Listening to Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+            spotifyStatus = `\n\n**<:spotify:1380769677332058183> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
         }
     }
 
@@ -85,7 +85,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             `${spotifyStatus}` // Append Spotify info if exists
         )
         .addFields(
-            { name: "❤️ Reputation", value: `> **${safeProfile.reps}**`, inline: true },
+            { name: "❤️ Likes", value: `> **${safeProfile.reps}**`, inline: true },
             { name: "💍 Partner", value: `> ${partnerString.replace('Married to ', '').replace(/\n.*/, '')}`, inline: true } // Simplified for field
         )
         .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
@@ -101,7 +101,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // Rep Button
     const repBtn = new ButtonBuilder()
         .setCustomId(`rep_${targetUser.id}`)
-        .setLabel('Reputation +')
+        .setLabel('Likes +')
         .setEmoji('❤️')
         .setStyle(ButtonStyle.Danger); // Red for heart
 
@@ -159,7 +159,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 const remaining = COOLDOWN - (now - giverProfile.lastRepDate);
                 const hours = Math.floor(remaining / 3600000);
                 const minutes = Math.floor((remaining % 3600000) / 60000);
-                await i.reply({ content: `${config.emojis.error} You can give reputation again in **${hours}h ${minutes}m**.`, ephemeral: true });
+                await i.reply({ content: `${config.emojis.error} You can give a like again in **${hours}h ${minutes}m**.`, ephemeral: true });
                 return;
             }
 
@@ -184,7 +184,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 });
             }
 
-            await i.reply({ content: `${config.emojis.success} You gave **+1 Reputation** to **${targetUser.username}**!`, ephemeral: true });
+            await i.reply({ content: `${config.emojis.success} You gave **+1 Like** to **${targetUser.username}**!`, ephemeral: true });
 
             // Refresh Embed
             const newFieldVal = `> **${safeProfile.reps}**`;
