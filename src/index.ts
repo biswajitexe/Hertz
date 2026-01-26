@@ -918,6 +918,7 @@ import { handleInteraction as handleHelpInteraction } from "./commands/extra/hel
 
 import { handleInteraction as handleRRInteraction } from "./commands/extra/reactionrole";
 import { handleInteraction as handleColorInteraction } from "./commands/extra/color";
+import { handleInteraction as handleDevInteraction } from "./commands/owner/dev";
 // import { handleInteraction as handleEmbedInteraction } from "./commands/utility/embed";
 
 client.on("interactionCreate", async (interaction) => {
@@ -934,6 +935,7 @@ client.on("interactionCreate", async (interaction) => {
         if (botConfig.maintenance && !isOwner) {
             return interaction.reply({ content: `${emojis.warning} **System is currently in Maintenance Mode.**`, ephemeral: true });
         }
+
 
         const commandModule = commandHandler.get(interaction.commandName);
         if (!commandModule) return;
@@ -957,6 +959,8 @@ client.on("interactionCreate", async (interaction) => {
             await handleRRInteraction(interaction as any, database);
         } else if (interaction.customId.startsWith('color_') || interaction.customId.startsWith('colored_')) {
             await handleColorInteraction(interaction as any, database);
+        } else if (interaction.customId.startsWith('dev_')) {
+            await handleDevInteraction(interaction, database);
         }
         // else if (interaction.customId.startsWith('embed_')) {
         //     await handleEmbedInteraction(interaction as any, database);
