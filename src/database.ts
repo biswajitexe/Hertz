@@ -179,6 +179,9 @@ export class Database {
     }
 
     async defaultGuild(guild: DiscordGuild) {
+        const existing = await this.retrieveGuild(guild.id);
+        if (existing) return;
+
         const webhooksWhiteList: string[] = [];
 
         /* All webhooks when the bot is added to the guild are whitelisted */
@@ -191,106 +194,120 @@ export class Database {
             console.warn(`[Database] Failed to fetch webhooks for guild ${guild.id} (Missing Permissions?)`);
         }
 
-await this.insertGuild(guild.id, {
-    moderators: [],
-    antiRaid: false,
-    unsafeMode: false,
-    webhooksWhitelist: webhooksWhiteList,
-    messageFilters: {
-        blacklist: [],
-        discordInvites: false,
-        links: false,
-        spam: false,
-        massMention: false,
-        antiEveryone: false,
-        messages: {
-            blacklist: "{user} This word is not allowed in this server!",
-            discordInvites: "{user} discord invites are not allowed in this server!",
-            links: "{user} links are not allowed in this server!",
-            spam: "{user} Do not spam.",
-        },
-        spamFilter: {},
-        linksWhitelist: { users: [], roles: [], channels: [] },
-        invitesWhitelist: { users: [], roles: [], channels: [] },
-        spamWhitelist: { users: [], roles: [], channels: [] },
-    },
-    extraOwners: [],
-    extraAdmins: [],
-    mediaChannels: [],
-    warns: {},
-    afk: {},
-    welcome: {
-        enabled: false,
-        channelId: null,
-        content: null,
-        embed: {
-            author: { name: "Welcome {user.name}!", icon: "{user.avatar}" },
-            title: null,
-            description: "Welcome to {server}. You are member #{memberCount}.",
-            color: 0x5865F2,
-            image: null,
-            thumbnail: null,
-            footer: "{server}",
-            timestamp: true
-        }
-    },
-    antinuke: {
-        enabled: false,
-        logChannelId: null,
-        limits: {
-            channelDelete: 3, channelCreate: 5, roleDelete: 3, roleCreate: 5, ban: 3, kick: 3,
-        },
-        actions: {
-            channelDelete: 'ban', channelCreate: 'ban', roleDelete: 'ban', roleCreate: 'ban', ban: 'ban', kick: 'ban',
-        }
-    },
-    reactionRoles: {},
-    colorRoles: true,
-    raidCache: { bannedUsers: [] },
-    banCache: [],
-    eventRateCache: new Map(),
-    tempBans: [],
-    whitelist: { users: [], roles: [], channels: [] },
-    customEmbeds: {},
-    noPrefixUsers: [],
-    autoroles: [],
-    autorolesBots: [],
-    prefix: null
-});
+        await this.insertGuild(guild.id, {
+            moderators: [],
+            antiRaid: false,
+            unsafeMode: false,
+            webhooksWhitelist: webhooksWhiteList,
+            messageFilters: {
+                blacklist: [],
+                discordInvites: false,
+                links: false,
+                spam: false,
+                massMention: false,
+                antiEveryone: false,
+                messages: {
+                    blacklist: "{user} This word is not allowed in this server!",
+                    discordInvites: "{user} discord invites are not allowed in this server!",
+                    links: "{user} links are not allowed in this server!",
+                    spam: "{user} Do not spam.",
+                },
+                spamFilter: {},
+                linksWhitelist: { users: [], roles: [], channels: [] },
+                invitesWhitelist: { users: [], roles: [], channels: [] },
+                spamWhitelist: { users: [], roles: [], channels: [] },
+            },
+            extraOwners: [],
+            extraAdmins: [],
+            mediaChannels: [],
+            warns: {},
+            afk: {},
+            welcome: {
+                enabled: false,
+                channelId: null,
+                content: null,
+                embed: {
+                    author: { name: "Welcome {user.name}!", icon: "{user.avatar}" },
+                    title: null,
+                    description: "Welcome to {server}. You are member #{memberCount}.",
+                    color: 0x5865F2,
+                    image: null,
+                    thumbnail: null,
+                    footer: "{server}",
+                    timestamp: true
+                }
+            },
+            antinuke: {
+                enabled: false,
+                logChannelId: null,
+                limits: {
+                    channelDelete: 3, channelCreate: 5, roleDelete: 3, roleCreate: 5, ban: 3, kick: 3,
+                },
+                actions: {
+                    channelDelete: 'ban', channelCreate: 'ban', roleDelete: 'ban', roleCreate: 'ban', ban: 'ban', kick: 'ban',
+                }
+            },
+            reactionRoles: {},
+            colorRoles: true,
+            raidCache: { bannedUsers: [] },
+            banCache: [],
+            eventRateCache: new Map(),
+            tempBans: [],
+            whitelist: { users: [], roles: [], channels: [] },
+            customEmbeds: {},
+            noPrefixUsers: [],
+            autoroles: [],
+            autorolesBots: [],
+            prefix: null
+        });
     }
 
     async insertGuild(id: string, guild: Guild) {
-    await this.inner.set(id, guild);
-}
-
-    async retrieveGuild(id: string): Promise < Guild | undefined > {
-    try {
-        const result = await Promise.race([
-            this.inner.get(id),
-            new Promise<undefined>((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 10000))
-        ]);
-        return result;
-    } catch(e: any) {
-        console.error(`[Database] Retrieve failed for ${id}: ${e.message}`);
-        if (e.message === 'DB_TIMEOUT') {
-            console.warn("[Database] MongoDB is unresponsive. Switched to In-Memory Storage.");
-            this.inner = new Keyv();
-            this.users = new Keyv();
-        }
-        return undefined;
+        await this.inner.set(id, guild);
     }
-}
+
+    async retrieveGuild(id: string): Promise<Guild | undefined> {
+        try {
+            const result = await Promise.race([
+                this.inner.get(id),
+                new Promise<undefined>((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 10000))
+            ]);
+            return result;
+        } catch (e: any) {
+            console.error(`[Database] Retrieve failed for ${id}: ${e.message}`);
+            if (e.message === 'DB_TIMEOUT') {
+                console.warn("[Database] MongoDB is unresponsive. Switched to In-Memory Storage.");
+                this.inner = new Keyv();
+                this.users = new Keyv();
+            }
+            return undefined;
+        }
+    }
 
     async removeGuild(id: string) {
-    await this.inner.delete(id);
-}
+        await this.inner.delete(id);
+    }
 
     /* Global Config Methods */
-    async getBotConfig(): Promise < BotConfig > {
-    try {
-        let config = await this.inner.get('bot_config') as BotConfig | undefined;
-        if(!config) {
-            config = {
+    async getBotConfig(): Promise<BotConfig> {
+        try {
+            let config = await this.inner.get('bot_config') as BotConfig | undefined;
+            if (!config) {
+                config = {
+                    maintenance: false,
+                    blacklistedUsers: [],
+                    blacklistedGuilds: [],
+                    premiumUsers: [],
+                    premiumGuilds: [],
+                    noPrefixUsers: []
+                };
+                await this.insertBotConfig(config);
+            }
+            if (!config.noPrefixUsers) config.noPrefixUsers = [];
+            return config;
+        } catch (e) {
+            console.error(`[Database] Failed to retrieve bot config:`, e);
+            return {
                 maintenance: false,
                 blacklistedUsers: [],
                 blacklistedGuilds: [],
@@ -298,50 +315,36 @@ await this.insertGuild(guild.id, {
                 premiumGuilds: [],
                 noPrefixUsers: []
             };
-            await this.insertBotConfig(config);
         }
-            if(!config.noPrefixUsers) config.noPrefixUsers = [];
-        return config;
-    } catch(e) {
-        console.error(`[Database] Failed to retrieve bot config:`, e);
-        return {
-            maintenance: false,
-            blacklistedUsers: [],
-            blacklistedGuilds: [],
-            premiumUsers: [],
-            premiumGuilds: [],
-            noPrefixUsers: []
-        };
     }
-}
 
     async updateBotConfig(config: BotConfig) {
-    await this.insertBotConfig(config);
-}
+        await this.insertBotConfig(config);
+    }
 
     async insertBotConfig(config: BotConfig) {
-    await this.inner.set('bot_config', config as any);
-}
+        await this.inner.set('bot_config', config as any);
+    }
 
     /* User Profile Methods */
-    async getUser(id: string): Promise < UserProfile > {
-    let user = await this.users.get(id);
-    if(!user) {
-        user = {
-            id: id,
-            bio: null,
-            reps: 0,
-            lastRepDate: 0,
-            partnerId: null,
-            marryDate: null,
-            color: null
-        };
-        await this.updateUser(user);
-    }
+    async getUser(id: string): Promise<UserProfile> {
+        let user = await this.users.get(id);
+        if (!user) {
+            user = {
+                id: id,
+                bio: null,
+                reps: 0,
+                lastRepDate: 0,
+                partnerId: null,
+                marryDate: null,
+                color: null
+            };
+            await this.updateUser(user);
+        }
         return user;
-}
+    }
 
     async updateUser(user: UserProfile) {
-    await this.users.set(user.id, user);
-}
+        await this.users.set(user.id, user);
+    }
 }
