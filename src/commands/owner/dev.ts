@@ -50,12 +50,9 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
 
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle(`Command: ${config.prefix}${foundCmd.command.name}`)
-                .addFields(
-                    { name: "Description", value: foundCmd.command.description || "No description provided." },
-                    { name: "Module", value: "Owner" }
-                )
-                .setFooter({ text: "Xeon • Owner Panel", iconURL: interaction.client.user?.displayAvatarURL() });
+                .setTitle(`${config.prefix}${foundCmd.command.name}`)
+                .setDescription(`> ${foundCmd.command.description || "No description provided."}`)
+                .setFooter({ text: "Xeon • Owner Command", iconURL: interaction.client.user?.displayAvatarURL() });
 
             // Navigation Buttons
             const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
