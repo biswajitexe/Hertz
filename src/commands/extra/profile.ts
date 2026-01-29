@@ -43,7 +43,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // --- Badges Logic ---
     const badgesList: string[] = [];
-    if (targetUser.id === process.env.OWNER_ID) badgesList.push(`${config.emojis.owner} **Owner**`); // Owner
+    if (targetUser.id === process.env.OWNER_ID) {
+        badgesList.push(`${config.emojis.owner} **Owner**`);
+        badgesList.push(`${config.emojis.developer} **Developer**`);
+    }
     if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(`${config.emojis.noprefix} **Premium User**`);
     if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
     if (botConfig.staffUsers?.includes(targetUser.id)) badgesList.push(`${config.emojis.staff} **Staff**`);
@@ -60,21 +63,34 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
     }
 
-    // --- Spotify Logic ---
-    let spotifyStatus = "\n\n**<:spotify:1380769677332058183> Spotify**\n> Not listening to anything.";
-    let spotifyImage = null;
-    let spotifyUrl = null;
+    // --- Activity Logic ---
+    let activityStatus = "\n\n**Activity**\n> Not doing anything.";
+    let activityImage = null;
+    let activityUrl = null;
 
     if (member && member.presence) {
-        const spotifyActivity = member.presence.activities.find(act => act.name === 'Spotify' || act.type === ActivityType.Listening);
-        if (spotifyActivity) {
-            const trackName = spotifyActivity.details;
-            const artist = spotifyActivity.state;
-            const album = spotifyActivity.assets?.largeText;
-            spotifyImage = spotifyActivity.assets?.largeImageURL();
-            spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`; // Fallback search URL or syncID if available
+        // Prioritize Listening (Spotify) > Playing (Game/Code) > Streaming
+        const activities = member.presence.activities;
+        const spotify = activities.find(act => act.name === 'Spotify' || act.type === ActivityType.Listening);
+        const playing = activities.find(act => act.type === ActivityType.Playing);
+        const streaming = activities.find(act => act.type === ActivityType.Streaming);
 
-            spotifyStatus = `\n\n**<:spotify:1380769677332058183> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+        if (spotify) {
+            const trackName = spotify.details;
+            const artist = spotify.state;
+            const album = spotify.assets?.largeText;
+            activityImage = spotify.assets?.largeImageURL();
+            activityUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
+            activityStatus = `\n\n**<:spotify:1380769677332058183> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+        } else if (playing) {
+             const name = playing.name;
+             const details = playing.details ? `\n> **Details:** ${playing.details}` : "";
+             const state = playing.state ? `\n> **State:** ${playing.state}` : "";
+             activityImage = playing.assets?.largeImageURL();
+             activityStatus = `\n\n**🎮 Activity**\n> **Playing:** ${name}${details}${state}`;
+        } else if (streaming) {
+             activityStatus = `\n\n**📡 Streaming**\n> **Stream:** ${streaming.name}`;
+             if (streaming.url) activityUrl = streaming.url;
         }
     }
 
@@ -85,14 +101,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         .setThumbnail(targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
-            `**About Me**\n> ${statusText}\n` +
-            `${spotifyStatus}`
+            `**Status**\n> ${statusText}\n` +
+            `${activityStatus}`
         )
         .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
         .setTimestamp();
 
-    if (spotifyImage) {
-        embed.setImage(spotifyImage);
+    if (activityImage) {
+        embed.setImage(activityImage);
     }
 
     // --- Buttons ---
@@ -118,12 +134,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         row.addComponents(bannerBtn);
     }
 
-    if (spotifyUrl) {
-        const spotifyBtn = new ButtonBuilder()
-            .setLabel('Play on Spotify')
+    if (activityUrl) {
+        const activityBtn = new ButtonBuilder()
+            .setLabel(activityUrl.includes('spotify') ? 'Play on Spotify' : 'View Activity')
             .setStyle(ButtonStyle.Link)
-            .setURL(spotifyUrl);
-        row.addComponents(spotifyBtn);
+            .setURL(activityUrl);
+        row.addComponents(activityBtn);
     }
 
     // --- Send Reply ---
