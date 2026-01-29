@@ -1,5 +1,5 @@
 
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ActivityType } from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ActivityType, User } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 
@@ -10,33 +10,14 @@ export const command = new SlashCommandBuilder()
 
 export const aliases = ['pr'];
 
-
-
-export async function run(interaction: ChatInputCommandInteraction, database: Database) {
-    if (!interaction.inCachedGuild()) return;
-
-    await interaction.deferReply();
-
-    const targetUser = interaction.options.getUser('user') || interaction.user;
-    const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-
+// Helper function to generate Embed and Components
+async function getProfileData(interaction: ChatInputCommandInteraction, targetUser: User, database: Database) {
+    const member = await interaction.guild?.members.fetch(targetUser.id).catch(() => null);
+    
     // Fetch Data
     let userProfile = await database.getUser(targetUser.id);
-    if (!userProfile) {
-        // Init if not exists (though getUser usually handles it or returns null, assuming safe access)
-    }
-    // Re-fetch object to be sure (shim if database method doesn't auto-create)
-    // Assuming database.getUser returns the object or undefined. 
-    // If undefined, we treat as default. 
-    // We will use a local default object if null.
     const safeProfile = userProfile || {
-        id: targetUser.id,
-        bio: null,
-        reps: 0,
-        lastRepDate: 0,
-        partnerId: null,
-        marryDate: null,
-        color: null
+        id: targetUser.id, bio: null, reps: 0, lastRepDate: 0, partnerId: null, marryDate: null, color: null
     };
 
     const botConfig = await database.getBotConfig();
@@ -58,19 +39,17 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // --- Status Logic ---
     let statusText = "No status set.";
     if (member && member.presence) {
-        const customStatus = member.presence.activities.find(act => act.type === 4); // ActivityType.Custom = 4
-        if (customStatus && customStatus.state) {
-            statusText = customStatus.state;
-        }
+        const customStatus = member.presence.activities.find(act => act.type === 4);
+        if (customStatus && customStatus.state) statusText = customStatus.state;
     }
 
-    // --- Activity Logic ---
+    // --- Activity & Voice Logic ---
     let activityStatus = "\n\n**Activity**\n> Not doing anything.";
     let activityImage = null;
     let activityUrl = null;
+    const voiceChannel = member?.voice.channel;
 
     if (member && member.presence) {
-        // Prioritize Listening (Spotify) > Playing (Game/Code) > Streaming
         const activities = member.presence.activities;
         const spotify = activities.find(act => act.name === 'Spotify' || act.type === ActivityType.Listening);
         const playing = activities.find(act => act.type === ActivityType.Playing);
@@ -92,14 +71,17 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         } else if (streaming) {
              activityStatus = `\n\n**📡 Streaming**\n> **Stream:** ${streaming.name}`;
              if (streaming.url) activityUrl = streaming.url;
+        } else if (voiceChannel) {
+             activityStatus = `\n\n**🎙️ Voice Channel**\n> **Channel:** ${voiceChannel.name}\n> **Guild:** ${voiceChannel.guild.name}`;
         }
+    } else if (voiceChannel) {
+        activityStatus = `\n\n**🎙️ Voice Channel**\n> **Channel:** ${voiceChannel.name}`;
     }
 
     // --- Embed Construction ---
     const embed = new EmbedBuilder()
         .setColor(safeProfile.color || config.colors.primary)
         .setAuthor({ name: `${targetUser.username}'s Profile`, iconURL: targetUser.displayAvatarURL() })
-        // Use Activity Image as thumbnail if available (small), else User Avatar
         .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
@@ -109,40 +91,49 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
         .setTimestamp();
 
-    // Removed .setImage to keep embed compact
-
     // --- Buttons ---
     const row = new ActionRowBuilder<ButtonBuilder>();
-
-    // Avatar Button
-    const avatarBtn = new ButtonBuilder()
-        .setLabel('Avatar')
-        .setStyle(ButtonStyle.Link)
-        .setURL(targetUser.displayAvatarURL({ size: 1024 }));
-
+    const avatarBtn = new ButtonBuilder().setLabel('Avatar').setStyle(ButtonStyle.Link).setURL(targetUser.displayAvatarURL({ size: 1024 }));
     row.addComponents(avatarBtn);
 
-    // Banner Button (only if exists, but we can't easily check null validity synchronously without fetch, discord handles empty link gracefully usually, but let's check basic prop)
-    // Actually fetching user to get banner force check is expensive, assume link button is fine or omit if standard user doesn't likely have one.
-    // Let's safe check: fetched user (not member) needed for banner.
     const fetchedUser = await targetUser.fetch();
     if (fetchedUser.bannerURL()) {
-        const bannerBtn = new ButtonBuilder()
-            .setLabel('Banner')
-            .setStyle(ButtonStyle.Link)
-            .setURL(fetchedUser.bannerURL({ size: 1024 })!);
+        const bannerBtn = new ButtonBuilder().setLabel('Banner').setStyle(ButtonStyle.Link).setURL(fetchedUser.bannerURL({ size: 1024 })!);
         row.addComponents(bannerBtn);
     }
 
     if (activityUrl) {
-        const activityBtn = new ButtonBuilder()
-            .setLabel(activityUrl.includes('spotify') ? 'Play on Spotify' : 'View Activity')
-            .setStyle(ButtonStyle.Link)
-            .setURL(activityUrl);
+        const activityBtn = new ButtonBuilder().setLabel(activityUrl.includes('spotify') ? 'Play on Spotify' : 'View Activity').setStyle(ButtonStyle.Link).setURL(activityUrl);
         row.addComponents(activityBtn);
     }
 
-    // --- Send Reply ---
+    return { embed, row };
+}
+
+export async function run(interaction: ChatInputCommandInteraction, database: Database) {
+    if (!interaction.inCachedGuild()) return;
+    await interaction.deferReply();
+
+    const targetUser = interaction.options.getUser('user') || interaction.user;
+
+    // Initial Send
+    const { embed, row } = await getProfileData(interaction, targetUser, database);
     await interaction.editReply({ embeds: [embed], components: [row] });
-    // Removed Collector logic as there are no interactive buttons anymore
+
+    // Auto-Update Loop (Runs every 5 seconds for 60 seconds)
+    const interval = setInterval(async () => {
+        try {
+            const newData = await getProfileData(interaction, targetUser, database);
+            // Check if message is still editable (not deleted) - tough to check perfectly without fetch, but editReply usually throws if unknown interaction.
+            // Using editReply on the deferred interaction is valid for 15 mins.
+            await interaction.editReply({ embeds: [newData.embed], components: [newData.row] });
+        } catch (e) {
+            clearInterval(interval); // Stop if error (e.g. message deleted)
+        }
+    }, 5000);
+
+    // Stop after 60 seconds to respect rate limits and resources
+    setTimeout(() => {
+        clearInterval(interval);
+    }, 60000);
 }
