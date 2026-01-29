@@ -43,11 +43,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // --- Badges Logic ---
     const badgesList: string[] = [];
-    if (targetUser.id === process.env.OWNER_ID) badgesList.push(config.emojis.owner); // Owner
+    if (targetUser.id === process.env.OWNER_ID) badgesList.push(`${config.emojis.owner} **Owner**`); // Owner
     if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(`${config.emojis.noprefix} **Premium User**`);
     if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
     if (botConfig.staffUsers?.includes(targetUser.id)) badgesList.push(`${config.emojis.staff} **Staff**`);
-    if (member && member.permissions.has("Administrator")) badgesList.push(config.emojis.admin);
+    if (member && member.permissions.has("Administrator")) badgesList.push(`${config.emojis.admin} **Admin**`);
 
     const badgesString = badgesList.length > 0 ? badgesList.join("\n> ") : "None";
 
@@ -85,7 +85,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         .setThumbnail(targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
-            `> **About Me**\n> ${statusText}\n` +
+            `**About Me**\n> ${statusText}\n` +
             `${spotifyStatus}`
         )
         .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
