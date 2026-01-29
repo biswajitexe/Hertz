@@ -46,10 +46,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (targetUser.id === process.env.OWNER_ID) {
         badgesList.push(`${config.emojis.owner} **Owner**`);
         badgesList.push(`${config.emojis.developer} **Developer**`);
+    } else {
+        if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(`${config.emojis.noprefix} **Premium User**`);
+        if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
+        if (botConfig.staffUsers?.includes(targetUser.id)) badgesList.push(`${config.emojis.staff} **Staff**`);
     }
-    if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(`${config.emojis.noprefix} **Premium User**`);
-    if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
-    if (botConfig.staffUsers?.includes(targetUser.id)) badgesList.push(`${config.emojis.staff} **Staff**`);
     if (member && member.permissions.has("Administrator")) badgesList.push(`${config.emojis.admin} **Admin**`);
 
     const badgesString = badgesList.length > 0 ? badgesList.join("\n> ") : "None";
