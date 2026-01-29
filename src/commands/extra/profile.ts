@@ -11,6 +11,7 @@ export const command = new SlashCommandBuilder()
 export const aliases = ['pr'];
 
 // Helper function to generate Embed and Components
+async function getProfileData(interaction: ChatInputCommandInteraction, targetUser: User, database: Database) {
     // Force fetch member to ensure real-time presence (crucial for auto-update)
     const member = await interaction.guild?.members.fetch({ user: targetUser.id, force: true }).catch(() => null);
     
@@ -68,6 +69,7 @@ export const aliases = ['pr'];
     const embed = new EmbedBuilder()
         .setColor(safeProfile.color || config.colors.primary)
         .setAuthor({ name: `${targetUser.username}'s Profile`, iconURL: targetUser.displayAvatarURL() })
+        // Use Use Activity Image as thumbnail if available, else User Avatar
         .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
