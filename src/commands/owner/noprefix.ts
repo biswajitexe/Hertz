@@ -50,7 +50,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const embedStyle = (title: string, description: string) => {
         return new EmbedBuilder()
             .setColor(config.colors.primary)
-            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setDescription(`**<:3852diamond:1466392074189410421> ${title}**\n\n${description}`)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
             .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
     };
