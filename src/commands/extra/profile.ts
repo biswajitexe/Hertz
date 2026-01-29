@@ -81,10 +81,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // --- Embed Construction ---
     const embed = new EmbedBuilder()
         .setColor(safeProfile.color || config.colors.primary)
-        .setTitle(`<:74658vipglow:1465051133704798435> ${targetUser.username}'s Profile`)
+        .setAuthor({ name: `${targetUser.username}'s Profile`, iconURL: targetUser.displayAvatarURL() })
         .setThumbnail(targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
-            `> **Badges**\n> ${badgesString}\n\n` +
+            `**Badges**\n> ${badgesString}\n\n` +
             `> **About Me**\n> ${statusText}\n` +
             `${spotifyStatus}`
         )
