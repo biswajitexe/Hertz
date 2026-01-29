@@ -11,8 +11,8 @@ export const command = new SlashCommandBuilder()
 export const aliases = ['pr'];
 
 // Helper function to generate Embed and Components
-async function getProfileData(interaction: ChatInputCommandInteraction, targetUser: User, database: Database) {
-    const member = await interaction.guild?.members.fetch(targetUser.id).catch(() => null);
+    // Force fetch member to ensure real-time presence (crucial for auto-update)
+    const member = await interaction.guild?.members.fetch({ user: targetUser.id, force: true }).catch(() => null);
     
     // Fetch Data
     let userProfile = await database.getUser(targetUser.id);
@@ -43,17 +43,15 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
         if (customStatus && customStatus.state) statusText = customStatus.state;
     }
 
-    // --- Activity & Voice Logic ---
-    let activityStatus = "\n\n**Activity**\n> Not doing anything.";
+    // --- Activity Logic (Spotify Only) ---
+    // Single newline to reduce spacing gap as requested
+    let activityStatus = "\n**Activity**\n> Not listening to Spotify.";
     let activityImage = null;
     let activityUrl = null;
-    const voiceChannel = member?.voice.channel;
 
     if (member && member.presence) {
         const activities = member.presence.activities;
         const spotify = activities.find(act => act.name === 'Spotify' || act.type === ActivityType.Listening);
-        const playing = activities.find(act => act.type === ActivityType.Playing);
-        const streaming = activities.find(act => act.type === ActivityType.Streaming);
 
         if (spotify) {
             const trackName = spotify.details;
@@ -61,21 +59,9 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
             const album = spotify.assets?.largeText;
             activityImage = spotify.assets?.largeImageURL();
             activityUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
-            activityStatus = `\n\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
-        } else if (playing) {
-             const name = playing.name;
-             const details = playing.details ? `\n> **Details:** ${playing.details}` : "";
-             const state = playing.state ? `\n> **State:** ${playing.state}` : "";
-             activityImage = playing.assets?.largeImageURL();
-             activityStatus = `\n\n**🎮 Activity**\n> **Playing:** ${name}${details}${state}`;
-        } else if (streaming) {
-             activityStatus = `\n\n**📡 Streaming**\n> **Stream:** ${streaming.name}`;
-             if (streaming.url) activityUrl = streaming.url;
-        } else if (voiceChannel) {
-             activityStatus = `\n\n**🎙️ Voice Channel**\n> **Channel:** ${voiceChannel.name}\n> **Guild:** ${voiceChannel.guild.name}`;
+            // Single newline for compact spacing
+            activityStatus = `\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
         }
-    } else if (voiceChannel) {
-        activityStatus = `\n\n**🎙️ Voice Channel**\n> **Channel:** ${voiceChannel.name}`;
     }
 
     // --- Embed Construction ---
