@@ -98,8 +98,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         };
 
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(ButtonStyle.Secondary).setEmoji('<:Member1:1459604921451020472>'),
-            new ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(ButtonStyle.Secondary).setEmoji('<:iconbot:1464605545293025395>')
+            new ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(ButtonStyle.Secondary).setEmoji('👤'),
+            new ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(ButtonStyle.Secondary).setEmoji('🤖')
         );
 
         const reply = await interaction.reply({ embeds: [await getEmbed('humans')], components: [row] });
@@ -117,8 +117,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         collector.on('end', () => {
             const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji('<:Member1:1459604921451020472>'),
-                new ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji('<:iconbot:1464605545293025395>')
+                new ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji('👤'),
+                new ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji('🤖')
             );
             reply.edit({ components: [disabledRow] }).catch(() => { });
         });
