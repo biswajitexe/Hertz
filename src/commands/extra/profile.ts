@@ -82,7 +82,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const album = spotify.assets?.largeText;
             activityImage = spotify.assets?.largeImageURL();
             activityUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
-            activityStatus = `\n\n**<:spotify:1380769677332058183> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+            activityStatus = `\n\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
         } else if (playing) {
              const name = playing.name;
              const details = playing.details ? `\n> **Details:** ${playing.details}` : "";
@@ -99,7 +99,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const embed = new EmbedBuilder()
         .setColor(safeProfile.color || config.colors.primary)
         .setAuthor({ name: `${targetUser.username}'s Profile`, iconURL: targetUser.displayAvatarURL() })
-        .setThumbnail(targetUser.displayAvatarURL({ size: 1024 }))
+        // Use Activity Image as thumbnail if available (small), else User Avatar
+        .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
             `**Status**\n> ${statusText}\n` +
@@ -108,9 +109,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
         .setTimestamp();
 
-    if (activityImage) {
-        embed.setImage(activityImage);
-    }
+    // Removed .setImage to keep embed compact
 
     // --- Buttons ---
     const row = new ActionRowBuilder<ButtonBuilder>();
