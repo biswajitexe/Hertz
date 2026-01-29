@@ -8,6 +8,8 @@ export const command = new SlashCommandBuilder()
     .setDescription('View user profile with premium aesthetics')
     .addUserOption(option => option.setName('user').setDescription('The user to view').setRequired(false));
 
+export const aliases = ['pr'];
+
 
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
