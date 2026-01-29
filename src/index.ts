@@ -372,9 +372,22 @@ client.on("messageCreate", async message => {
 
     /* --- ANTI-LINK SYSTEM --- */
     if (guild?.messageFilters.links) {
-        if (message.content.search(linksRegex) > 0) {
+        if (message.content.search(linksRegex) >= 0) {
             // Check Whitelist
             let isWhitelisted = false;
+
+            // Smart Whitelist (Internal & Media)
+            const internalLink = message.guild.id;
+            const trustedDomains = [
+                "youtube.com", "youtu.be",
+                "spotify.com", "open.spotify.com",
+                "tenor.com", "giphy.com",
+                "discord.com/channels"
+            ];
+
+            if (message.content.includes(internalLink)) isWhitelisted = true;
+            if (trustedDomains.some(domain => message.content.toLowerCase().includes(domain))) isWhitelisted = true;
+
             if (guild.messageFilters.linksWhitelist) {
                 const wl = guild.messageFilters.linksWhitelist;
                 const isWhitelistedUser = wl.users.includes(message.author.id);
