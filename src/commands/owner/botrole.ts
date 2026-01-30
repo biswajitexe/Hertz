@@ -145,7 +145,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             if (action === 'add') {
                 await interaction.reply({ content: `${config.emojis.success} Added **${targetUser.username}** to **${rankName}** ${emoji}.` });
             } else {
-                await interaction.reply({ content: `${config.emojis.success} Removed **${targetUser.username}** from **${rankName}**.`, allowedMentions: { parsed: [] } });
+                await interaction.reply({ content: `${config.emojis.success} Removed **${targetUser.username}** from **${rankName}**.`, allowedMentions: { parse: [] } });
             }
         }
     } else {

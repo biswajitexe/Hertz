@@ -332,7 +332,12 @@ export class Database {
                 premiumUsers: [],
                 premiumGuilds: [],
                 noPrefixUsers: [],
-                staffUsers: []
+                staffUsers: [],
+                ownerUsers: [],
+                developerUsers: [],
+                adminUsers: [],
+                supporterUsers: [],
+                vipUsers: []
             };
         }
     }
