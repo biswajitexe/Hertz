@@ -57,7 +57,7 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                 // Has subcommands
                 const subcommands = rawData.options
                     .filter((opt: any) => opt.type === 1 || opt.type === 2)
-                    .map((opt: any) => `\`${foundCmd.command.name} ${opt.name}\``)
+                    .map((opt: any) => `\`${opt.name}\``)
                     .join(", ");
                 
                 if (subcommands) {
