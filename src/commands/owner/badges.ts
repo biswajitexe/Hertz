@@ -4,7 +4,7 @@ import { Database } from "../../database";
 import * as config from "../../config";
 
 export const command = new SlashCommandBuilder()
-    .setName('botrole')
+    .setName('badges')
     .setDescription('Manage bot roles (Owner Only)')
     .addSubcommand(sub =>
         sub.setName('owner')

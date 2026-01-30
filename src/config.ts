@@ -224,7 +224,7 @@ export const modules: { [key: string]: { name: string, description: string, comm
         name: "Developer",
         description: "Bot developer and management commands.",
         commands: [
-            { name: "botrole", usage: "botrole <subcommand> <add/remove> <user>", description: "Manage bot roles" }
+            { name: "badges", usage: "badges <subcommand> <add/remove> <user>", description: "Manage bot badges" }
         ]
     }
 };
