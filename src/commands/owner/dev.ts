@@ -1,14 +1,15 @@
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ButtonInteraction, StringSelectMenuInteraction, ApplicationCommandOptionType } from "discord.js";
-import { Database } from "../../database";
-import * as config from "../../config";
+import type { ButtonInteraction, ChatInputCommandInteraction, StringSelectMenuInteraction } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBuilder, StringSelectMenuBuilder } from "discord.js";
 import fs from 'fs';
 import path from 'path';
+import * as config from "../../config";
+import type { Database } from "../../database";
 
 export const command = new SlashCommandBuilder()
     .setName('dev')
     .setDescription('Owner Only Control Panel');
 
-export async function run(interaction: ChatInputCommandInteraction, database: Database) {
+export async function run(interaction: ChatInputCommandInteraction, _database: Database) {
     if (interaction.user.id !== process.env.OWNER_ID) {
         if (!interaction.isRepliable()) return;
         return interaction.reply({ content: "Unknown command.", ephemeral: true });
@@ -16,7 +17,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     await sendOwnerPanel(interaction);
 }
 
-export async function handleInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction, database: Database) {
+export async function handleInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction, _database: Database) {
     if (!interaction.customId.startsWith('dev_')) return;
 
     if (interaction.user.id !== process.env.OWNER_ID) {
@@ -33,11 +34,12 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
             const ownerDir = path.join(__dirname);
             const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
             
+            // biome-ignore lint/suspicious/noExplicitAny: Dynamic require
             let foundCmd: any = null;
             for(const file of files) {
                 try {
                     const cmd = require(path.join(ownerDir, file));
-                    if(cmd.command && cmd.command.name === commandName) {
+                    if(cmd.command?.name === commandName) {
                         foundCmd = cmd;
                         break;
                     }
@@ -52,10 +54,13 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
             
             // Check for Subcommands
             const rawData = typeof foundCmd.command.toJSON === 'function' ? foundCmd.command.toJSON() : foundCmd.command;
-            if (rawData.options && rawData.options.some((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)) {
+            // biome-ignore lint/suspicious/noExplicitAny: Dynamic command data
+            if (rawData.options?.some((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)) {
                 // Has subcommands
                 const subcommands = rawData.options
+                    // biome-ignore lint/suspicious/noExplicitAny: Dynamic command data
                     .filter((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)
+                    // biome-ignore lint/suspicious/noExplicitAny: Dynamic command data
                     .map((opt: any) => `\`${opt.name}\``)
                     .join(", ");
                 
@@ -97,7 +102,7 @@ async function sendOwnerPanel(interaction: ChatInputCommandInteraction | ButtonI
     const cleanCommands = files.map(file => {
         try {
             const cmd = require(path.join(ownerDir, file));
-            if (cmd.command && cmd.command.name) {
+            if (cmd.command?.name) {
                 return `\`${config.prefix}${cmd.command.name}\``;
             }
             return null;
@@ -135,7 +140,7 @@ async function createOwnerSelectMenu() {
     const selectOptions = files.map(file => {
         try {
             const cmd = require(path.join(ownerDir, file));
-            if (cmd.command && cmd.command.name) {
+            if (cmd.command?.name) {
                 return {
                     label: cmd.command.name,
                     value: cmd.command.name,

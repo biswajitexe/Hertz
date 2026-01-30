@@ -1,7 +1,8 @@
 
-import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ChannelType, TextChannel } from "discord.js";
-import { Database } from "../../database";
+import type { ChatInputCommandInteraction } from "discord.js";
+import { ChannelType, EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import * as config from "../../config";
+import { Database } from "../../database";
 
 export const command = new SlashCommandBuilder()
     .setName('antinuke')
