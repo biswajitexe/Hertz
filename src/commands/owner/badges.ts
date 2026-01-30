@@ -5,7 +5,7 @@ import * as config from "../../config";
 
 export const command = new SlashCommandBuilder()
     .setName('badges')
-    .setDescription('Manage bot roles (Owner Only)')
+    .setDescription('Manage Badges')
     .addSubcommand(sub =>
         sub.setName('owner')
             .setDescription('Manage Bot Owners')

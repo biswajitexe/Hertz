@@ -138,7 +138,6 @@ async function createOwnerSelectMenu() {
             if (cmd.command && cmd.command.name) {
                 return {
                     label: cmd.command.name,
-                    description: cmd.command.description ? cmd.command.description.substring(0, 100) : 'No description',
                     value: cmd.command.name,
                     emoji: config.emojis.owner || '👑'
                 };
