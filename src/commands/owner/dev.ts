@@ -101,7 +101,11 @@ async function sendOwnerPanel(interaction: any, isUpdate = false) {
             if (cmd.command && cmd.command.name) {
                 return `\`${config.prefix}${cmd.command.name}\``;
             }
-        } catch { return null; }
+
+        } catch (e) {
+            console.error(`[DevCmd] Failed to load ${file}:`, e);
+            return null;
+        }
     }).filter(c => c !== null).join(", ");
 
     const embed = new EmbedBuilder()
