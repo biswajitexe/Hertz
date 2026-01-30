@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, StringSelectMenuBuilder, ButtonInteraction, StringSelectMenuInteraction } from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ButtonInteraction, StringSelectMenuInteraction, ApplicationCommandOptionType } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import fs from 'fs';
@@ -50,13 +50,12 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
 
             let description = `> ${foundCmd.command.description || "No description provided."}`;
             
-            // Check for Subcommands to mimic help category view
-            // Assuming SlashCommandBuilder options structure (toJSON or direct)
+            // Check for Subcommands
             const rawData = typeof foundCmd.command.toJSON === 'function' ? foundCmd.command.toJSON() : foundCmd.command;
-            if (rawData.options && rawData.options.some((opt: any) => opt.type === 1 || opt.type === 2)) {
+            if (rawData.options && rawData.options.some((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)) {
                 // Has subcommands
                 const subcommands = rawData.options
-                    .filter((opt: any) => opt.type === 1 || opt.type === 2)
+                    .filter((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)
                     .map((opt: any) => `\`${opt.name}\``)
                     .join(", ");
                 
@@ -64,13 +63,13 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                     description = `> ${subcommands}`;
                 }
             } else {
-                 // No subcommands, just listing the command itself like help does (?command)
+                 // No subcommands
                  description = `> \`${foundCmd.command.name}\``;
             }
 
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`) // Capitalize Title, No Prefix (?)
+                .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`)
                 .setDescription(description)
                 .setFooter({ text: "Xeon • Owner Command", iconURL: interaction.client.user?.displayAvatarURL() });
 
@@ -91,7 +90,7 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
     }
 }
 
-async function sendOwnerPanel(interaction: any, isUpdate = false) {
+async function sendOwnerPanel(interaction: ChatInputCommandInteraction | ButtonInteraction | StringSelectMenuInteraction, isUpdate = false) {
     const ownerDir = path.join(__dirname);
     const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
 
@@ -101,6 +100,7 @@ async function sendOwnerPanel(interaction: any, isUpdate = false) {
             if (cmd.command && cmd.command.name) {
                 return `\`${config.prefix}${cmd.command.name}\``;
             }
+            return null;
 
         } catch (e) {
             console.error(`[DevCmd] Failed to load ${file}:`, e);
@@ -121,9 +121,9 @@ async function sendOwnerPanel(interaction: any, isUpdate = false) {
         new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
     );
 
-    if (isUpdate) {
+    if (isUpdate && (interaction.isButton() || interaction.isStringSelectMenu())) {
         await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
-    } else {
+    } else if (interaction.isChatInputCommand()) {
         await interaction.reply({ embeds: [embed], components: [selectMenu, buttons], ephemeral: true });
     }
 }
@@ -142,8 +142,9 @@ async function createOwnerSelectMenu() {
                     emoji: config.emojis.owner || '👑'
                 };
             }
+            return null;
         } catch { return null; }
-    }).filter(opt => opt !== null) as any[];
+    }).filter((opt): opt is { label: string; value: string; emoji: string } => opt !== null);
 
     return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
         new StringSelectMenuBuilder()
