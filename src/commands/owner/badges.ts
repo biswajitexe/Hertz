@@ -2,7 +2,7 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 import * as config from "../../config";
-import { Database } from "../../database";
+import type { Database } from "../../database";
 
 export const command = new SlashCommandBuilder()
     .setName('badges')
