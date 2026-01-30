@@ -57,6 +57,7 @@ export const emojis: { [key: string]: string } = {
     settings: "<:iconssettings58:1380534732936319048>",
     general: "<:hparchive:1380534477297553419>",
     afk: "<:6858aventurinebye:1464310768366522616>",
+    vip: "<:74658vipglow:1465051133704798435>", // Added VIP emoji (reusing from roles.ts or similar)
 };
 
 export const colors = {
@@ -219,12 +220,11 @@ export const modules: { [key: string]: { name: string, description: string, comm
             { name: "membercount", description: "Check member count" }
         ]
     },
-    botroles: {
-        name: "Bot Roles",
-        description: "Information about bot roles.",
+    dev: {
+        name: "Developer",
+        description: "Bot developer and management commands.",
         commands: [
-            { name: "botroles", description: "Displays information about special bot roles" },
-            { name: "manage", usage: "manage <premium/staff/noprefix> <add/remove> <user>", description: "Manage bot roles (Owner Only)" }
+            { name: "botrole", usage: "botrole <subcommand> <add/remove> <user>", description: "Manage bot roles" }
         ]
     }
 };

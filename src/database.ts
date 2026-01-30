@@ -126,6 +126,11 @@ export interface BotConfig {
     premiumGuilds: string[];
     noPrefixUsers: string[]; // Global No Prefix Users
     staffUsers: string[]; // Bot Staff Members
+    ownerUsers: string[]; // Bot Owners
+    developerUsers: string[]; // Bot Developers
+    adminUsers: string[]; // Bot Admins
+    supporterUsers: string[]; // Bot Supporters
+    vipUsers: string[]; // Bot VIPs
 }
 
 
@@ -301,12 +306,22 @@ export class Database {
                     premiumUsers: [],
                     premiumGuilds: [],
                     noPrefixUsers: [],
-                    staffUsers: []
+                    staffUsers: [],
+                    ownerUsers: [],
+                    developerUsers: [],
+                    adminUsers: [],
+                    supporterUsers: [],
+                    vipUsers: []
                 };
                 await this.insertBotConfig(config);
             }
             if (!config.noPrefixUsers) config.noPrefixUsers = [];
             if (!config.staffUsers) config.staffUsers = [];
+            if (!config.ownerUsers) config.ownerUsers = [];
+            if (!config.developerUsers) config.developerUsers = [];
+            if (!config.adminUsers) config.adminUsers = [];
+            if (!config.supporterUsers) config.supporterUsers = [];
+            if (!config.vipUsers) config.vipUsers = [];
             return config;
         } catch (e) {
             console.error(`[Database] Failed to retrieve bot config:`, e);

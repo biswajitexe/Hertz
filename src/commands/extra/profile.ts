@@ -24,16 +24,48 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
     const botConfig = await database.getBotConfig();
 
     // --- Badges Logic ---
+    // --- Badges Logic ---
     const badgesList: string[] = [];
-    if (targetUser.id === process.env.OWNER_ID) {
+
+    // Owner (Env or DB)
+    if (targetUser.id === process.env.OWNER_ID || botConfig.ownerUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.owner} **Owner**`);
-        badgesList.push(`${config.emojis.developer} **Developer**`);
-    } else {
-        if (botConfig.premiumUsers.includes(targetUser.id)) badgesList.push(`${config.emojis.noprefix} **Premium User**`);
-        if (botConfig.noPrefixUsers?.includes(targetUser.id)) badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
-        if (botConfig.staffUsers?.includes(targetUser.id)) badgesList.push(`${config.emojis.staff} **Staff**`);
     }
-    if (member && member.permissions.has("Administrator")) badgesList.push(`${config.emojis.admin} **Admin**`);
+
+    // Developer
+    if (botConfig.developerUsers?.includes(targetUser.id)) {
+        badgesList.push(`${config.emojis.developer} **Developer**`);
+    }
+
+    // Admin (Bot Admin)
+    if (botConfig.adminUsers?.includes(targetUser.id)) {
+        badgesList.push(`${config.emojis.admin} **Admin**`);
+    }
+
+    // Staff
+    if (botConfig.staffUsers?.includes(targetUser.id)) {
+        badgesList.push(`${config.emojis.staff} **Staff**`);
+    }
+
+    // VIP
+    if (botConfig.vipUsers?.includes(targetUser.id)) {
+        badgesList.push(`${config.emojis.vip} **VIP**`);
+    }
+
+    // Premium
+    if (botConfig.premiumUsers?.includes(targetUser.id)) {
+        badgesList.push(`${config.emojis.noprefix} **Premium User**`);
+    }
+
+    // No Prefix
+    if (botConfig.noPrefixUsers?.includes(targetUser.id)) {
+        badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
+    }
+
+    // Supporter
+    if (botConfig.supporterUsers?.includes(targetUser.id)) {
+        badgesList.push(`${config.emojis.supporter} **Supporter**`);
+    }
 
     const badgesString = badgesList.length > 0 ? badgesList.join("\n> ") : "None";
 

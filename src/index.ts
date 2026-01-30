@@ -18,7 +18,7 @@ const token = (process.env.DISCORD_TOKEN as string)?.trim();
 import { isBadMessage, replaceValues } from "./utilities/messages";
 
 import { Client, Collection, CommandInteraction, GatewayIntentBits, Partials, Interaction, EmbedBuilder, ActivityType } from "discord.js";
-import { emojis, prefix } from "./config";
+import { emojis, prefix, colors } from "./config";
 
 import fs from 'fs';
 import path from 'path';
@@ -321,7 +321,11 @@ client.on("messageCreate", async message => {
             });
 
             if (afkMembers.length > 0) {
-                await message.reply({ content: afkMembers.join("\n"), allowedMentions: { repliedUser: false } });
+                const embed = new EmbedBuilder()
+                    .setColor(colors.primary)
+                    .setDescription(afkMembers.join("\n"));
+
+                await message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
             }
         }
     }
