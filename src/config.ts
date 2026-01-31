@@ -46,19 +46,19 @@ export const emojis: { [key: string]: string } = {
     user: "<:online:1458160864032194591>",
     member: "<:Member1:1459604921451020472>",
     role: "<:hds_roles:1385014066837327923>",
-    staff: "<:nashe_staff:1385197969552314500>",
+    staff: "<:45859staff:1467168164381986922>",
     mod: "<:sg_modrator:1385373510486065332>",
-    admin: "<:senior_admin:1385373516194648165>",
+    admin: "<:9081settings:1467166995534450688>",
     manager: "<:llw_role_manager:1385224759574532201>",
-    supporter: "<:blurple_early_supporter84:1385196192689815674>",
-    developer: "<:esdeveloperbadge:1385196366611091517>",
+    supporter: "<:12895early:1467168985706533076>",
+    developer: "<:81639developer:1467163172237475851>",
     owners: "<:Devilscrown:1385197905501097984>",
     noprefix: "<:z_premium:1385210766457831434>",
     settings: "<:iconssettings58:1380534732936319048>",
     general: "<:hparchive:1380534477297553419>",
     afk: "<:6858aventurinebye:1464310768366522616>",
     vip: "<:74658vipglow:1465051133704798435>", // Added VIP emoji (reusing from roles.ts or similar)
-    partner: "<:partner:1466418873082576926>", // Added Partner emoji (placeholder ID, user can update)
+    partner: "<:1137partnericon:1467169931928932423>", // Added Partner emoji (placeholder ID, user can update)
     early: "<:early_supporter:1466418903520641115>", // Added Early User emoji (placeholder ID)
 };
 
