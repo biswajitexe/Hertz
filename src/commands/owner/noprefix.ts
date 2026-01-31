@@ -31,10 +31,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (!interaction.inCachedGuild()) return;
 
     // Global Config
+    // Global Config
     const botConfig = await database.getBotConfig();
-    const isBotOwner = interaction.user.id === process.env.OWNER_ID;
+    const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
+    if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
+    if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
+    if (botConfig?.adminUsers) owners.push(...botConfig.adminUsers);
 
-    if (!isBotOwner) {
+    if (!owners.includes(interaction.user.id)) {
         return interaction.reply({
             embeds: [new EmbedBuilder()
                 .setColor(config.colors.error)

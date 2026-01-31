@@ -615,7 +615,11 @@ client.on("messageCreate", async message => {
         const isOwner = message.author.id === process.env.OWNER_ID;
 
         if (botConfig.blacklistedUsers.includes(message.author.id) && !isOwner) return;
-        if (botConfig.maintenance && !isOwner) return;
+        
+        // Maintenance Check (Bypass for Owner, Developer, Staff)
+        const isStaff = botConfig.staffUsers?.includes(message.author.id);
+        const isDev = botConfig.developerUsers?.includes(message.author.id);
+        if (botConfig.maintenance && !isOwner && !isDev && !isStaff) return;
 
         fs.appendFileSync('debug.log', `[DEBUG] Command matched: ${commandName}\n`);
 

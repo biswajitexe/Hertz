@@ -1,8 +1,8 @@
-import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { Database } from "../../database";
-import { canModerate } from "../../utilities/permission";
+import { type ChatInputCommandInteraction, EmbedBuilder, GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import * as config from "../../config";
+import type { Database } from "../../database";
 import { logAction } from "../../utilities/modLogger";
+import { canModerate } from "../../utilities/permission";
 
 export const command = new SlashCommandBuilder()
     .setName('warnkick')
@@ -66,13 +66,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // Invite Logic
     let inviteUrl = "";
     try {
-        const channel = interaction.guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(interaction.guild.members.me!).has(PermissionFlagsBits.CreateInstantInvite));
-        if (channel) {
-            const invite = await interaction.guild.invites.create(channel.id, { maxUses: 1, maxAge: 86400, unique: true, reason: `Warning Kick for ${user.user.tag}` });
-            inviteUrl = invite.url;
+        const me = interaction.guild.members.me;
+        if (me) {
+            const channel = interaction.guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(me).has(PermissionFlagsBits.CreateInstantInvite));
+            if (channel) {
+                const invite = await interaction.guild.invites.create(channel.id, { maxUses: 1, maxAge: 86400, unique: true, reason: `Warning Kick for ${user.user.tag}` });
+                inviteUrl = invite.url;
+            }
         }
-    } catch (e) {
-        console.error("Failed to create invite for Warning Kick:", e);
+    } catch (error) {
+        console.error("Failed to create invite for Warning Kick:", error);
     }
 
     // DM the user
@@ -94,7 +97,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
 
         await user.send({ embeds: [dmEmbed] });
-    } catch (e) { }
+    } catch { }
 
     try {
         await user.kick(reason);

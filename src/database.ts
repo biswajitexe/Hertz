@@ -131,8 +131,9 @@ export interface BotConfig {
     adminUsers: string[]; // Bot Admins
     supporterUsers: string[]; // Bot Supporters
     vipUsers: string[]; // Bot VIPs
+    partnerUsers: string[]; // Bot Partners
+    earlyUsers: string[]; // Early Supporters
 }
-
 
 /* User Profile Schema */
 export interface UserProfile {
@@ -311,7 +312,9 @@ export class Database {
                     developerUsers: [],
                     adminUsers: [],
                     supporterUsers: [],
-                    vipUsers: []
+                    vipUsers: [],
+                    partnerUsers: [],
+                    earlyUsers: []
                 };
                 await this.insertBotConfig(config);
             }
@@ -322,6 +325,8 @@ export class Database {
             if (!config.adminUsers) config.adminUsers = [];
             if (!config.supporterUsers) config.supporterUsers = [];
             if (!config.vipUsers) config.vipUsers = [];
+            if (!config.partnerUsers) config.partnerUsers = [];
+            if (!config.earlyUsers) config.earlyUsers = [];
             return config;
         } catch (e) {
             console.error(`[Database] Failed to retrieve bot config:`, e);
@@ -337,7 +342,9 @@ export class Database {
                 developerUsers: [],
                 adminUsers: [],
                 supporterUsers: [],
-                vipUsers: []
+                vipUsers: [],
+                partnerUsers: [],
+                earlyUsers: []
             };
         }
     }

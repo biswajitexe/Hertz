@@ -27,7 +27,12 @@ export const command = new SlashCommandBuilder()
     );
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
-    if (interaction.user.id !== process.env.OWNER_ID) return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+    let botConfig = await database.getBotConfig();
+    const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
+    if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
+    if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
+
+    if (!owners.includes(interaction.user.id)) return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
 
     const sub = interaction.options.getSubcommand();
 
@@ -64,7 +69,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (sub === 'maintenance') {
         const state = interaction.options.getBoolean('state', true);
 
-        let botConfig = await database.getBotConfig();
+        if (!botConfig) botConfig = await database.getBotConfig(); // Safety check
         botConfig.maintenance = state;
         await database.insertBotConfig(botConfig);
 

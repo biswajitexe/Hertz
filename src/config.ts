@@ -58,6 +58,8 @@ export const emojis: { [key: string]: string } = {
     general: "<:hparchive:1380534477297553419>",
     afk: "<:6858aventurinebye:1464310768366522616>",
     vip: "<:74658vipglow:1465051133704798435>", // Added VIP emoji (reusing from roles.ts or similar)
+    partner: "<:partner:1466418873082576926>", // Added Partner emoji (placeholder ID, user can update)
+    early: "<:early_supporter:1466418903520641115>", // Added Early User emoji (placeholder ID)
 };
 
 export const colors = {

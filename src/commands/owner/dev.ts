@@ -9,18 +9,26 @@ export const command = new SlashCommandBuilder()
     .setName('dev')
     .setDescription('Owner Only Control Panel');
 
-export async function run(interaction: ChatInputCommandInteraction, _database: Database) {
-    if (interaction.user.id !== process.env.OWNER_ID) {
+export async function run(interaction: ChatInputCommandInteraction, database: Database) {
+    const botConfig = await database.getBotConfig();
+    const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
+    if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
+
+    if (!owners.includes(interaction.user.id)) {
         if (!interaction.isRepliable()) return;
         return interaction.reply({ content: "Unknown command.", ephemeral: true });
     }
     await sendOwnerPanel(interaction);
 }
 
-export async function handleInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction, _database: Database) {
+export async function handleInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction, database: Database) {
     if (!interaction.customId.startsWith('dev_')) return;
 
-    if (interaction.user.id !== process.env.OWNER_ID) {
+    const botConfig = await database.getBotConfig();
+    const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
+    if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
+
+    if (!owners.includes(interaction.user.id)) {
         return interaction.reply({ content: "You cannot use this menu.", ephemeral: true });
     }
 

@@ -11,7 +11,11 @@ export const command = new SlashCommandBuilder()
     .addSubcommand(sub => sub.setName('invite').setDescription('Generate invite for a server').addStringOption(opt => opt.setName('id').setDescription('Server ID').setRequired(true)));
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
-    if (interaction.user.id !== process.env.OWNER_ID) return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+    const botConfig = await database.getBotConfig();
+    const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
+    if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
+
+    if (!owners.includes(interaction.user.id)) return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
 
     const sub = interaction.options.getSubcommand();
 

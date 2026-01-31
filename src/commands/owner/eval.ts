@@ -11,9 +11,14 @@ export const command = new SlashCommandBuilder()
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     // Hidden execution check
-    if (interaction.user.id !== process.env.OWNER_ID) {
+    const botConfig = await database.getBotConfig();
+    const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
+    if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
+    if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
+
+    // Hidden execution check
+    if (!owners.includes(interaction.user.id)) {
         return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
-        // Fake "Unknown command" regarding user perception or just silent fail
     }
 
     const code = interaction.options.getString('code', true);
