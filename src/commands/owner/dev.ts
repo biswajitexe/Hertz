@@ -105,7 +105,7 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
 
 async function sendOwnerPanel(interaction: ChatInputCommandInteraction | ButtonInteraction | StringSelectMenuInteraction, isUpdate = false) {
     const ownerDir = path.join(__dirname);
-    const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
+    const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && file !== 'dev.ts' && file !== 'dev.js');
 
     const cleanCommands = files.map(file => {
         try {

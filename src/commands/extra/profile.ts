@@ -57,10 +57,7 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
         badgesList.push(`${config.emojis.partner} **Partner**`);
     }
 
-    // Early User
-    if (botConfig.earlyUsers?.includes(targetUser.id)) {
-        badgesList.push(`${config.emojis.early} **Early User**`);
-    }
+
 
     // Premium
     if (botConfig.premiumUsers?.includes(targetUser.id)) {

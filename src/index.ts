@@ -14,6 +14,18 @@ app.listen(port, () => {
 import { Database } from "./database";
 import { log } from "./logging";
 import 'dotenv/config';
+
+/* Global Error Handling to catch silent crashes */
+process.on('unhandledRejection', (reason, p) => {
+    console.error('[Anti-Crash] Unhandled Rejection/Catch');
+    console.error(reason, p);
+});
+
+process.on('uncaughtException', (err, origin) => {
+    console.error('[Anti-Crash] Uncaught Exception/Catch');
+    console.error(err, origin);
+});
+
 const token = (process.env.DISCORD_TOKEN as string)?.trim();
 import { isBadMessage, replaceValues } from "./utilities/messages";
 
@@ -937,9 +949,8 @@ client.on("messageCreate", async message => {
 
 import { handleInteraction as handleHelpInteraction } from "./commands/extra/help";
 
-import { handleInteraction as handleRRInteraction } from "./commands/extra/reactionrole";
-import { handleInteraction as handleColorInteraction } from "./commands/extra/color";
 import { handleInteraction as handleDevInteraction } from "./commands/owner/dev";
+import { handleInteraction as handleTranslateInteraction } from "./commands/extra/translate";
 // import { handleInteraction as handleEmbedInteraction } from "./commands/utility/embed";
 
 client.on("interactionCreate", async (interaction) => {
@@ -976,12 +987,10 @@ client.on("interactionCreate", async (interaction) => {
             await giveawayHandler.handleEntry(interaction as any);
         } else if (interaction.customId.startsWith('help_')) {
             await handleHelpInteraction(interaction as any, database);
-        } else if (interaction.customId.startsWith('rr_') || interaction.customId.startsWith('rred_')) {
-            await handleRRInteraction(interaction as any, database);
-        } else if (interaction.customId.startsWith('color_') || interaction.customId.startsWith('colored_')) {
-            await handleColorInteraction(interaction as any, database);
         } else if (interaction.customId.startsWith('dev_')) {
             await handleDevInteraction(interaction as any, database);
+        } else if (interaction.customId.startsWith('translate_')) {
+            await handleTranslateInteraction(interaction as any, database);
         }
         // else if (interaction.customId.startsWith('embed_')) {
         //     await handleEmbedInteraction(interaction as any, database);
@@ -994,4 +1003,14 @@ client.on("messageDelete", (message) => {
 });
 
 /* Go to src/config.json and put your token there */
-client.login(token);
+/* Go to src/config.json and put your token there */
+client.login(token).catch(e => {
+    console.error("[CRITICAL] Failed to login to Discord:");
+    console.error(e);
+    // Specifically check for DisallowedIntents
+    if (e.code === 'DisallowedIntents') {
+        console.error(">>> SOLUTION: Go to https://discord.com/developers/applications, select your bot, go to 'Bot' tab, and ENABLE all Privileged Gateway Intents (Presence, Server Members, Message Content).");
+    } else if (e.code === 'TokenInvalid') {
+        console.error(">>> SOLUTION: Your Bot Token is invalid. Regenerate it in the Developer Portal and update your hosting environment variables.");
+    }
+});

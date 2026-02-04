@@ -1,0 +1,146 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.command = void 0;
+exports.run = run;
+const discord_js_1 = require("discord.js");
+const permission_1 = require("../../utilities/permission");
+const ms_1 = __importDefault(require("ms"));
+const modLogger_1 = require("../../utilities/modLogger");
+const embedUtils_1 = require("../../utilities/embedUtils");
+exports.command = new discord_js_1.SlashCommandBuilder()
+    .setName('ban')
+    .setDescription('Ban a user from the server (Advanced)')
+    .addUserOption(option => option
+    .setName('user')
+    .setDescription('The user to ban.')
+    .setRequired(true))
+    .addStringOption(option => option
+    .setName('reason')
+    .setDescription('The reason for the ban.'))
+    .addStringOption(option => option
+    .setName('duration')
+    .setDescription('Temporary ban duration (e.g. 1d, 30m). Leave empty for permanent.'))
+    .addStringOption(option => option
+    .setName('delete_history')
+    .setDescription('Delete message history.')
+    .addChoices({ name: 'None', value: '0' }, { name: '1 Hour', value: '3600' }, { name: '6 Hours', value: '21600' }, { name: '12 Hours', value: '43200' }, { name: '24 Hours', value: '86400' }, { name: '3 Days', value: '259200' }, { name: '7 Days', value: '604800' }))
+    .addBooleanOption(option => option
+    .setName('silent')
+    .setDescription('If true, the ban confirmation will be hidden from public chat.'))
+    .addAttachmentOption(option => option
+    .setName('evidence')
+    .setDescription('Screenshot proof/evidence for the ban.'));
+function run(interaction, database) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        if (!interaction.inCachedGuild())
+            return;
+        const user = interaction.options.getMember('user');
+        const reason = interaction.options.getString('reason') || "No reason provided";
+        const durationStr = interaction.options.getString('duration');
+        const deleteSeconds = parseInt(interaction.options.getString('delete_history') || '0');
+        const silent = interaction.options.getBoolean('silent') || false;
+        const evidence = interaction.options.getAttachment('evidence');
+        if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.BanMembers)) && interaction.user.id !== process.env.OWNER_ID) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to ban members.**")], ephemeral: true });
+            return;
+        }
+        if (!user) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**\nUsage: `?ban <user> [reason]`")], ephemeral: true });
+            return;
+        }
+        if (!(user instanceof discord_js_1.GuildMember)) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "Target is not a member of this server. (Force ban by ID not implemented yet)")], ephemeral: true });
+            return;
+        }
+        if (user.id === interaction.user.id) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot ban yourself.**")], ephemeral: true });
+            return;
+        }
+        if (user.id === interaction.client.user.id) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot ban me.**")], ephemeral: true });
+            return;
+        }
+        if (user.id === interaction.guild.ownerId && interaction.user.id !== process.env.OWNER_ID) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot ban the server owner.**")], ephemeral: true });
+            return;
+        }
+        if (!user.bannable) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**I cannot ban this user. My role is likely below theirs.**")], ephemeral: true });
+            return;
+        }
+        if (!(0, permission_1.canModerate)(interaction.member, user, discord_js_1.PermissionFlagsBits.BanMembers)) {
+            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot ban this user due to role hierarchy.**")], ephemeral: true });
+            return;
+        }
+        yield interaction.deferReply({ ephemeral: silent });
+        let endTime = null;
+        let durationFormatted = "Permanent";
+        if (durationStr) {
+            try {
+                const milliseconds = (0, ms_1.default)(durationStr);
+                if (!milliseconds || milliseconds < 1000) {
+                    yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "Invalid duration format. Example: `1d`, `30m`")] });
+                    return;
+                }
+                endTime = Date.now() + milliseconds;
+                durationFormatted = (0, ms_1.default)(milliseconds, { long: true });
+            }
+            catch (e) {
+                yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "Invalid duration string.")] });
+                return;
+            }
+        }
+        try {
+            const dmEmbed = new discord_js_1.EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle(`You have been banned from ${interaction.guild.name}`)
+                .addFields({ name: 'Reason', value: reason }, { name: 'Duration', value: durationFormatted }, { name: 'Moderator', value: interaction.user.tag })
+                .setTimestamp();
+            yield user.send({ embeds: [dmEmbed] });
+        }
+        catch (e) { }
+        try {
+            yield user.ban({ reason: `[Banned by ${interaction.user.tag}] ${reason}`, deleteMessageSeconds: deleteSeconds });
+            if (endTime) {
+                const guildData = yield database.retrieveGuild(interaction.guild.id);
+                if (guildData) {
+                    guildData.tempBans.push({
+                        userId: user.id,
+                        endTime: endTime,
+                        moderatorId: interaction.user.id,
+                        reason: reason
+                    });
+                    yield database.insertGuild(interaction.guild.id, guildData);
+                }
+            }
+            let extraInfo = `**Duration**: ${durationFormatted}\n**Deleted History**: ${deleteSeconds ? (0, ms_1.default)(deleteSeconds * 1000, { long: true }) : 'None'}`;
+            if (evidence)
+                extraInfo += `\n**Evidence**: [Link](${evidence.url})`;
+            yield (0, modLogger_1.logAction)(interaction.guild, user.user, interaction.user, 'BAN', reason, database, extraInfo);
+            const successEmbed = (0, embedUtils_1.createSuccessEmbed)(interaction.user, `**Banned ${user.user.tag}**`)
+                .addFields({ name: 'Reason', value: reason, inline: false });
+            if (durationStr)
+                successEmbed.addFields({ name: 'Duration', value: durationFormatted, inline: false });
+            if (evidence)
+                successEmbed.setImage(evidence.url);
+            yield interaction.editReply({ embeds: [successEmbed] });
+        }
+        catch (error) {
+            console.error(error);
+            yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to ban user.**")] });
+        }
+    });
+}

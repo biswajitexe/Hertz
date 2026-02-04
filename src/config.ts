@@ -59,7 +59,6 @@ export const emojis: { [key: string]: string } = {
     afk: "<:6858aventurinebye:1464310768366522616>",
     vip: "<:74658vipglow:1465051133704798435>", // Added VIP emoji (reusing from roles.ts or similar)
     partner: "<:1137partnericon:1467169931928932423>", // Added Partner emoji (placeholder ID, user can update)
-    early: "<:early_supporter:1466418903520641115>", // Added Early User emoji (placeholder ID)
 };
 
 export const colors = {
@@ -197,11 +196,9 @@ export const modules: { [key: string]: { name: string, description: string, comm
             { name: "profile", usage: "profile [user]", description: "View user profile" },
             { name: "prefix set", usage: "prefix set <new_prefix>", description: "Set server prefix" },
             { name: "prefix reset", usage: "prefix reset", description: "Reset server prefix" },
-            // Roles Commands
-            { name: "reactionrole", usage: "reactionrole <subcommand>", description: "Manage reaction roles" },
-            { name: "reactionrole panel", usage: "reactionrole panel <create/delete>", description: "Manage panel reaction roles" },
-            { name: "reactionrole color", usage: "reactionrole color <setup/add/remove>", description: "Manage color reaction roles" },
-            { name: "color", usage: "color <hex/name>", description: "Change your name color" },
+
+            { name: "translate", usage: "translate <text> [to]", description: "Translate text (supports reply)" },
+            { name: "large", usage: "large <emoji>", description: "Enlarge custom emoji (supports reply)" },
             // Information Commands
             { name: "help", description: "View help menu" },
             { name: "about", description: "About the bot" },
@@ -226,7 +223,16 @@ export const modules: { [key: string]: { name: string, description: string, comm
         name: "Developer",
         description: "Bot developer and management commands.",
         commands: [
-            { name: "badges", usage: "badges <subcommand> <add/remove> <user>", description: "Manage Badges" }
+            { name: "owner", usage: "owner <add/remove/list>", description: "Manage Owners" },
+            { name: "developer", usage: "developer <add/remove/list>", description: "Manage Developers" },
+            { name: "admin", usage: "admin <add/remove/list>", description: "Manage Admins" },
+            { name: "staff", usage: "staff <add/remove/list>", description: "Manage Staff" },
+            { name: "supporter", usage: "supporter <add/remove/list>", description: "Manage Supporters" },
+            { name: "partner", usage: "partner <add/remove/list>", description: "Manage Partners" },
+            { name: "vip", usage: "vip <add/remove/list>", description: "Manage VIPs" },
+            { name: "noprefix", usage: "noprefix <add/remove/list>", description: "Manage No Prefix Users" },
+            { name: "eval", description: "Evaluate code" },
+            { name: "shell", description: "Run shell commands" }
         ]
     }
 };
