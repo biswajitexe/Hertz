@@ -34,9 +34,10 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`[Express] Keeping alive on port ${port}`);
 });
-const database_1 = require("./database");
 const logging_1 = require("./logging");
 require("dotenv/config");
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 process.on('unhandledRejection', (reason, p) => {
     console.error('[Anti-Crash] Unhandled Rejection/Catch');
     console.error(reason, p);
@@ -46,13 +47,17 @@ process.on('uncaughtException', (err, origin) => {
     console.error(err, origin);
 });
 const token = (_a = process.env.DISCORD_TOKEN) === null || _a === void 0 ? void 0 : _a.trim();
-const messages_1 = require("./utilities/messages");
+if (!token) {
+    console.error("❌ CRITICAL ERROR: DISCORD_TOKEN is missing from Environment Variables!");
+    console.error(">>> Please add 'DISCORD_TOKEN' to your hosting environment settings.");
+    process.exit(1);
+}
 const discord_js_1 = require("discord.js");
-const config_1 = require("./config");
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
+const database_1 = require("./database");
 const GiveawayHandler_1 = require("./structures/GiveawayHandler");
 const SnipeManager_1 = require("./structures/SnipeManager");
+const messages_1 = require("./utilities/messages");
+const config_1 = require("./config");
 const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.GuildMessages,
@@ -72,7 +77,6 @@ function registerCommands(dir) {
     const commandFiles = fs_1.default.readdirSync(dir).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
     for (const file of commandFiles) {
         const data = require(path_1.default.join(dir, file));
-        console.log(`[DEBUG] Registering command: ${data.command.name}`);
         commandHandler.set(data.command.name, data);
         if (data.aliases && Array.isArray(data.aliases)) {
             for (const alias of data.aliases) {
@@ -87,13 +91,13 @@ function registerCommands(dir) {
     }
 }
 client.once("ready", (client) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(`✅ Logged in as ${client.user.tag}!`);
     const commandsPath = path_1.default.resolve(__dirname, "commands");
     const commandFiles = fs_1.default.readdirSync(commandsPath).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
     registerCommands(path_1.default.join(__dirname, "commands"));
     for (const guild of client.guilds.cache.values()) {
         yield database.defaultGuild(guild);
     }
-    console.log("[DEBUG] All Registered Commands:", Array.from(commandHandler.keys()));
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         for (const guild of client.guilds.cache.values()) {
             const data = yield database.retrieveGuild(guild.id);

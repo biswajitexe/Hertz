@@ -11,9 +11,10 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`[Express] Keeping alive on port ${port}`);
 });
-import { Database } from "./database";
 import { log } from "./logging";
 import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 
 /* Global Error Handling to catch silent crashes */
 process.on('unhandledRejection', (reason, p) => {
@@ -26,19 +27,21 @@ process.on('uncaughtException', (err, origin) => {
     console.error(err, origin);
 });
 
+// Token Validation
 const token = (process.env.DISCORD_TOKEN as string)?.trim();
-import { isBadMessage, replaceValues } from "./utilities/messages";
+if (!token) {
+    console.error("❌ CRITICAL ERROR: DISCORD_TOKEN is missing from Environment Variables!");
+    console.error(">>> Please add 'DISCORD_TOKEN' to your hosting environment settings.");
+    process.exit(1);
+}
 
-import { Client, Collection, CommandInteraction, GatewayIntentBits, Partials, Interaction, EmbedBuilder, ActivityType } from "discord.js";
-import { emojis, prefix, colors } from "./config";
-
-import fs from 'fs';
-import path from 'path';
-
-import { ChatInputCommandInteraction } from "discord.js";
+// ... imports ...
+import { Client, Collection, GatewayIntentBits, Partials, ActivityType, EmbedBuilder, ChatInputCommandInteraction } from "discord.js";
+import { Database } from "./database";
 import { giveawayHandler } from "./structures/GiveawayHandler";
 import { handleSnipe } from "./structures/SnipeManager";
-
+import { isBadMessage, replaceValues } from "./utilities/messages";
+import { emojis, prefix, colors } from "./config";
 
 const client = new Client({
     intents: [
@@ -56,7 +59,7 @@ const client = new Client({
 const database = new Database();
 const commandHandler: Collection<string, any> = new Collection();
 
-/* Anti-Spam Cache: key = guildId_userId, value = { score, lastMessage, lastTimestamp } */
+/* Anti-Spam Cache */
 const spamCache = new Map<string, { score: number, lastMessage: string, lastTimestamp: number }>();
 
 /* Regular expression to match URLs */
@@ -68,7 +71,7 @@ function registerCommands(dir: string) {
 
     for (const file of commandFiles) {
         const data = require(path.join(dir, file));
-        console.log(`[DEBUG] Registering command: ${data.command.name}`);
+        // console.log(`[DEBUG] Registering command: ${data.command.name}`); // Cleaned up
         commandHandler.set(data.command.name, data);
         if (data.aliases && Array.isArray(data.aliases)) {
             for (const alias of data.aliases) {
@@ -86,6 +89,7 @@ function registerCommands(dir: string) {
 }
 
 client.once("ready", async (client) => {
+    console.log(`✅ Logged in as ${client.user.tag}!`);
     const commandsPath = path.resolve(__dirname, "commands");
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
 
@@ -96,8 +100,8 @@ client.once("ready", async (client) => {
     for (const guild of client.guilds.cache.values()) {
         await database.defaultGuild(guild);
     }
-
-    console.log("[DEBUG] All Registered Commands:", Array.from(commandHandler.keys()));
+    
+    // console.log("[DEBUG] All Registered Commands:", Array.from(commandHandler.keys()));
 
     /* Temp Ban Scheduler */
     setInterval(async () => {
