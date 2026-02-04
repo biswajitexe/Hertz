@@ -20,8 +20,8 @@ export const run = async (interaction: any, database: any) => {
     let emojiArg = "";
 
     // 1. Parse Input
-    if (interaction instanceof CommandInteraction) {
-        emojiArg = interaction.options.get("emoji")?.value as string;
+    if (interaction.isChatInputCommand()) {
+        emojiArg = interaction.options.getString("emoji") || "";
     } else if (interaction instanceof Message) {
         const args = interaction.content.split(" ").slice(1);
         emojiArg = args[0] || ""; // Default to empty string if no arg

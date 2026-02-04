@@ -122,7 +122,7 @@ function sendLanguageDropdown(interaction, text) {
 }
 function performTranslation(interaction, text, targetLang) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e;
         let replyMsg;
         if (interaction instanceof discord_js_1.Message) {
             replyMsg = yield interaction.reply({ content: `${config_1.emojis.loading || '⏳'} Translating...` });
@@ -135,8 +135,8 @@ function performTranslation(interaction, text, targetLang) {
             const embed = new discord_js_1.EmbedBuilder()
                 .setColor(0x4285F4)
                 .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
-                .addFields({ name: `Original (${res.from.language.iso})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` })
-                .setFooter({ text: `Requested by ${((_b = (_a = interaction.member) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.username) || ((_c = interaction.author) === null || _c === void 0 ? void 0 : _c.username)}` });
+                .addFields({ name: `Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` })
+                .setFooter({ text: `Requested by ${((_d = (_c = interaction.member) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.username) || ((_e = interaction.author) === null || _e === void 0 ? void 0 : _e.username)}` });
             if (interaction instanceof discord_js_1.Message) {
                 yield replyMsg.edit({ content: null, embeds: [embed], components: [] });
             }
@@ -159,6 +159,7 @@ function performTranslation(interaction, text, targetLang) {
     });
 }
 const handleInteraction = (interaction, database) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     if (!interaction.isStringSelectMenu())
         return;
     const parts = interaction.customId.split("_");
@@ -181,7 +182,7 @@ const handleInteraction = (interaction, database) => __awaiter(void 0, void 0, v
         const embed = new discord_js_1.EmbedBuilder()
             .setColor(0x4285F4)
             .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
-            .addFields({ name: `Original (${res.from.language.iso})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` })
+            .addFields({ name: `Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` })
             .setFooter({ text: `Requested by ${interaction.user.username}` });
         yield interaction.editReply({ content: null, embeds: [embed], components: [] });
     }

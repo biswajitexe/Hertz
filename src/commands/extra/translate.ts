@@ -187,13 +187,13 @@ async function performTranslation(interaction: any, text: string, targetLang: st
     }
 
     try {
-        const res = await translate(text, { to: targetLang });
+        const res: any = await translate(text, { to: targetLang });
         
         const embed = new EmbedBuilder()
             .setColor(0x4285F4) // Google Blue
             .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
             .addFields(
-                { name: `Original (${res.from.language.iso})`, value: `> ${text.substring(0, 1000)}` },
+                { name: `Original (${res.from?.language?.iso || 'auto'})`, value: `> ${text.substring(0, 1000)}` },
                 { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` }
             )
             .setFooter({ text: `Requested by ${interaction.member?.user?.username || interaction.author?.username}` });
@@ -245,13 +245,13 @@ export const handleInteraction = async (interaction: any, database: any) => {
         }
         
         const text = targetMsg.content;
-        const res = await translate(text, { to: selectedLang });
+        const res: any = await translate(text, { to: selectedLang });
         
         const embed = new EmbedBuilder()
             .setColor(0x4285F4)
             .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
             .addFields(
-                { name: `Original (${res.from.language.iso})`, value: `> ${text.substring(0, 1000)}` },
+                { name: `Original (${res.from?.language?.iso || 'auto'})`, value: `> ${text.substring(0, 1000)}` },
                 { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` }
             )
             .setFooter({ text: `Requested by ${interaction.user.username}` });

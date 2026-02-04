@@ -19,10 +19,9 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDescription("The emoji to enlarge")
     .setRequired(true));
 const run = (interaction, database) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     let emojiArg = "";
-    if (interaction instanceof discord_js_1.CommandInteraction) {
-        emojiArg = (_a = interaction.options.get("emoji")) === null || _a === void 0 ? void 0 : _a.value;
+    if (interaction.isChatInputCommand()) {
+        emojiArg = interaction.options.getString("emoji") || "";
     }
     else if (interaction instanceof discord_js_1.Message) {
         const args = interaction.content.split(" ").slice(1);
