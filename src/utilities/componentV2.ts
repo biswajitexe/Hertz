@@ -281,13 +281,22 @@ export class V2Embed {
             flagBitfield |= MessageFlags.Ephemeral;
         }
 
-        const components: any[] = [this.build()];
+        const container = this.build();
+
+        // Place extra action rows (buttons, select menus) INSIDE the container card
         if (options?.extraComponents && options.extraComponents.length > 0) {
-            components.push(...options.extraComponents);
+            container.addSeparatorComponents(
+                new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
+            );
+            for (const item of options.extraComponents) {
+                if (item instanceof ActionRowBuilder || (item && (item.data?.type === 1 || item.type === 1))) {
+                    container.addActionRowComponents(item);
+                }
+            }
         }
 
         return {
-            components,
+            components: [container],
             flags: flagBitfield,
             allowedMentions: options?.allowedMentions || { repliedUser: false }
         };
@@ -334,16 +343,35 @@ export function createInfoV2(description: string, title?: string): V2Embed {
 // Dispatch Helpers for Interactions and Channels
 // -------------------------------------------------------------
 
+function preparePayload(v2: V2Embed | ContainerBuilder | any, options?: V2PayloadOptions): any {
+    if (v2 instanceof V2Embed) {
+        return v2.toPayload(options);
+    } else if (v2 instanceof ContainerBuilder) {
+        if (options?.extraComponents && options.extraComponents.length > 0) {
+            v2.addSeparatorComponents(
+                new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
+            );
+            for (const item of options.extraComponents) {
+                if (item instanceof ActionRowBuilder || (item && (item.data?.type === 1 || item.type === 1))) {
+                    v2.addActionRowComponents(item);
+                }
+            }
+        }
+        return {
+            components: [v2],
+            flags: options?.ephemeral ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2,
+            allowedMentions: options?.allowedMentions || { repliedUser: false }
+        };
+    }
+    return v2;
+}
+
 export async function replyV2(
     target: any,
     v2: V2Embed | ContainerBuilder | any,
     options?: V2PayloadOptions
 ): Promise<any> {
-    const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof ContainerBuilder ? {
-        components: [v2, ...(options?.extraComponents || [])],
-        flags: options?.ephemeral ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2,
-        allowedMentions: options?.allowedMentions || { repliedUser: false }
-    } : v2);
+    const payload = preparePayload(v2, options);
 
     if (target.replied || target.deferred) {
         return await target.editReply(payload);
@@ -359,12 +387,7 @@ export async function editReplyV2(
     v2: V2Embed | ContainerBuilder | any,
     options?: V2PayloadOptions
 ): Promise<any> {
-    const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof ContainerBuilder ? {
-        components: [v2, ...(options?.extraComponents || [])],
-        flags: MessageFlags.IsComponentsV2,
-        allowedMentions: options?.allowedMentions || { repliedUser: false }
-    } : v2);
-
+    const payload = preparePayload(v2, options);
     return await target.editReply(payload);
 }
 
@@ -373,12 +396,7 @@ export async function updateV2(
     v2: V2Embed | ContainerBuilder | any,
     options?: V2PayloadOptions
 ): Promise<any> {
-    const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof ContainerBuilder ? {
-        components: [v2, ...(options?.extraComponents || [])],
-        flags: MessageFlags.IsComponentsV2,
-        allowedMentions: options?.allowedMentions || { repliedUser: false }
-    } : v2);
-
+    const payload = preparePayload(v2, options);
     return await target.update(payload);
 }
 
@@ -387,11 +405,6 @@ export async function sendV2(
     v2: V2Embed | ContainerBuilder | any,
     options?: V2PayloadOptions
 ): Promise<any> {
-    const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof ContainerBuilder ? {
-        components: [v2, ...(options?.extraComponents || [])],
-        flags: MessageFlags.IsComponentsV2,
-        allowedMentions: options?.allowedMentions || { repliedUser: false }
-    } : v2);
-
+    const payload = preparePayload(v2, options);
     return await target.send(payload);
 }

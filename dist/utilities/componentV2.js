@@ -217,16 +217,22 @@ class V2Embed {
         return container;
     }
     toPayload(options) {
+        var _a;
         let flagBitfield = discord_js_1.MessageFlags.IsComponentsV2;
         if (options === null || options === void 0 ? void 0 : options.ephemeral) {
             flagBitfield |= discord_js_1.MessageFlags.Ephemeral;
         }
-        const components = [this.build()];
+        const container = this.build();
         if ((options === null || options === void 0 ? void 0 : options.extraComponents) && options.extraComponents.length > 0) {
-            components.push(...options.extraComponents);
+            container.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
+            for (const item of options.extraComponents) {
+                if (item instanceof discord_js_1.ActionRowBuilder || (item && (((_a = item.data) === null || _a === void 0 ? void 0 : _a.type) === 1 || item.type === 1))) {
+                    container.addActionRowComponents(item);
+                }
+            }
         }
         return {
-            components,
+            components: [container],
             flags: flagBitfield,
             allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
         };
@@ -265,13 +271,31 @@ function createInfoV2(description, title) {
         embed.setTitle(title);
     return embed;
 }
-function replyV2(target, v2, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof discord_js_1.ContainerBuilder ? {
-            components: [v2, ...((options === null || options === void 0 ? void 0 : options.extraComponents) || [])],
+function preparePayload(v2, options) {
+    var _a;
+    if (v2 instanceof V2Embed) {
+        return v2.toPayload(options);
+    }
+    else if (v2 instanceof discord_js_1.ContainerBuilder) {
+        if ((options === null || options === void 0 ? void 0 : options.extraComponents) && options.extraComponents.length > 0) {
+            v2.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
+            for (const item of options.extraComponents) {
+                if (item instanceof discord_js_1.ActionRowBuilder || (item && (((_a = item.data) === null || _a === void 0 ? void 0 : _a.type) === 1 || item.type === 1))) {
+                    v2.addActionRowComponents(item);
+                }
+            }
+        }
+        return {
+            components: [v2],
             flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? (discord_js_1.MessageFlags.IsComponentsV2 | discord_js_1.MessageFlags.Ephemeral) : discord_js_1.MessageFlags.IsComponentsV2,
             allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
-        } : v2);
+        };
+    }
+    return v2;
+}
+function replyV2(target, v2, options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const payload = preparePayload(v2, options);
         if (target.replied || target.deferred) {
             return yield target.editReply(payload);
         }
@@ -285,31 +309,19 @@ function replyV2(target, v2, options) {
 }
 function editReplyV2(target, v2, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof discord_js_1.ContainerBuilder ? {
-            components: [v2, ...((options === null || options === void 0 ? void 0 : options.extraComponents) || [])],
-            flags: discord_js_1.MessageFlags.IsComponentsV2,
-            allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
-        } : v2);
+        const payload = preparePayload(v2, options);
         return yield target.editReply(payload);
     });
 }
 function updateV2(target, v2, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof discord_js_1.ContainerBuilder ? {
-            components: [v2, ...((options === null || options === void 0 ? void 0 : options.extraComponents) || [])],
-            flags: discord_js_1.MessageFlags.IsComponentsV2,
-            allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
-        } : v2);
+        const payload = preparePayload(v2, options);
         return yield target.update(payload);
     });
 }
 function sendV2(target, v2, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        const payload = v2 instanceof V2Embed ? v2.toPayload(options) : (v2 instanceof discord_js_1.ContainerBuilder ? {
-            components: [v2, ...((options === null || options === void 0 ? void 0 : options.extraComponents) || [])],
-            flags: discord_js_1.MessageFlags.IsComponentsV2,
-            allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
-        } : v2);
+        const payload = preparePayload(v2, options);
         return yield target.send(payload);
     });
 }

@@ -33,36 +33,36 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setTitle(`<:iconfolder:1458160174815514670> About ${client.user.username}`)
+        .setTitle(`About ${client.user.username}`)
         .setThumbnail(client.user.displayAvatarURL())
         .addFields(
             {
                 name: "Identity",
                 value: [
-                    `${config.emojis.dot} **Developer:** Vasudev AI Team`,
-                    `${config.emojis.dot} **Name:** **${client.user.username}**`,
-                    `${config.emojis.dot} **ID:** \`${process.env.CLIENT_ID || client.user.id}\``,
-                    `${config.emojis.dot} **Created:** <t:${Math.floor(client.user.createdTimestamp / 1000)}:R>`
+                    `• **Developer:** Vasudev AI Team`,
+                    `• **Name:** **${client.user.username}**`,
+                    `• **ID:** \`${process.env.CLIENT_ID || client.user.id}\``,
+                    `• **Created:** <t:${Math.floor(client.user.createdTimestamp / 1000)}:R>`
                 ].join("\n"),
                 inline: false
             },
             {
                 name: "Statistics",
                 value: [
-                    `${config.emojis.dot} **Servers:** ${totalGuilds.toLocaleString()}`,
-                    `${config.emojis.dot} **Users:** ${totalUsers.toLocaleString()}`,
-                    `${config.emojis.dot} **Channels:** ${totalChannels.toLocaleString()}`,
-                    `${config.emojis.dot} **Ping:** ${client.ws.ping}ms`
+                    `• **Servers:** ${totalGuilds.toLocaleString()}`,
+                    `• **Users:** ${totalUsers.toLocaleString()}`,
+                    `• **Channels:** ${totalChannels.toLocaleString()}`,
+                    `• **Ping:** ${client.ws.ping}ms`
                 ].join("\n"),
                 inline: true
             },
             {
                 name: "System",
                 value: [
-                    `${config.emojis.dot} **Uptime:** ${days}d ${hours}h ${minutes}m ${seconds}s`,
-                    `${config.emojis.dot} **Memory:** ${memoryUsage} MB / ${totalMemory} GB`,
-                    `${config.emojis.dot} **Node.js:** ${nodeVersion}`,
-                    `${config.emojis.dot} **Library:** v${djsVersion}`
+                    `• **Uptime:** ${days}d ${hours}h ${minutes}m ${seconds}s`,
+                    `• **Memory:** ${memoryUsage} MB / ${totalMemory} GB`,
+                    `• **Node.js:** ${nodeVersion}`,
+                    `• **Library:** v${djsVersion}`
                 ].join("\n"),
                 inline: true
             }

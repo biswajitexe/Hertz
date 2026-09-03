@@ -123,7 +123,7 @@ function handleInteraction(interaction, database) {
                     .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`)
                     .setDescription(description)
                     .setFooter("Hertz • Owner Command", (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
-                const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger));
+                const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("dev_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
                 const selectMenu = yield createOwnerSelectMenu();
                 yield interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
             }
@@ -155,11 +155,11 @@ function sendOwnerPanel(interaction_1) {
         }).filter(c => c !== null).join(", ");
         const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
+            .setTitle('Owner Commands')
             .setDescription(`> ${cleanCommands}`)
             .setFooter(`Hertz • Owner Commands`, ((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || undefined);
         const selectMenu = yield createOwnerSelectMenu();
-        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger));
+        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
         if (isUpdate && (interaction.isButton() || interaction.isStringSelectMenu())) {
             yield interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
         }
@@ -179,8 +179,7 @@ function createOwnerSelectMenu() {
                 if ((_a = cmd.command) === null || _a === void 0 ? void 0 : _a.name) {
                     return {
                         label: cmd.command.name,
-                        value: cmd.command.name,
-                        emoji: config.emojis.owner || '👑'
+                        value: cmd.command.name
                     };
                 }
                 return null;

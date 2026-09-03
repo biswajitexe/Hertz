@@ -116,24 +116,24 @@ function sendHelpMenu(context_1) {
         const user = context.user || context.author;
         const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor(`Hi, ${user.username}!`, user.displayAvatarURL())
+            .setAuthor(`Command Center • ${user.username}`, user.displayAvatarURL())
             .setThumbnail((_a = client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL())
-            .setTitle(`<:iconfolder:1458160174815514670> Hertz Security Command Center`)
-            .setDescription(`> **Hertz is a powerful, advanced server automation & security tool.**\n> **Prefix:** \`${config.prefix}\` • **Slash Commands:** Enabled`)
+            .setTitle(`Hertz Command Center`)
+            .setDescription(`> **Advanced Server Automation & Security System**\n> **Prefix:** \`${config.prefix}\` • **Slash Commands:** Enabled`)
             .addFields({
             name: "Modules",
             value: ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
-                .map(key => { var _a; return `> ${config.emojis[key] || "📁"} [${((_a = config.modules[key]) === null || _a === void 0 ? void 0 : _a.name) || key}](https://discord.gg/hertz)`; })
+                .map(key => { var _a, _b; return `> **${((_a = config.modules[key]) === null || _a === void 0 ? void 0 : _a.name) || key}** — ${((_b = config.modules[key]) === null || _b === void 0 ? void 0 : _b.description) || ""}`; })
                 .join("\n"),
             inline: false
         }, {
-            name: "Links",
+            name: "Quick Links",
             value: `> [Support Server](https://discord.gg/suttabar) • [Invite Me](https://discord.com/api/oauth2/authorize?client_id=${(_b = client.user) === null || _b === void 0 ? void 0 : _b.id}&permissions=8&scope=bot%20applications.commands) • [Vote](https://top.gg/bot/${(_c = client.user) === null || _c === void 0 ? void 0 : _c.id})`,
             inline: false
         })
             .setFooter(`Developed by Vasudev AI Team`, (_d = client.user) === null || _d === void 0 ? void 0 : _d.displayAvatarURL())
             .setTimestamp();
-        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(discord_js_1.ButtonStyle.Primary));
+        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
         const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select a Category"));
         let sentMessage;
         if (isUpdate) {
@@ -156,10 +156,10 @@ function sendModuleHelp(interaction, moduleKey) {
         const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
             .setAuthor(`Module Help`, (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL())
-            .setTitle(`${config.emojis[moduleKey] || "📁"} ${module.name}`)
+            .setTitle(`${module.name} Module`)
             .setDescription(`> ${commandsText.substring(0, 4096)}`)
             .setFooter(`Hertz • ${module.name}`, (_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL());
-        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(discord_js_1.ButtonStyle.Primary));
+        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
         const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Choose another Category"));
         yield interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
     });
@@ -170,24 +170,24 @@ function sendAllCommands(interaction) {
         const totalCount = Object.values(config.modules).reduce((acc, mod) => acc + (mod.commands.length || 0), 0);
         const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setTitle(`${config.emojis.commands} All Commands (${totalCount})`)
+            .setTitle(`All Commands (${totalCount})`)
             .setDescription(`Full list of available commands across all categories:`)
             .setFooter(`Hertz • Total Commands: ${totalCount}`, (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL())
             .setTimestamp();
         const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
         moduleOrder.forEach(key => {
-            const module = config.modules[key];
-            if (module) {
-                const cmds = module.commands.map(c => `\`${c.name}\``).join(", ");
+            const mod = config.modules[key];
+            if (mod && mod.commands.length > 0) {
+                const list = mod.commands.map(c => `\`${c.name}\``).join(", ");
                 card.addFields({
-                    name: `${config.emojis[key] || "📁"} ${module.name}`,
-                    value: `> ${cmds}`,
+                    name: `${mod.name} (${mod.commands.length})`,
+                    value: `> ${list.substring(0, 1024)}`,
                     inline: false
                 });
             }
         });
-        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(discord_js_1.ButtonStyle.Primary).setDisabled(true));
-        const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Choose a specific Category"));
+        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
+        const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select a Category"));
         yield interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
     });
 }
@@ -218,7 +218,6 @@ function createModuleSelectMenu(placeholder) {
         .setPlaceholder(placeholder)
         .addOptions(moduleOrder.map(key => ({
         label: config.modules[key].name,
-        emoji: config.emojis[key],
         value: `help_${key}`,
         description: config.modules[key].description.substring(0, 100)
     })));

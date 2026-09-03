@@ -73,20 +73,20 @@ async function sendHelpMenu(context: any, isUpdate = false) {
     // Personalized Title
     const card = new V2Embed()
         .setColor(config.colors.primary)
-        .setAuthor(`Hi, ${user.username}!`, user.displayAvatarURL())
+        .setAuthor(`Command Center • ${user.username}`, user.displayAvatarURL())
         .setThumbnail(client.user?.displayAvatarURL())
-        .setTitle(`<:iconfolder:1458160174815514670> Hertz Security Command Center`)
-        .setDescription(`> **Hertz is a powerful, advanced server automation & security tool.**\n> **Prefix:** \`${config.prefix}\` • **Slash Commands:** Enabled`)
+        .setTitle(`Hertz Command Center`)
+        .setDescription(`> **Advanced Server Automation & Security System**\n> **Prefix:** \`${config.prefix}\` • **Slash Commands:** Enabled`)
         .addFields(
             {
                 name: "Modules",
                 value: ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
-                    .map(key => `> ${config.emojis[key] || "📁"} [${config.modules[key]?.name || key}](https://discord.gg/hertz)`)
+                    .map(key => `> **${config.modules[key]?.name || key}** — ${config.modules[key]?.description || ""}`)
                     .join("\n"),
                 inline: false
             },
             {
-                name: "Links",
+                name: "Quick Links",
                 value: `> [Support Server](https://discord.gg/suttabar) • [Invite Me](https://discord.com/api/oauth2/authorize?client_id=${client.user?.id}&permissions=8&scope=bot%20applications.commands) • [Vote](https://top.gg/bot/${client.user?.id})`,
                 inline: false
             }
@@ -96,9 +96,9 @@ async function sendHelpMenu(context: any, isUpdate = false) {
 
     // Redesigned Buttons
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(ButtonStyle.Primary)
+        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
     );
 
     const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Select a Category"));
@@ -122,14 +122,14 @@ async function sendModuleHelp(interaction: any, moduleKey: string) {
     const card = new V2Embed()
         .setColor(config.colors.primary)
         .setAuthor(`Module Help`, interaction.client.user?.displayAvatarURL())
-        .setTitle(`${config.emojis[moduleKey] || "📁"} ${module.name}`)
+        .setTitle(`${module.name} Module`)
         .setDescription(`> ${commandsText.substring(0, 4096)}`)
         .setFooter(`Hertz • ${module.name}`, interaction.client.user?.displayAvatarURL());
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(ButtonStyle.Primary)
+        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
     );
 
     const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Choose another Category"));
@@ -141,31 +141,30 @@ async function sendAllCommands(interaction: any) {
     const totalCount = Object.values(config.modules).reduce((acc: any, mod: any) => acc + (mod.commands.length || 0), 0);
     const card = new V2Embed()
         .setColor(config.colors.primary)
-        .setTitle(`${config.emojis.commands} All Commands (${totalCount})`)
+        .setTitle(`All Commands (${totalCount})`)
         .setDescription(`Full list of available commands across all categories:`)
         .setFooter(`Hertz • Total Commands: ${totalCount}`, interaction.client.user?.displayAvatarURL())
         .setTimestamp();
 
     const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
     moduleOrder.forEach(key => {
-        const module = config.modules[key];
-        if (module) {
-            const cmds = module.commands.map(c => `\`${c.name}\``).join(", ");
+        const mod = config.modules[key];
+        if (mod && mod.commands.length > 0) {
+            const list = mod.commands.map(c => `\`${c.name}\``).join(", ");
             card.addFields({
-                name: `${config.emojis[key] || "📁"} ${module.name}`,
-                value: `> ${cmds}`,
+                name: `${mod.name} (${mod.commands.length})`,
+                value: `> ${list.substring(0, 1024)}`,
                 inline: false
             });
         }
     });
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(ButtonStyle.Primary).setDisabled(true),
+        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
     );
 
-    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Choose a specific Category"));
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Select a Category"));
 
     await interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
 }
@@ -202,7 +201,6 @@ function createModuleSelectMenu(placeholder: string) {
         .setPlaceholder(placeholder)
         .addOptions(moduleOrder.map(key => ({
             label: config.modules[key].name,
-            emoji: config.emojis[key],
             value: `help_${key}`,
             description: config.modules[key].description.substring(0, 100)
         })));

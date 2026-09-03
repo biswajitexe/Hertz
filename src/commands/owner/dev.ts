@@ -81,8 +81,8 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                 .setFooter("Hertz • Owner Command", interaction.client.user?.displayAvatarURL());
 
             const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
+                new ButtonBuilder().setCustomId("dev_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
             );
 
             const selectMenu = await createOwnerSelectMenu();
@@ -116,15 +116,15 @@ async function sendOwnerPanel(interaction: ChatInputCommandInteraction | ButtonI
 
     const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
+        .setTitle('Owner Commands')
         .setDescription(`> ${cleanCommands}`)
         .setFooter(`Hertz • Owner Commands`, interaction.client.user?.displayAvatarURL() || undefined);
 
     const selectMenu = await createOwnerSelectMenu();
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary).setDisabled(true),
-        new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
+        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary).setDisabled(true),
+        new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
     );
 
     if (isUpdate && (interaction.isButton() || interaction.isStringSelectMenu())) {
@@ -144,13 +144,12 @@ async function createOwnerSelectMenu() {
             if (cmd.command?.name) {
                 return {
                     label: cmd.command.name,
-                    value: cmd.command.name,
-                    emoji: config.emojis.owner || '👑'
+                    value: cmd.command.name
                 };
             }
             return null;
         } catch { return null; }
-    }).filter((opt): opt is { label: string; value: string; emoji: string } => opt !== null);
+    }).filter((opt): opt is { label: string; value: string } => opt !== null);
 
     return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
         new StringSelectMenuBuilder()
