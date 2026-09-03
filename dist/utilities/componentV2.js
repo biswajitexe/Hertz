@@ -43,6 +43,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.V2Embed = void 0;
+exports.stripEmojis = stripEmojis;
 exports.createSuccessV2 = createSuccessV2;
 exports.createErrorV2 = createErrorV2;
 exports.createWarningV2 = createWarningV2;
@@ -53,6 +54,15 @@ exports.updateV2 = updateV2;
 exports.sendV2 = sendV2;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../config"));
+function stripEmojis(str) {
+    if (!str)
+        return str;
+    return str
+        .replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '')
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{FE0F}]/gu, '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+}
 class V2Embed {
     constructor() {
         this.accentColor = config.colors.primary;
@@ -74,7 +84,7 @@ class V2Embed {
         return this.setColor(color);
     }
     setTitle(title) {
-        this.titleText = title;
+        this.titleText = stripEmojis(title);
         return this;
     }
     setURL(url) {
@@ -82,15 +92,15 @@ class V2Embed {
         return this;
     }
     setDescription(description) {
-        this.descriptionText = description;
+        this.descriptionText = description ? description.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : undefined;
         return this;
     }
     setAuthor(author, iconURL, url) {
         if (typeof author === 'string') {
-            this.authorData = { name: author, iconURL, url };
+            this.authorData = { name: stripEmojis(author), iconURL, url };
         }
         else {
-            this.authorData = author;
+            this.authorData = Object.assign(Object.assign({}, author), { name: stripEmojis(author.name) });
         }
         return this;
     }
@@ -103,12 +113,18 @@ class V2Embed {
         return this;
     }
     addFields(...fields) {
-        this.fields.push(...fields);
+        for (const f of fields) {
+            this.fields.push({
+                name: stripEmojis(f.name),
+                value: f.value ? f.value.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : '',
+                inline: f.inline
+            });
+        }
         return this;
     }
     setFields(...fields) {
-        this.fields = [...fields];
-        return this;
+        this.fields = [];
+        return this.addFields(...fields);
     }
     setFooter(footer, iconURL) {
         if (typeof footer === 'string') {
@@ -220,7 +236,7 @@ exports.V2Embed = V2Embed;
 function createSuccessV2(description, title) {
     const embed = new V2Embed()
         .setColor(config.colors.success)
-        .setDescription(`${config.emojis.success} ${description}`);
+        .setDescription(`**Success:** ${description}`);
     if (title)
         embed.setTitle(title);
     return embed;
@@ -228,7 +244,7 @@ function createSuccessV2(description, title) {
 function createErrorV2(description, title) {
     const embed = new V2Embed()
         .setColor(config.colors.error)
-        .setDescription(`${config.emojis.error} ${description}`);
+        .setDescription(`**Error:** ${description}`);
     if (title)
         embed.setTitle(title);
     return embed;
@@ -236,7 +252,7 @@ function createErrorV2(description, title) {
 function createWarningV2(description, title) {
     const embed = new V2Embed()
         .setColor(config.colors.warning)
-        .setDescription(`${config.emojis.warning} ${description}`);
+        .setDescription(`**Warning:** ${description}`);
     if (title)
         embed.setTitle(title);
     return embed;

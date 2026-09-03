@@ -19,6 +19,10 @@ const postgres_1 = __importDefault(require("@keyv/postgres"));
 class Database {
     constructor() {
         var _a;
+        this.guildCache = new Map();
+        this.userCache = new Map();
+        this.botConfigCache = null;
+        this.isStoreConnected = true;
         const dbUrl = (_a = (process.env.DATABASE || process.env.MONGO_URL || process.env.MONGO_URI || process.env.MONGODB_URI)) === null || _a === void 0 ? void 0 : _a.trim();
         if (dbUrl) {
             try {
@@ -26,30 +30,35 @@ class Database {
                 if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
                     console.log("DEBUG: Connecting to PostgreSQL (Supabase)...");
                     const PostgresAdapter = postgres_1.default.default || postgres_1.default;
-                    store = new PostgresAdapter({ uri: dbUrl, table: 'keyv_store' });
+                    store = new PostgresAdapter({ uri: dbUrl, table: 'keyv_store', connectionTimeoutMillis: 2000 });
                 }
                 else {
                     console.log("DEBUG: Connecting to MongoDB...");
                     store = new mongo_1.default(dbUrl, { dbName: process.env.DB_NAME || 'hertz', tls: true });
                 }
+                if (store && typeof store.on === 'function') {
+                    store.on('error', (err) => {
+                        console.warn('[Database] Store connection issue:', err.message);
+                        this.isStoreConnected = false;
+                    });
+                }
                 this.inner = new keyv_1.default({ store: store, namespace: 'guilds' });
                 this.users = new keyv_1.default({ store: store, namespace: 'users' });
                 this.inner.on('error', (err) => {
-                    console.warn('[Database Warning] Connection issue. Switching to in-memory storage temporarily.');
-                    console.error('Connection Error Detail:', err.message);
-                    this.inner = new keyv_1.default();
-                    this.users = new keyv_1.default();
+                    console.warn('[Database Warning] Connection issue. Fast fallback active.');
+                    this.isStoreConnected = false;
                 });
             }
             catch (err) {
                 console.warn("[Database Warning] Failed to initialize database adapter. Using in-memory storage.");
-                console.error(err);
+                this.isStoreConnected = false;
                 this.inner = new keyv_1.default();
                 this.users = new keyv_1.default();
             }
         }
         else {
-            console.warn('Database URL not found in .env, falling back to in-memory storage (data will be lost on restart)');
+            console.warn('Database URL not found in .env, falling back to in-memory storage');
+            this.isStoreConnected = false;
             this.inner = new keyv_1.default();
             this.users = new keyv_1.default();
         }
@@ -139,24 +148,31 @@ class Database {
     }
     insertGuild(id, guild) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.inner.set(id, guild);
+            this.guildCache.set(id, guild);
+            this.inner.set(id, guild).catch(() => { });
         });
     }
     retrieveGuild(id) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.guildCache.has(id)) {
+                return this.guildCache.get(id);
+            }
+            if (!this.isStoreConnected) {
+                return undefined;
+            }
             try {
                 const result = yield Promise.race([
                     this.inner.get(id),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 10000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 800))
                 ]);
+                if (result) {
+                    this.guildCache.set(id, result);
+                }
                 return result;
             }
             catch (e) {
-                console.error(`[Database] Retrieve failed for ${id}: ${e.message}`);
                 if (e.message === 'DB_TIMEOUT') {
-                    console.warn("[Database] MongoDB is unresponsive. Switched to In-Memory Storage.");
-                    this.inner = new keyv_1.default();
-                    this.users = new keyv_1.default();
+                    this.isStoreConnected = false;
                 }
                 return undefined;
             }
@@ -164,30 +180,42 @@ class Database {
     }
     removeGuild(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.inner.delete(id);
+            this.guildCache.delete(id);
+            this.inner.delete(id).catch(() => { });
         });
     }
     getBotConfig() {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.botConfigCache) {
+                return this.botConfigCache;
+            }
+            const defaultConfig = {
+                maintenance: false,
+                blacklistedUsers: [],
+                blacklistedGuilds: [],
+                premiumUsers: [],
+                premiumGuilds: [],
+                noPrefixUsers: [],
+                staffUsers: [],
+                ownerUsers: [],
+                developerUsers: [],
+                adminUsers: [],
+                supporterUsers: [],
+                vipUsers: [],
+                partnerUsers: [],
+            };
+            if (!this.isStoreConnected) {
+                this.botConfigCache = defaultConfig;
+                return defaultConfig;
+            }
             try {
-                let config = yield this.inner.get('bot_config');
+                let config = yield Promise.race([
+                    this.inner.get('bot_config'),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 800))
+                ]);
                 if (!config) {
-                    config = {
-                        maintenance: false,
-                        blacklistedUsers: [],
-                        blacklistedGuilds: [],
-                        premiumUsers: [],
-                        premiumGuilds: [],
-                        noPrefixUsers: [],
-                        staffUsers: [],
-                        ownerUsers: [],
-                        developerUsers: [],
-                        adminUsers: [],
-                        supporterUsers: [],
-                        vipUsers: [],
-                        partnerUsers: [],
-                    };
-                    yield this.insertBotConfig(config);
+                    config = defaultConfig;
+                    this.insertBotConfig(config).catch(() => { });
                 }
                 if (!config.noPrefixUsers)
                     config.noPrefixUsers = [];
@@ -205,25 +233,12 @@ class Database {
                     config.vipUsers = [];
                 if (!config.partnerUsers)
                     config.partnerUsers = [];
+                this.botConfigCache = config;
                 return config;
             }
             catch (e) {
-                console.error(`[Database] Failed to retrieve bot config:`, e);
-                return {
-                    maintenance: false,
-                    blacklistedUsers: [],
-                    blacklistedGuilds: [],
-                    premiumUsers: [],
-                    premiumGuilds: [],
-                    noPrefixUsers: [],
-                    staffUsers: [],
-                    ownerUsers: [],
-                    developerUsers: [],
-                    adminUsers: [],
-                    supporterUsers: [],
-                    vipUsers: [],
-                    partnerUsers: []
-                };
+                this.botConfigCache = defaultConfig;
+                return defaultConfig;
             }
         });
     }
@@ -234,12 +249,36 @@ class Database {
     }
     insertBotConfig(config) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.inner.set('bot_config', config);
+            this.botConfigCache = config;
+            this.inner.set('bot_config', config).catch(() => { });
+        });
+    }
+    retrieveUser(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.userCache.has(id)) {
+                return this.userCache.get(id);
+            }
+            if (!this.isStoreConnected) {
+                return undefined;
+            }
+            try {
+                const result = yield Promise.race([
+                    this.users.get(id),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 800))
+                ]);
+                if (result) {
+                    this.userCache.set(id, result);
+                }
+                return result;
+            }
+            catch (_a) {
+                return undefined;
+            }
         });
     }
     getUser(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            let user = yield this.users.get(id);
+            let user = yield this.retrieveUser(id);
             if (!user) {
                 user = {
                     id: id,
@@ -257,7 +296,8 @@ class Database {
     }
     updateUser(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.users.set(user.id, user);
+            this.userCache.set(user.id, user);
+            this.users.set(user.id, user).catch(() => { });
         });
     }
 }

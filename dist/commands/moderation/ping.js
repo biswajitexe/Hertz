@@ -53,14 +53,15 @@ exports.command = new discord_js_1.SlashCommandBuilder()
 exports.aliases = ['p', 'latency'];
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
+        const wsPing = Math.round(interaction.client.ws.ping) || 0;
+        const start = Date.now();
         const sent = yield interaction.reply({ content: 'Pinging...', fetchReply: true });
-        const latency = sent.createdTimestamp - interaction.createdTimestamp;
-        const apiLatency = Math.round(interaction.client.ws.ping);
+        const latency = (sent === null || sent === void 0 ? void 0 : sent.createdTimestamp) ? Math.max(1, sent.createdTimestamp - (interaction.createdTimestamp || start)) : Math.max(1, Date.now() - start);
         const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setTitle('🏓 Pong!')
-            .addFields({ name: 'Bot Latency', value: `${latency}ms`, inline: true }, { name: 'API Latency', value: `${apiLatency}ms`, inline: true })
+            .setTitle('Pong!')
+            .addFields({ name: 'Bot Latency', value: `${latency}ms`, inline: true }, { name: 'API Latency', value: `${wsPing}ms`, inline: true })
             .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
-        yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
+        yield interaction.editReply(embed.toPayload());
     });
 }

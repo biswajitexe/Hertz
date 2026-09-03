@@ -39,6 +39,15 @@ export interface V2PayloadOptions {
     extraComponents?: any[];
 }
 
+export function stripEmojis(str: string): string {
+    if (!str) return str;
+    return str
+        .replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '')
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{FE0F}]/gu, '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+}
+
 /**
  * Modern Discord Components V2 Container Builder
  * Fully supersedes legacy EmbedBuilder with rich structured cards.
@@ -75,7 +84,7 @@ export class V2Embed {
     }
 
     public setTitle(title: string): this {
-        this.titleText = title;
+        this.titleText = stripEmojis(title);
         return this;
     }
 
@@ -85,15 +94,15 @@ export class V2Embed {
     }
 
     public setDescription(description: string): this {
-        this.descriptionText = description;
+        this.descriptionText = description ? description.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : undefined;
         return this;
     }
 
     public setAuthor(author: V2AuthorOptions | string, iconURL?: string, url?: string): this {
         if (typeof author === 'string') {
-            this.authorData = { name: author, iconURL, url };
+            this.authorData = { name: stripEmojis(author), iconURL, url };
         } else {
-            this.authorData = author;
+            this.authorData = { ...author, name: stripEmojis(author.name) };
         }
         return this;
     }
@@ -109,13 +118,19 @@ export class V2Embed {
     }
 
     public addFields(...fields: V2FieldOptions[]): this {
-        this.fields.push(...fields);
+        for (const f of fields) {
+            this.fields.push({
+                name: stripEmojis(f.name),
+                value: f.value ? f.value.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : '',
+                inline: f.inline
+            });
+        }
         return this;
     }
 
     public setFields(...fields: V2FieldOptions[]): this {
-        this.fields = [...fields];
-        return this;
+        this.fields = [];
+        return this.addFields(...fields);
     }
 
     public setFooter(footer: V2FooterOptions | string, iconURL?: string): this {
@@ -286,7 +301,7 @@ export class V2Embed {
 export function createSuccessV2(description: string, title?: string): V2Embed {
     const embed = new V2Embed()
         .setColor(config.colors.success)
-        .setDescription(`${config.emojis.success} ${description}`);
+        .setDescription(`**Success:** ${description}`);
     if (title) embed.setTitle(title);
     return embed;
 }
@@ -294,7 +309,7 @@ export function createSuccessV2(description: string, title?: string): V2Embed {
 export function createErrorV2(description: string, title?: string): V2Embed {
     const embed = new V2Embed()
         .setColor(config.colors.error)
-        .setDescription(`${config.emojis.error} ${description}`);
+        .setDescription(`**Error:** ${description}`);
     if (title) embed.setTitle(title);
     return embed;
 }
@@ -302,7 +317,7 @@ export function createErrorV2(description: string, title?: string): V2Embed {
 export function createWarningV2(description: string, title?: string): V2Embed {
     const embed = new V2Embed()
         .setColor(config.colors.warning)
-        .setDescription(`${config.emojis.warning} ${description}`);
+        .setDescription(`**Warning:** ${description}`);
     if (title) embed.setTitle(title);
     return embed;
 }
