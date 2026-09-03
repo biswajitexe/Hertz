@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('antinuke')
     .setDescription('Configure the Advanced Antinuke System.')
@@ -75,33 +76,34 @@ function run(interaction, database) {
         const isExtraOwner = guildData.extraOwners.includes(interaction.user.id);
         const isBotOwner = interaction.user.id === process.env.OWNER_ID;
         if (!isOwner && !isExtraOwner && !isBotOwner) {
-            yield interaction.reply({ content: `${config.emojis.error} **Only the Server Owner, Extra Owners, or Bot Owner can manage the Antinuke system.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)('Only the Server Owner, Extra Owners, or Bot Owner can manage the Antinuke system.').toPayload({ ephemeral: true }));
             return;
         }
         const sub = interaction.options.getSubcommand();
-        const embedStyle = (title, description) => {
+        const embedStyle = (title, description, color = config.colors.primary) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
-                .setColor(config.colors.primary)
-                .setDescription(`**${config.emojis.antinuke} ${title}**\n\n${description}`)
+            return new componentV2_1.V2Embed()
+                .setColor(color)
+                .setTitle(`${config.emojis.antinuke} ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (sub === 'enable') {
             if (guildData.antinuke.enabled) {
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.error)
                     .setDescription(`${config.emojis.error} **Antinuke is already enabled!**`)
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-                yield interaction.reply({ embeds: [embed] });
+                    .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                yield interaction.reply(embed.toPayload());
                 return;
             }
             guildData.antinuke.enabled = true;
-            let logChannel = interaction.guild.channels.cache.find(c => c.name === 'xeon-log' && c.type === discord_js_1.ChannelType.GuildText);
+            let logChannel = interaction.guild.channels.cache.find(c => c.name === 'hertz-log' && c.type === discord_js_1.ChannelType.GuildText);
             if (!logChannel) {
                 try {
                     logChannel = yield interaction.guild.channels.create({
-                        name: 'xeon-log',
+                        name: 'hertz-log',
                         type: discord_js_1.ChannelType.GuildText,
                         permissionOverwrites: [
                             {
@@ -128,7 +130,7 @@ function run(interaction, database) {
                 guildData.antinuke.logChannelId = logChannel.id;
             }
             yield database.insertGuild(interaction.guild.id, guildData);
-            const channelMsg = logChannel ? `\n<:1709locked:1461066037008269434> Log channel set to <#${logChannel.id}>.` : `\n⚠️ Could not create 'xeon-log'. Please set logs manually.`;
+            const channelMsg = logChannel ? `\n<:1709locked:1461066037008269434> Log channel set to <#${logChannel.id}>.` : `\n⚠️ Could not create 'hertz-log'. Please set logs manually.`;
             const protections = [
                 'Anti Ban', 'Anti Kick', 'Anti Prune', 'Anti Unban', 'Anti Bot Add',
                 'Anti Role Create', 'Anti Role Delete', 'Anti Role Update',
@@ -138,7 +140,7 @@ function run(interaction, database) {
                 'Anti AutoMod Rule', 'Anti Thread Create', 'Anti Thread Delete'
             ].map(p => `> ${config.emojis.success} ${p}`).join('\n');
             const embed = embedStyle('Antinuke Panel', `**Antinuke System Enabled.**\n\n**Active Protections:**\n${protections}\n${channelMsg}\n<:527192nikkiworking:1461069361115824168> **Note:** Keep my role on top with Admin perms.`);
-            yield interaction.reply({ embeds: [embed] });
+            yield interaction.reply(embed.toPayload());
         }
         else if (sub === 'disable') {
             guildData.antinuke.enabled = false;
@@ -151,12 +153,12 @@ function run(interaction, database) {
                 'Anti Emoji Update', 'Anti Sticker Update', 'Anti Integration',
                 'Anti AutoMod Rule', 'Anti Thread Create', 'Anti Thread Delete'
             ].map(p => `> ${config.emojis.error} ${p}`).join('\n');
-            const embed = embedStyle('Antinuke Panel', `**Antinuke System Disabled.**\n\n**Inactive Protections:**\n${protections}\n\n⚠️ **Your server is now vulnerable.**\nUse \`/antinuke enable\` to restore security.`);
-            yield interaction.reply({ embeds: [embed] });
+            const embed = embedStyle('Antinuke Panel', `**Antinuke System Disabled.**\n\n**Inactive Protections:**\n${protections}\n\n⚠️ **Your server is now vulnerable.**\nUse \`/antinuke enable\` to restore security.`, config.colors.error);
+            yield interaction.reply(embed.toPayload());
         }
         else if (sub === 'show') {
             const logChannelId = guildData.antinuke.logChannelId;
-            const channelMsg = logChannelId ? `\n<:1709locked:1461066037008269434> **Log Channel:** <#${logChannelId}>` : `\n${config.emojis.warning} Could not find 'xeon-log'. Please set logs manually.`;
+            const channelMsg = logChannelId ? `\n<:1709locked:1461066037008269434> **Log Channel:** <#${logChannelId}>` : `\n${config.emojis.warning} Could not find 'hertz-log'. Please set logs manually.`;
             const statusEmoji = guildData.antinuke.enabled ? config.emojis.success : config.emojis.error;
             const protections = [
                 'Anti Ban', 'Anti Kick', 'Anti Prune', 'Anti Unban', 'Anti Bot Add',
@@ -174,13 +176,13 @@ function run(interaction, database) {
                 description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antinuke enable\` to activate security and protect your server! <:6581lockkey:1461100873479487559>`;
             }
             const embed = embedStyle('Antinuke Panel', description);
-            yield interaction.reply({ embeds: [embed] });
+            yield interaction.reply(embed.toPayload());
         }
         else {
             const embed = embedStyle('Antinuke Commands', `\`${config.prefix}antinuke enable\`\n` +
                 `\`${config.prefix}antinuke disable\`\n` +
                 `\`${config.prefix}antinuke show\``);
-            yield interaction.reply({ embeds: [embed] });
+            yield interaction.reply(embed.toPayload());
         }
     });
 }

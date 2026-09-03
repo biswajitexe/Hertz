@@ -1,28 +1,27 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, GuildVerificationLevel, GuildExplicitContentFilter, GuildMFALevel, GuildFeature, Guild, GuildPremiumTier, GuildSystemChannelFlags } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, GuildVerificationLevel, GuildExplicitContentFilter, GuildMFALevel, GuildFeature, GuildPremiumTier } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('serverinfo')
     .setDescription('Display detailed server information with categorized pages');
 
-// Aliases for prefix commands
 export const aliases = ["si", "server"];
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
-    if (!interaction.guild) return interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+    if (!interaction.guild) return interaction.reply(createErrorV2("This command can only be used in a server.").toPayload({ ephemeral: true }));
 
     const guild = interaction.guild;
     const owner = await guild.fetchOwner().catch(() => null);
 
-    // --- Helper to Generate Embeds for each Page ---
+    // --- Helper to Generate V2Embed for each Page ---
     const generateEmbed = (page: string) => {
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: guild.name, iconURL: guild.iconURL() || undefined })
+            .setAuthor(guild.name, guild.iconURL() || undefined)
             .setThumbnail(guild.iconURL({ size: 4096 }))
-            .setFooter({ text: `Requested by ${interaction.user.tag} • Page: ${page}`, iconURL: interaction.user.displayAvatarURL() })
+            .setFooter(`Requested by ${interaction.user.tag} • Page: ${page}`, interaction.user.displayAvatarURL())
             .setTimestamp();
 
         if (guild.bannerURL()) embed.setImage(guild.bannerURL({ size: 4096 })!);
@@ -96,13 +95,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 const humans = guild.members.cache.filter(m => !m.user.bot).size;
                 const bots = guild.members.cache.filter(m => m.user.bot).size;
 
-                // Presence (Now valid with Intent)
-                const online = guild.members.cache.filter(m => m.presence?.status === 'online').size;
-                const idle = guild.members.cache.filter(m => m.presence?.status === 'idle').size;
-                const dnd = guild.members.cache.filter(m => m.presence?.status === 'dnd').size;
-                const offline = total - (online + idle + dnd); // Rough estimate as invisible is offline
-
-                // Upload limit in MB
                 let maxUpload = "25MB";
                 if (guild.premiumTier === GuildPremiumTier.Tier2) maxUpload = "50MB";
                 if (guild.premiumTier === GuildPremiumTier.Tier3) maxUpload = "100MB";
@@ -150,7 +142,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
                 const roleCount = guild.roles.cache.size;
                 const highestRole = guild.roles.highest;
-                // Get top roles (excluding @everyone)
                 const topRoles = guild.roles.cache
                     .filter(r => r.id !== guild.id)
                     .sort((a, b) => b.position - a.position)
@@ -158,7 +149,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     .map(r => r.toString())
                     .join(", ");
 
-                // Emoji Preview
                 const emojis = guild.emojis.cache;
                 const emojiPreview = emojis.size > 0
                     ? emojis.first(15).map(e => e.toString()).join(" ") + (emojis.size > 15 ? ` ...+${emojis.size - 15}` : "")
@@ -190,7 +180,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 break;
 
             case 'Features':
-                // Format features list to Title Case and readable
                 const featuresList = guild.features.map(f => `\`${f.replace(/_/g, ' ')}\``).join(", ") || "None";
                 const shortFeatures = featuresList.length > 1024 ? featuresList.substring(0, 1020) + "..." : featuresList;
 
@@ -237,20 +226,19 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // --- Send Initial Message ---
     const message = await interaction.reply({
-        embeds: [generateEmbed('General')],
-        components: getButtons('General'),
+        ...generateEmbed('General').toPayload({ extraComponents: getButtons('General') }),
         fetchReply: true
     });
 
     // --- Collector ---
     const collector = message.createMessageComponentCollector({
         componentType: ComponentType.Button,
-        time: 60000 // 1 minute timeout
+        time: 60000
     });
 
     collector.on('collect', async (i) => {
         if (i.user.id !== interaction.user.id) {
-            await i.reply({ content: `${config.emojis.error} You cannot interact with this menu.`, ephemeral: true });
+            await i.reply(createErrorV2("You cannot interact with this menu.").toPayload({ ephemeral: true }));
             return;
         }
 
@@ -260,30 +248,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         if (i.customId === 'si_chn') pageName = 'Channels';
         if (i.customId === 'si_feat') pageName = 'Features';
 
-        await i.update({
-            embeds: [generateEmbed(pageName)],
-            components: getButtons(pageName)
-        });
+        await i.update(generateEmbed(pageName).toPayload({ extraComponents: getButtons(pageName) }));
     });
 
     collector.on('end', async () => {
-        await interaction.editReply({ components: getButtons('General', true) }).catch(() => { });
+        await interaction.editReply(generateEmbed('General').toPayload({ extraComponents: getButtons('General', true) })).catch(() => { });
     });
-}
-
-// --- Helpers ---
-function getNextTierGoal(currentTier: GuildPremiumTier): number {
-    if (currentTier === GuildPremiumTier.None) return 2;
-    if (currentTier === GuildPremiumTier.Tier1) return 7;
-    if (currentTier === GuildPremiumTier.Tier2) return 14;
-    return 14; // Max
-}
-
-function getProgressBar(current: number, goal: number): string {
-    const percent = Math.min(current / goal, 1);
-    const filled = Math.round(percent * 10);
-    const empty = 10 - filled;
-    return "[" + "🟦".repeat(filled) + "⬜".repeat(empty) + `] ${current}/${goal}`;
 }
 
 function getEmojiLimit(tier: GuildPremiumTier): string {

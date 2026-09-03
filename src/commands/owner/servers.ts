@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionsBitField } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, PermissionsBitField } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('servers')
@@ -15,16 +15,17 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
     if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
 
-    if (!owners.includes(interaction.user.id)) return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+    if (!owners.includes(interaction.user.id)) return interaction.reply(createErrorV2('Unknown command.').toPayload({ ephemeral: true }));
 
     const sub = interaction.options.getSubcommand();
 
     const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(color)
-            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
     if (sub === 'list') {
@@ -34,39 +35,38 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         const embed = embedStyle(`Top 10 Servers (${interaction.client.guilds.cache.size} Total)`, description);
 
-        return interaction.reply({ embeds: [embed], ephemeral: true });
+        return interaction.reply(embed.toPayload({ ephemeral: true }));
     }
 
     if (sub === 'leave') {
         const id = interaction.options.getString('id', true);
         const guild = interaction.client.guilds.cache.get(id);
-        if (!guild) return interaction.reply({ embeds: [embedStyle('Server Error', '> Bot is not in that server.', config.colors.error)], ephemeral: true });
+        if (!guild) return interaction.reply(embedStyle('Server Error', '> Bot is not in that server.', config.colors.error).toPayload({ ephemeral: true }));
 
         await guild.leave();
-        return interaction.reply({ embeds: [embedStyle('Left Server', `> Left **${guild.name}** (\`${id}\`).`, config.colors.success)], ephemeral: true });
+        return interaction.reply(embedStyle('Left Server', `> Left **${guild.name}** (\`${id}\`).`, config.colors.success).toPayload({ ephemeral: true }));
     }
 
     if (sub === 'invite') {
         const id = interaction.options.getString('id', true);
         const guild = interaction.client.guilds.cache.get(id);
-        if (!guild) return interaction.reply({ embeds: [embedStyle('Server Error', '> Bot is not in that server.', config.colors.error)], ephemeral: true });
+        if (!guild) return interaction.reply(embedStyle('Server Error', '> Bot is not in that server.', config.colors.error).toPayload({ ephemeral: true }));
 
-        // Find a Text Channel with CreateInvite permission
         const channel = guild.channels.cache.find(c =>
             c.type === ChannelType.GuildText &&
             c.permissionsFor(guild.members.me!)?.has(PermissionsBitField.Flags.CreateInstantInvite)
         );
 
         if (!channel) {
-            return interaction.reply({ embeds: [embedStyle('Invite Error', `> Could not find a channel to create invite in **${guild.name}**. Missing permissions?`, config.colors.error)], ephemeral: true });
+            return interaction.reply(embedStyle('Invite Error', `> Could not find a channel to create invite in **${guild.name}**. Missing permissions?`, config.colors.error).toPayload({ ephemeral: true }));
         }
 
         try {
             // @ts-ignore - channel is text based
             const invite = await channel.createInvite({ maxAge: 0, maxUses: 1 });
-            return interaction.reply({ embeds: [embedStyle(`Invite for ${guild.name}`, `> [Click to Join](${invite.url})`)], ephemeral: true });
+            return interaction.reply(embedStyle(`Invite for ${guild.name}`, `> [Click to Join](${invite.url})`).toPayload({ ephemeral: true }));
         } catch (e) {
-            return interaction.reply({ embeds: [embedStyle('Invite Error', '> Failed to create invite.', config.colors.error)], ephemeral: true });
+            return interaction.reply(embedStyle('Invite Error', '> Failed to create invite.', config.colors.error).toPayload({ ephemeral: true }));
         }
     }
 }

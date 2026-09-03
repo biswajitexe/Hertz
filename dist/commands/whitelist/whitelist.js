@@ -46,6 +46,7 @@ exports.command = exports.aliases = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.aliases = ['wl'];
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('whitelist')
@@ -133,12 +134,13 @@ function run(interaction, database) {
                         const userIds = new Set([...l.users, ...i.users, ...s.users]);
                         const roleIds = new Set([...l.roles, ...i.roles, ...s.roles]);
                         const channelIds = new Set([...l.channels, ...i.channels, ...s.channels]);
+                        let currentType = 'users';
                         const getEmbed = (type) => __awaiter(this, void 0, void 0, function* () {
-                            const embed = new discord_js_1.EmbedBuilder()
+                            const embed = new componentV2_1.V2Embed()
                                 .setColor(config.colors.primary)
-                                .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+                                .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
                             if (type === 'users') {
-                                embed.setAuthor({ name: 'whitelist users', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                                embed.setAuthor('whitelist users', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                                 const ids = Array.from(userIds);
                                 const names = yield Promise.all(ids.map((id) => __awaiter(this, void 0, void 0, function* () {
                                     try {
@@ -153,36 +155,41 @@ function run(interaction, database) {
                                 embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No users whitelisted.**");
                             }
                             else if (type === 'roles') {
-                                embed.setAuthor({ name: 'whitelist roles', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                                embed.setAuthor('whitelist roles', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                                 const list = Array.from(roleIds).map((id, i) => `${i + 1}. <@&${id}>`).join('\n');
                                 embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No roles whitelisted.**");
                             }
                             else if (type === 'channels') {
-                                embed.setAuthor({ name: 'whitelist channels', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                                embed.setAuthor('whitelist channels', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                                 const list = Array.from(channelIds).map((id, i) => `${i + 1}. <#${id}>`).join('\n');
                                 embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No channels whitelisted.**");
                             }
                             return embed;
                         });
-                        const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>'), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general));
-                        const reply = yield interaction.reply({ embeds: [yield getEmbed('users')], components: [row] });
+                        const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled));
+                        const reply = yield interaction.reply((yield getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
                         const collector = reply.createMessageComponentCollector({ componentType: discord_js_1.ComponentType.Button, time: 60000 });
                         collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {
                             if (i.user.id !== interaction.user.id) {
                                 yield i.reply({ content: `${config.emojis.error} **Only the requester can use these buttons.**`, ephemeral: true });
                                 return;
                             }
-                            if (i.customId === 'wl_show_users')
-                                yield i.update({ embeds: [yield getEmbed('users')] });
-                            else if (i.customId === 'wl_show_roles')
-                                yield i.update({ embeds: [yield getEmbed('roles')] });
-                            else if (i.customId === 'wl_show_channels')
-                                yield i.update({ embeds: [yield getEmbed('channels')] });
+                            if (i.customId === 'wl_show_users') {
+                                currentType = 'users';
+                                yield i.update((yield getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
+                            }
+                            else if (i.customId === 'wl_show_roles') {
+                                currentType = 'roles';
+                                yield i.update((yield getEmbed('roles')).toPayload({ extraComponents: [getRow()] }));
+                            }
+                            else if (i.customId === 'wl_show_channels') {
+                                currentType = 'channels';
+                                yield i.update((yield getEmbed('channels')).toPayload({ extraComponents: [getRow()] }));
+                            }
                         }));
-                        collector.on('end', () => {
-                            const disabledRow = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.user), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji('<:64851purpleshield:1461677014367998153>'), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.general));
-                            reply.edit({ components: [disabledRow] }).catch(() => { });
-                        });
+                        collector.on('end', () => __awaiter(this, void 0, void 0, function* () {
+                            reply.edit((yield getEmbed(currentType)).toPayload({ extraComponents: [getRow(true)] })).catch(() => { });
+                        }));
                         return;
                     }
                     catch (err) {
@@ -308,13 +315,13 @@ function run(interaction, database) {
                     }
                 }
             }
-            const helpEmbed = new discord_js_1.EmbedBuilder()
+            const helpEmbed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
                 .setTitle('<:4497kazuhawaiter:1461641597476274332> whitelist command')
                 .setDescription('\`?wl add <user>\`\n\`?wl remove <user>\`\n\`?wl show\`\n\`?wl reset all\`')
                 .setThumbnail(interaction.client.user.displayAvatarURL())
-                .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
-            yield interaction.reply({ embeds: [helpEmbed] });
+                .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            yield interaction.reply(helpEmbed.toPayload());
             return;
         }
         const user = interaction.options.getUser('user');
@@ -421,12 +428,13 @@ function run(interaction, database) {
                     list.roles.forEach(id => roleIds.add(id));
                     list.channels.forEach(id => channelIds.add(id));
                 }
+                let currentType = 'users';
                 const getEmbed = (type) => __awaiter(this, void 0, void 0, function* () {
-                    const embed = new discord_js_1.EmbedBuilder()
+                    const embed = new componentV2_1.V2Embed()
                         .setColor(config.colors.primary)
-                        .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+                        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
                     if (type === 'users') {
-                        embed.setAuthor({ name: 'whitelist users', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                        embed.setAuthor('whitelist users', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                         const ids = Array.from(userIds);
                         const names = yield Promise.all(ids.map((id) => __awaiter(this, void 0, void 0, function* () {
                             try {
@@ -441,36 +449,41 @@ function run(interaction, database) {
                         embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No users whitelisted.**");
                     }
                     else if (type === 'roles') {
-                        embed.setAuthor({ name: 'whitelist roles', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                        embed.setAuthor('whitelist roles', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                         const list = Array.from(roleIds).map((id, i) => `${i + 1}. <@&${id}>`).join('\n');
                         embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No roles whitelisted.**");
                     }
                     else if (type === 'channels') {
-                        embed.setAuthor({ name: 'whitelist channels', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                        embed.setAuthor('whitelist channels', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                         const list = Array.from(channelIds).map((id, i) => `${i + 1}. <#${id}>`).join('\n');
                         embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No channels whitelisted.**");
                     }
                     return embed;
                 });
-                const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>'), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general));
-                const reply = yield interaction.editReply({ embeds: [yield getEmbed('users')], components: [row] });
+                const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled));
+                const reply = yield interaction.editReply((yield getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
                 const collector = reply.createMessageComponentCollector({ componentType: discord_js_1.ComponentType.Button, time: 60000 });
                 collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {
                     if (i.user.id !== interaction.user.id) {
                         yield i.reply({ content: `${config.emojis.error} **Only the requester can use these buttons.**`, ephemeral: true });
                         return;
                     }
-                    if (i.customId === 'wl_show_users')
-                        yield i.update({ embeds: [yield getEmbed('users')] });
-                    else if (i.customId === 'wl_show_roles')
-                        yield i.update({ embeds: [yield getEmbed('roles')] });
-                    else if (i.customId === 'wl_show_channels')
-                        yield i.update({ embeds: [yield getEmbed('channels')] });
+                    if (i.customId === 'wl_show_users') {
+                        currentType = 'users';
+                        yield i.update((yield getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
+                    }
+                    else if (i.customId === 'wl_show_roles') {
+                        currentType = 'roles';
+                        yield i.update((yield getEmbed('roles')).toPayload({ extraComponents: [getRow()] }));
+                    }
+                    else if (i.customId === 'wl_show_channels') {
+                        currentType = 'channels';
+                        yield i.update((yield getEmbed('channels')).toPayload({ extraComponents: [getRow()] }));
+                    }
                 }));
-                collector.on('end', () => {
-                    const disabledRow = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.user), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji('<:64851purpleshield:1461677014367998153>'), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.general));
-                    reply.edit({ components: [disabledRow] }).catch(() => { });
-                });
+                collector.on('end', () => __awaiter(this, void 0, void 0, function* () {
+                    reply.edit((yield getEmbed(currentType)).toPayload({ extraComponents: [getRow(true)] })).catch(() => { });
+                }));
             }
             else if (sub === 'reset') {
                 let changeCount = 0;

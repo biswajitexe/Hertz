@@ -1,4 +1,3 @@
-
 import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import { canModerate } from "../../utilities/permission";
@@ -26,40 +25,40 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // 0. Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.KickMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You do not have permission to kick members.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You do not have permission to kick members.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!user) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?kick <user> [reason]`")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?kick <user> [reason]`").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!(user instanceof GuildMember)) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "User is not in the server.")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "User is not in the server.").toPayload({ ephemeral: true }));
         return;
     }
 
     // 1. Safety Checks
     if (user.id === interaction.user.id) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot kick yourself.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot kick yourself.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.client.user.id) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot kick me.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot kick me.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.guild.ownerId) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot kick the server owner.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot kick the server owner.**").toPayload({ ephemeral: true }));
         return;
     }
     if (!user.kickable) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**I cannot kick this user. My role is likely below theirs.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**I cannot kick this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!canModerate(interaction.member, user, PermissionFlagsBits.KickMembers)) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot kick this user due to role hierarchy.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot kick this user due to role hierarchy.**").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -67,14 +66,13 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // 2. DM User
     try {
-        const dmEmbed = createErrorEmbed(interaction.user, `You have been kicked from **${interaction.guild.name}**`) // Using Error style for punishment DM
+        const dmEmbed = createErrorEmbed(interaction.user, `You have been kicked from **${interaction.guild.name}**`)
             .setTitle(`You have been kicked from ${interaction.guild.name}`)
-            .setDescription(null)
             .addFields(
                 { name: 'Reason', value: reason },
                 { name: 'Moderator', value: interaction.user.tag }
             );
-        await user.send({ embeds: [dmEmbed] });
+        await user.send(dmEmbed.toPayload()).catch(() => {});
     } catch (e) { }
 
     // 3. Execute Kick
@@ -88,10 +86,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const successEmbed = createSuccessEmbed(interaction.user, `**Kicked ${user.user.tag}**`)
             .addFields({ name: 'Reason', value: reason, inline: false });
 
-        await interaction.editReply({ embeds: [successEmbed] });
+        await interaction.editReply(successEmbed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "**Failed to kick user.**")] });
+        await interaction.editReply(createErrorEmbed(interaction.user, "**Failed to kick user.**").toPayload());
     }
 }

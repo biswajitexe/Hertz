@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const util_1 = require("util");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('eval')
     .setDescription('Evaluates arbitrary JavaScript code (Owner Only)')
@@ -60,17 +61,18 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.developerUsers)
             owners.push(...botConfig.developerUsers);
         if (!owners.includes(interaction.user.id)) {
-            return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         }
         const code = interaction.options.getString('code', true);
         const embedStyle = (title, description, color, fields) => {
             var _a;
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(color)
-                .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**${description ? `\n\n${description}` : ''}`)
+                .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+                .setDescription(description || "")
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .addFields(fields)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .addFields(...fields)
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
             return embed;
         };
         try {
@@ -84,14 +86,14 @@ function run(interaction, database) {
                 { name: 'Input', value: `> \`\`\`js\n${code}\n\`\`\`` },
                 { name: 'Output', value: `> \`\`\`js\n${output}\n\`\`\`` }
             ]);
-            yield interaction.reply({ embeds: [embed], ephemeral: true });
+            yield interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         catch (error) {
             const embed = embedStyle('Evaluation Failed', null, config.colors.error, [
                 { name: 'Input', value: `> \`\`\`js\n${code}\n\`\`\`` },
                 { name: 'Error', value: `> \`\`\`js\n${error.message}\n\`\`\`` }
             ]);
-            yield interaction.reply({ embeds: [embed], ephemeral: true });
+            yield interaction.reply(embed.toPayload({ ephemeral: true }));
         }
     });
 }

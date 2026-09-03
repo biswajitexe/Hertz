@@ -1,12 +1,11 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits, TextChannel } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, TextChannel } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('unlockall')
-    .setDescription('Unlock all channels in the server')
-
+    .setDescription('Unlock all channels in the server');
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.guild) return;
@@ -14,7 +13,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     await interaction.deferReply();
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to use this command.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to use this command.").toPayload({ ephemeral: true }));
     }
 
     const channels = interaction.guild.channels.cache.filter(c => c.isTextBased() && c.manageable);
@@ -31,9 +30,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
     }
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(0x57F287)
-        .setDescription(`${config.emojis.success || "🔓"} **Unlocked ${count} channels.**`);
+        .setTitle(`${config.emojis.success || "🔓"} Channels Unlocked`)
+        .setDescription(`**Unlocked ${count} channels.**`);
 
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(embed.toPayload());
 }

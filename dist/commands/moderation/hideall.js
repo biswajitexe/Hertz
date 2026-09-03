@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('hideall')
     .setDescription('Hide all channels in the server')
@@ -57,7 +58,7 @@ function run(interaction, database) {
             return;
         yield interaction.deferReply();
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.Administrator)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to use this command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to use this command.").toPayload({ ephemeral: true }));
         }
         const channels = interaction.guild.channels.cache.filter(c => c.isTextBased() && c.manageable);
         let count = 0;
@@ -72,9 +73,10 @@ function run(interaction, database) {
                 console.error(`Failed to hide ${channel.name}`);
             }
         }
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(0xED4245)
-            .setDescription(`${config.emojis.success || "🙈"} **Hidden ${count} channels.**`);
-        yield interaction.editReply({ embeds: [embed] });
+            .setTitle(`${config.emojis.success || "🙈"} Channels Hidden`)
+            .setDescription(`**Hidden ${count} channels** from everyone.`);
+        yield interaction.editReply(embed.toPayload());
     });
 }

@@ -1,9 +1,10 @@
 import type { ButtonInteraction, ChatInputCommandInteraction, StringSelectMenuInteraction } from "discord.js";
-import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBuilder, StringSelectMenuBuilder } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, SlashCommandBuilder, StringSelectMenuBuilder } from "discord.js";
 import fs from 'node:fs';
 import path from 'node:path';
 import * as config from "../../config";
 import type { Database } from "../../database";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('dev')
@@ -16,7 +17,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     if (!owners.includes(interaction.user.id)) {
         if (!interaction.isRepliable()) return;
-        return interaction.reply({ content: "Unknown command.", ephemeral: true });
+        return interaction.reply(createErrorV2("Unknown command.").toPayload({ ephemeral: true }));
     }
     await sendOwnerPanel(interaction);
 }
@@ -29,7 +30,7 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
     if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
 
     if (!owners.includes(interaction.user.id)) {
-        return interaction.reply({ content: "You cannot use this menu.", ephemeral: true });
+        return interaction.reply(createErrorV2("You cannot use this menu.").toPayload({ ephemeral: true }));
     }
 
     if (interaction.isButton() && interaction.customId === 'dev_home') {
@@ -42,7 +43,6 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
             const ownerDir = path.join(__dirname);
             const files = fs.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.startsWith('dev'));
             
-            // biome-ignore lint/suspicious/noExplicitAny: Dynamic require
             let foundCmd: any = null;
             for(const file of files) {
                 try {
@@ -55,20 +55,15 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
             }
 
             if (!foundCmd) {
-                return interaction.reply({ content: `Command information not found for \`${commandName}\`.`, ephemeral: true });
+                return interaction.reply(createErrorV2(`Command information not found for \`${commandName}\`.`).toPayload({ ephemeral: true }));
             }
 
             let description = `> ${foundCmd.command.description || "No description provided."}`;
             
-            // Check for Subcommands
             const rawData = typeof foundCmd.command.toJSON === 'function' ? foundCmd.command.toJSON() : foundCmd.command;
-            // biome-ignore lint/suspicious/noExplicitAny: Dynamic command data
             if (rawData.options?.some((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)) {
-                // Has subcommands
                 const subcommands = rawData.options
-                    // biome-ignore lint/suspicious/noExplicitAny: Dynamic command data
                     .filter((opt: any) => opt.type === ApplicationCommandOptionType.Subcommand || opt.type === ApplicationCommandOptionType.SubcommandGroup)
-                    // biome-ignore lint/suspicious/noExplicitAny: Dynamic command data
                     .map((opt: any) => `\`${opt.name}\``)
                     .join(", ");
                 
@@ -76,17 +71,15 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
                     description = `> ${subcommands}`;
                 }
             } else {
-                 // No subcommands
                  description = `> \`${foundCmd.command.name}\``;
             }
 
-            const embed = new EmbedBuilder()
+            const embed = new V2Embed()
                 .setColor(config.colors.primary)
                 .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`)
                 .setDescription(description)
-                .setFooter({ text: "Xeon • Owner Command", iconURL: interaction.client.user?.displayAvatarURL() });
+                .setFooter("Hertz • Owner Command", interaction.client.user?.displayAvatarURL());
 
-            // Navigation Buttons
             const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
@@ -94,11 +87,11 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
 
             const selectMenu = await createOwnerSelectMenu();
 
-            await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
+            await interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
 
         } catch (error) {
             console.error(error);
-            await interaction.reply({ content: "Error retrieving command details.", ephemeral: true });
+            await interaction.reply(createErrorV2("Error retrieving command details.").toPayload({ ephemeral: true }));
         }
     }
 }
@@ -121,23 +114,23 @@ async function sendOwnerPanel(interaction: ChatInputCommandInteraction | ButtonI
         }
     }).filter(c => c !== null).join(", ");
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
         .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
         .setDescription(`> ${cleanCommands}`)
-        .setFooter({ text: `Xeon • Owner Commands`, iconURL: interaction.client.user?.displayAvatarURL() || undefined });
+        .setFooter(`Hertz • Owner Commands`, interaction.client.user?.displayAvatarURL() || undefined);
 
     const selectMenu = await createOwnerSelectMenu();
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary).setDisabled(true), // Disabled on Home
+        new ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(ButtonStyle.Secondary).setDisabled(true),
         new ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(ButtonStyle.Danger)
     );
 
     if (isUpdate && (interaction.isButton() || interaction.isStringSelectMenu())) {
-        await interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
+        await interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
     } else if (interaction.isChatInputCommand()) {
-        await interaction.reply({ embeds: [embed], components: [selectMenu, buttons], ephemeral: true });
+        await interaction.reply(embed.toPayload({ extraComponents: [selectMenu, buttons], ephemeral: true }));
     }
 }
 

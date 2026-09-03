@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('admin')
     .setDescription('Manage Bot Admins')
@@ -61,44 +62,42 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
             owners.push(...botConfig.ownerUsers);
         if (!owners.includes(interaction.user.id)) {
-            return interaction.reply({
-                embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Only the **Bot Owner** can use this command.`)],
-                ephemeral: true
-            });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Only the **Bot Owner** can use this command.').toPayload({ ephemeral: true }));
         }
         const subcommand = interaction.options.getSubcommand(false);
         if (!botConfig.adminUsers)
             botConfig.adminUsers = [];
         const embedStyle = (title, description) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
-                .setDescription(`**${config.emojis.admin} ${title}**\n\n${description}`)
+                .setTitle(`${config.emojis.admin} ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (subcommand === 'add') {
             const targetUser = interaction.options.getUser('user', true);
             if (botConfig.adminUsers.includes(targetUser.id)) {
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is already an **Admin**.`)] });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`**${targetUser.tag}** is already an **Admin**.`).toPayload());
             }
             botConfig.adminUsers.push(targetUser.id);
             yield database.updateBotConfig(botConfig);
-            return interaction.reply({ embeds: [embedStyle('Admin Added', `> Added **${targetUser.tag}** as a **Bot Admin**.`)] });
+            return interaction.reply(embedStyle('Admin Added', `> Added **${targetUser.tag}** as a **Bot Admin**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
         }
         if (subcommand === 'remove') {
             const targetUser = interaction.options.getUser('user', true);
             if (!botConfig.adminUsers.includes(targetUser.id)) {
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is not an **Admin**.`)] });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`**${targetUser.tag}** is not an **Admin**.`).toPayload());
             }
             botConfig.adminUsers = botConfig.adminUsers.filter(id => id !== targetUser.id);
             yield database.updateBotConfig(botConfig);
-            return interaction.reply({ embeds: [embedStyle('Admin Removed', `> Removed **${targetUser.tag}** from **Bot Admins**.`)] });
+            return interaction.reply(embedStyle('Admin Removed', `> Removed **${targetUser.tag}** from **Bot Admins**.`).toPayload());
         }
         if (subcommand === 'list') {
             const users = botConfig.adminUsers;
             if (users.length === 0)
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} No Admins found.`)] });
+                return interaction.reply((0, componentV2_1.createWarningV2)('No Admins found.').toPayload());
             const names = yield Promise.all(users.map((id) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     return (yield interaction.client.users.fetch(id)).username;
@@ -108,11 +107,11 @@ function run(interaction, database) {
                 }
             })));
             const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
-            return interaction.reply({ embeds: [embedStyle('Bot Admins', list)] });
+            return interaction.reply(embedStyle('Bot Admins', list).toPayload());
         }
         const embed = embedStyle('Admin Commands', `\`${config.prefix}admin add <user>\`\n` +
             `\`${config.prefix}admin remove <user>\`\n` +
             `\`${config.prefix}admin list\``);
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     });
 }

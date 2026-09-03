@@ -46,6 +46,7 @@ exports.AntinukeManager = void 0;
 const discord_js_1 = require("discord.js");
 const Core_1 = require("./Core");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 class AntinukeManager {
     constructor(client, database) {
         this.client = client;
@@ -128,7 +129,7 @@ class AntinukeManager {
             if (guildData && guildData.antinuke && guildData.antinuke.enabled && guildData.antinuke.logChannelId === channel.id) {
                 try {
                     const newChannel = yield channel.guild.channels.create({
-                        name: 'xeon-log',
+                        name: 'hertz-log',
                         type: discord_js_1.ChannelType.GuildText,
                         permissionOverwrites: [
                             {
@@ -144,13 +145,13 @@ class AntinukeManager {
                     });
                     guildData.antinuke.logChannelId = newChannel.id;
                     yield this.database.insertGuild(channel.guild.id, guildData);
-                    const embed = new discord_js_1.EmbedBuilder()
+                    const embed = new componentV2_1.V2Embed()
                         .setColor(config.colors.primary)
                         .setTitle(`${config.emojis.antinuke} Security Alert`)
                         .setDescription(`${config.emojis.warning} **The previous log channel was deleted.**\n\nI have automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
                         .setThumbnail(channel.guild.iconURL() || ((_a = this.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                        .setFooter({ text: 'Antinuke Security System', iconURL: ((_b = this.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || undefined });
-                    yield newChannel.send({ embeds: [embed] });
+                        .setFooter('Antinuke Security System', ((_b = this.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || undefined);
+                    yield newChannel.send(embed.toPayload());
                 }
                 catch (e) {
                     console.error("Failed to recover log channel", e);

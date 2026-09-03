@@ -46,6 +46,7 @@ exports.aliases = exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('userinfo')
     .setDescription('Display detailed information about a user')
@@ -60,17 +61,11 @@ function run(interaction, database) {
         const user = yield interaction.client.users.fetch(rawUser.id, { force: true });
         const member = (_a = interaction.guild) === null || _a === void 0 ? void 0 : _a.members.cache.get(user.id);
         const targetMember = member || (interaction.guild ? yield interaction.guild.members.fetch(user.id).catch(() => null) : null);
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({
-            name: `${user.username}`,
-            iconURL: user.displayAvatarURL(),
-        })
+            .setAuthor(user.username, user.displayAvatarURL())
             .setThumbnail(user.displayAvatarURL({ size: 4096 }))
-            .setFooter({
-            text: `Requested by ${interaction.user.tag}`,
-            iconURL: interaction.user.displayAvatarURL(),
-        })
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
             .setTimestamp();
         const userInfoParts = [
             `${config.emojis.dot} **Display Name:** ${user.globalName || user.username}`,
@@ -134,6 +129,6 @@ function run(interaction, database) {
                 .setStyle(discord_js_1.ButtonStyle.Link)
                 .setURL(user.bannerURL({ size: 4096 })));
         }
-        yield interaction.reply({ embeds: [embed], components: [row] });
+        yield interaction.reply(embed.toPayload({ extraComponents: [row] }));
     });
 }

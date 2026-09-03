@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../../config"));
 const giveaway_1 = require("../giveaway");
+const componentV2_1 = require("../../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('gstart')
     .setDescription('Start a new giveaway')
@@ -67,16 +68,17 @@ function run(interaction, database) {
         if (!interaction.guild)
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageMessages)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage giveaways.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('You do not have permission to manage giveaways.').toPayload({ ephemeral: true }));
         }
         const time = interaction.options.getString('time');
         const winners = interaction.options.getInteger('winners');
         const prize = interaction.options.getString('prize');
         if (!time || !winners || !prize) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
+                .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Start`)
                 .setDescription(`**Usage:** \`?gstart <time> <winners> <prize>\`\n**Example:** \`?gstart 10m 1 Nitro\``);
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply(embed.toPayload());
         }
         yield (0, giveaway_1.handleStart)(interaction);
     });

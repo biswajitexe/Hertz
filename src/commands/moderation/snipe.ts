@@ -1,8 +1,8 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import { snipeCache } from "../../structures/SnipeManager";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('snipe')
@@ -13,20 +13,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const snipes = snipeCache.get(interaction.channelId);
 
     if (!snipes || snipes.length === 0) {
-        return interaction.reply({ content: `${config.emojis.error} There is nothing to snipe here!`, ephemeral: true });
+        return interaction.reply(createErrorV2("There is nothing to snipe here!").toPayload({ ephemeral: true }));
     }
 
-    const data = snipes[0]; // Get latest
+    const data = snipes[0];
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setAuthor({ name: data.authorTag, iconURL: data.authorAvatar || undefined })
+        .setAuthor(data.authorTag, data.authorAvatar || undefined)
         .setDescription(data.content || "*No content (Image only)*")
-        .setFooter({ text: `Sniped by ${interaction.user.tag} | Deleted` });
+        .setFooter(`Sniped by ${interaction.user.tag} | Deleted`);
 
     if (data.image) {
         embed.setImage(data.image);
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(embed.toPayload());
 }

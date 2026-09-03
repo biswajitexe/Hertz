@@ -46,9 +46,9 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('nuke')
-    .setDescription('Clone and delete the current channel (clears all messages)')
     .setDescription('Clone and delete the current channel (clears all messages)');
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -57,16 +57,17 @@ function run(interaction, database) {
             return;
         const channel = interaction.channel;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageChannels)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to use this command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to use this command.").toPayload({ ephemeral: true }));
         }
         if (!channel.clone) {
-            return interaction.reply({ content: `${config.emojis.error} This channel type cannot be nuked.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("This channel type cannot be nuked.").toPayload({ ephemeral: true }));
         }
         try {
-            const confirmEmbed = new discord_js_1.EmbedBuilder()
+            const confirmEmbed = new componentV2_1.V2Embed()
                 .setColor(config.colors.warning || 0xFFA500)
+                .setTitle('⚠️ Confirm Channel Nuke')
                 .setDescription(`**Are you sure you want to nuke this channel?**\nThis will **permanently delete** all messages and clone the channel.`)
-                .setFooter({ text: 'This action cannot be undone.' });
+                .setFooter('This action cannot be undone.');
             const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
                 .setCustomId('nuke_confirm')
                 .setLabel('Yes, Nuke it!')
@@ -74,25 +75,26 @@ function run(interaction, database) {
                 .setCustomId('nuke_cancel')
                 .setLabel('No, Cancel')
                 .setStyle(discord_js_1.ButtonStyle.Secondary));
-            const reply = yield interaction.reply({ embeds: [confirmEmbed], components: [buttons], fetchReply: true });
+            const reply = yield interaction.reply(Object.assign(Object.assign({}, confirmEmbed.toPayload({ extraComponents: [buttons] })), { fetchReply: true }));
             const collector = reply.createMessageComponentCollector({ componentType: discord_js_1.ComponentType.Button, time: 30000 });
             collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {
                 if (i.user.id !== interaction.user.id) {
-                    return i.reply({ content: 'Only the person who requested the nuke can confirm it.', ephemeral: true });
+                    return i.reply((0, componentV2_1.createErrorV2)('Only the person who requested the nuke can confirm it.').toPayload({ ephemeral: true }));
                 }
                 if (i.customId === 'nuke_confirm') {
-                    yield i.reply({ content: 'Nuking channel...', ephemeral: true });
+                    yield i.reply((0, componentV2_1.createWarningV2)('Nuking channel...').toPayload({ ephemeral: true }));
                     const newChannel = yield channel.clone({ position: channel.position });
                     yield channel.delete();
-                    const successEmbed = new discord_js_1.EmbedBuilder()
+                    const successEmbed = new componentV2_1.V2Embed()
                         .setColor(0xED4245)
-                        .setImage('https://media.giphy.com/media/HhTXt43pk1I1W/giphy.gif')
-                        .setDescription(`${config.emojis.success || "💥"} **Channel Nuked!**\nAll messages have been cleared.`);
-                    yield newChannel.send({ embeds: [successEmbed] });
+                        .setTitle(`${config.emojis.success || "💥"} Channel Nuked!`)
+                        .setDescription(`All messages have been cleared.`)
+                        .setImage('https://media.giphy.com/media/HhTXt43pk1I1W/giphy.gif');
+                    yield newChannel.send(successEmbed.toPayload());
                     yield newChannel.send({ content: `Action performed by <@${interaction.user.id}>` });
                 }
                 else if (i.customId === 'nuke_cancel') {
-                    yield i.update({ content: 'Nuke action cancelled.', embeds: [], components: [] });
+                    yield i.update({ content: 'Nuke action cancelled.', components: [] });
                     setTimeout(() => interaction.deleteReply().catch(() => { }), 5000);
                 }
             }));

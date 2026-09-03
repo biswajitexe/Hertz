@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, OAuth2Scopes, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, OAuth2Scopes, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('invite')
@@ -11,15 +11,22 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const inviteLink = interaction.client.generateInvite({
         scopes: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands],
         permissions: [
-            PermissionFlagsBits.Administrator // Requesting Admin for full features
+            PermissionFlagsBits.Administrator
         ]
     });
 
-    const embed = new EmbedBuilder()
-        .setColor(0x2B2D31)
-        .setTitle('Invite Me!')
-        .setDescription(`[Click here to invite me to your server](${inviteLink})\n\nI need **Administrator** permissions for full functionality (Moderation, Antiraid, etc.).`)
-        .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+    const embed = new V2Embed()
+        .setColor(config.colors.primary)
+        .setTitle('Invite Hertz Security!')
+        .setDescription(`Click below to add me to your server.\n\nI recommend **Administrator** permissions for full functionality (Antinuke, AutoMod, Moderation, etc.).`)
+        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
-    await interaction.reply({ embeds: [embed] });
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setLabel("Invite Me")
+            .setStyle(ButtonStyle.Link)
+            .setURL(inviteLink)
+    );
+
+    await interaction.reply(embed.toPayload({ extraComponents: [row] }));
 }

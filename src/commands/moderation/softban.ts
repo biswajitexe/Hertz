@@ -1,8 +1,9 @@
-import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import { canModerate } from "../../utilities/permission";
 import * as config from "../../config";
 import { logAction } from "../../utilities/modLogger";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('softban')
@@ -25,39 +26,39 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.BanMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to ban members.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to ban members.").toPayload({ ephemeral: true }));
     }
 
     if (!user) {
-        await interaction.reply({ content: `${config.emojis.error} User not found. Please mention a valid user.`, ephemeral: true });
+        await interaction.reply(createErrorV2("User not found. Please mention a valid user.").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!(user instanceof GuildMember)) {
-        await interaction.reply({ content: `${config.emojis.error} User is not in the server.`, ephemeral: true });
+        await interaction.reply(createErrorV2("User is not in the server.").toPayload({ ephemeral: true }));
         return;
     }
 
     // Safety Checks
     if (user.id === interaction.user.id) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot softban yourself.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot softban yourself.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.client.user.id) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot softban me.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot softban me.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.guild.ownerId) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot softban the server owner.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot softban the server owner.**").toPayload({ ephemeral: true }));
         return;
     }
     if (!user.bannable) {
-        await interaction.reply({ content: `${config.emojis.error} **I cannot softban this user (My role is too low).**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**I cannot softban this user (My role is too low).**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!canModerate(interaction.member, user, PermissionFlagsBits.BanMembers)) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot moderate this user.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot moderate this user.**").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -73,9 +74,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         // 3. Log
         await logAction(interaction.guild, user.user, interaction.user, 'BAN', `(Soft Ban) ${reason}`, database);
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.warning) // Softban is lighter than Ban
-            .setDescription(`${config.emojis.success} **Soft Banned ${user.user.tag}**`)
+        const embed = new V2Embed()
+            .setColor(config.colors.warning)
+            .setTitle(`${config.emojis.success} Soft Banned ${user.user.tag}`)
+            .setDescription(`**User kicked and messages from the past 7 days have been removed.**`)
             .addFields(
                 { name: 'Action', value: 'Kicked + Messages Deleted (7 Days)', inline: false }
             );
@@ -84,10 +86,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             embed.addFields({ name: 'Reason', value: reason, inline: false });
         }
 
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply(embed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ content: `${config.emojis.error} **Failed to softban user.**` });
+        await interaction.editReply(createErrorV2("**Failed to softban user.**").toPayload());
     }
 }

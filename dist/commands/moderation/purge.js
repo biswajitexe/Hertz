@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('purge')
     .setDescription('Delete multiple messages at once')
@@ -70,10 +71,10 @@ function run(interaction, database) {
         const botsOnly = interaction.options.getBoolean('bots');
         const channel = interaction.channel;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageMessages)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to purge messages.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to purge messages.").toPayload({ ephemeral: true }));
         }
         if (!channel.bulkDelete) {
-            return interaction.reply({ content: `${config.emojis.error} This channel cannot be purged.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("This channel cannot be purged.").toPayload({ ephemeral: true }));
         }
         yield interaction.deferReply({ ephemeral: false });
         try {
@@ -86,8 +87,8 @@ function run(interaction, database) {
             else if (botsOnly) {
                 messagesToDelete = messagesToDelete.filter((m) => m.author.bot);
             }
+            const rawAmount = interaction.options.getInteger('amount');
             if (targetUser || botsOnly) {
-                const rawAmount = interaction.options.getInteger('amount');
                 if (rawAmount) {
                     messagesToDelete = messagesToDelete.first(rawAmount);
                 }
@@ -98,26 +99,27 @@ function run(interaction, database) {
             const finalDeleteList = messagesToDelete instanceof Map || messagesToDelete instanceof Array ? messagesToDelete : messagesToDelete;
             const deleteCount = Array.isArray(finalDeleteList) ? finalDeleteList.length : finalDeleteList.size;
             if (deleteCount === 0) {
-                return interaction.editReply({ content: `${config.emojis.error} No matching messages found to delete.` });
+                return interaction.editReply((0, componentV2_1.createErrorV2)("No matching messages found to delete.").toPayload());
             }
             yield channel.bulkDelete(finalDeleteList, true);
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(0x57F287)
-                .setDescription(`${config.emojis.success || "correct"} Successfully deleted **${deleteCount}** messages.`);
+                .setTitle(`${config.emojis.success || "✅"} Messages Purged`)
+                .setDescription(`Successfully deleted **${deleteCount}** messages.`);
             if (targetUser)
-                embed.setDescription(`${config.emojis.success || "correct"} Deleted **${deleteCount}** messages from **${targetUser.tag}**.`);
+                embed.setDescription(`Deleted **${deleteCount}** messages from **${targetUser.tag}**.`);
             if (botsOnly)
-                embed.setDescription(`${config.emojis.success || "correct"} Deleted **${deleteCount}** bot messages.`);
-            yield interaction.editReply({ embeds: [embed] });
+                embed.setDescription(`Deleted **${deleteCount}** bot messages.`);
+            yield interaction.editReply(embed.toPayload());
             setTimeout(() => interaction.deleteReply().catch(() => { }), 30000);
         }
         catch (err) {
             console.error(err);
             if (interaction.deferred) {
-                return interaction.editReply({ content: `${config.emojis.error} Failed to delete messages. Messages older than 14 days cannot be bulk deleted.` });
+                return interaction.editReply((0, componentV2_1.createErrorV2)("Failed to delete messages. Messages older than 14 days cannot be bulk deleted.").toPayload());
             }
             else {
-                return interaction.reply({ content: `${config.emojis.error} Failed to delete messages.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)("Failed to delete messages.").toPayload({ ephemeral: true }));
             }
         }
     });

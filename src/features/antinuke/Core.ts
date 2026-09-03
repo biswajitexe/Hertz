@@ -1,7 +1,8 @@
 
-import { Client, Guild, User, TextChannel, EmbedBuilder, PermissionFlagsBits, AuditLogEvent } from "discord.js";
+import { Client, Guild, User, TextChannel, PermissionFlagsBits, AuditLogEvent } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 interface ActionTracker {
     count: number;
@@ -162,12 +163,12 @@ export class AntinukeCore {
         if (guildData?.antinuke.logChannelId) {
             const channel = guild.channels.cache.get(guildData.antinuke.logChannelId) as TextChannel;
             if (channel && channel.isTextBased()) {
-                const embed = new EmbedBuilder()
+                const embed = new V2Embed()
                     .setColor(config.colors.error)
                     .setTitle(`${config.emojis.error} Antinuke Triggered`)
                     .setDescription(message)
                     .setTimestamp();
-                await channel.send({ embeds: [embed] }).catch(() => { });
+                await channel.send(embed.toPayload()).catch(() => { });
             }
         }
     }

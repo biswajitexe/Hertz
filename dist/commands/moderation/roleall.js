@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('roleall')
     .setDescription('Manage roles for all members')
@@ -59,29 +60,29 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .addRoleOption(option => option.setName('role').setDescription('The role').setRequired(true)));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
+        var _a, _b, _c;
         if (!interaction.guild)
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.Administrator)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage roles (Admin only).`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to manage roles (Admin only).").toPayload({ ephemeral: true }));
         }
         const subcommand = interaction.options.getSubcommand(false);
         const role = interaction.options.getRole('role');
         if (!subcommand || !role) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
-                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-                .setThumbnail(interaction.client.user.displayAvatarURL())
-                .setDescription(`\`?roleall add <role>\`\n\`?roleall remove <role>\``)
-                .setFooter({ text: `Xeon • Advanced Moderation`, iconURL: interaction.client.user.displayAvatarURL() });
-            return interaction.reply({ embeds: [embed] });
+                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
+                .setThumbnail(((_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || null)
+                .setDescription(`\`${config.prefix}roleall add <role>\`\n\`${config.prefix}roleall remove <role>\``)
+                .setFooter(`Hertz • Advanced Moderation`, (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
+            return interaction.reply(embed.toPayload());
         }
         const botMember = yield interaction.guild.members.fetchMe();
         if (role.position >= botMember.roles.highest.position) {
-            return interaction.reply({ content: `${config.emojis.error} I cannot manage this role (it is higher or equal to my highest role).`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("I cannot manage this role (it is higher or equal to my highest role).").toPayload({ ephemeral: true }));
         }
         if (role.managed) {
-            return interaction.reply({ content: `${config.emojis.error} I cannot manage this role (it is managed by an integration).`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("I cannot manage this role (it is managed by an integration).").toPayload({ ephemeral: true }));
         }
         yield interaction.deferReply();
         const members = yield interaction.guild.members.fetch();
@@ -127,10 +128,11 @@ function run(interaction, database) {
                 const batch = validMembers.slice(i, i + batchSize);
                 yield processBatch(batch, 'add');
             }
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(0x57F287)
-                .setDescription(`${config.emojis.success} **Added role ${role.name} to ${count} members.** (Failed: ${failed})`);
-            yield interaction.editReply({ content: '', embeds: [embed] });
+                .setTitle(`${config.emojis.success} Role Added to Members`)
+                .setDescription(`**Added role ${role.name} to ${count} members.** (Failed: ${failed})`);
+            yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
         }
         else if (subcommand === 'remove') {
             yield interaction.editReply({ content: `${config.emojis.loading || "🔄"} Processing **${validMembers.length}** members... This may take a while.` });
@@ -138,10 +140,11 @@ function run(interaction, database) {
                 const batch = validMembers.slice(i, i + batchSize);
                 yield processBatch(batch, 'remove');
             }
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(0xED4245)
-                .setDescription(`${config.emojis.success} **Removed role ${role.name} from ${count} members.** (Failed: ${failed})`);
-            yield interaction.editReply({ content: '', embeds: [embed] });
+                .setTitle(`${config.emojis.success} Role Removed from Members`)
+                .setDescription(`**Removed role ${role.name} from ${count} members.** (Failed: ${failed})`);
+            yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
         }
     });
 }

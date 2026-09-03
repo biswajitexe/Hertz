@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits, TextChannel, GuildChannel } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, TextChannel, GuildChannel } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('unhide')
@@ -11,24 +11,23 @@ export const command = new SlashCommandBuilder()
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.guild || !interaction.channel) return;
 
-    // Direct Logic (No Subcommands)
     const channel = (interaction.options.getChannel('channel') as GuildChannel) || (interaction.channel as GuildChannel);
 
-    if (!channel) return interaction.reply({ content: `${config.emojis.error} Could not resolve channel.`, ephemeral: true });
+    if (!channel) return interaction.reply(createErrorV2("Could not resolve channel.").toPayload({ ephemeral: true }));
 
     if (channel.isThread()) {
-        return interaction.reply({ content: `${config.emojis.error} Threads cannot be unhidden individually via this command.`, ephemeral: true });
+        return interaction.reply(createErrorV2("Threads cannot be unhidden individually via this command.").toPayload({ ephemeral: true }));
     }
 
     // Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage channels.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to manage channels.").toPayload({ ephemeral: true }));
     }
 
     // Redundancy Check
     const currentOverwrites = (channel as TextChannel).permissionOverwrites.cache.get(interaction.guild.id);
     if (!currentOverwrites || !currentOverwrites.deny.has(PermissionFlagsBits.ViewChannel)) {
-        return interaction.reply({ content: `${config.emojis.error} **This channel is already visible.**`, ephemeral: true });
+        return interaction.reply(createErrorV2("**This channel is already visible.**").toPayload({ ephemeral: true }));
     }
 
     try {
@@ -36,14 +35,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             ViewChannel: true
         });
 
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(0x57F287)
-            .setDescription(`${config.emojis.success || "👁️"} **Channel Visible**`);
+            .setTitle(`${config.emojis.success || "👁️"} Channel Visible`)
+            .setDescription(`Successfully unhidden **<#${channel.id}>** for everyone.`);
 
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
 
     } catch (err) {
         console.error(err);
-        return interaction.reply({ content: `${config.emojis.error} Failed to manage channel permissions. Check my role permissions.`, ephemeral: true });
+        return interaction.reply(createErrorV2("Failed to manage channel permissions. Check my role permissions.").toPayload({ ephemeral: true }));
     }
 }

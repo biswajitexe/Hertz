@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('afk')
@@ -17,7 +17,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const reason = interaction.options.getString('reason');
     const guildData = await database.retrieveGuild(interaction.guild.id);
-    if (!guildData) return interaction.reply({ content: "Database error.", ephemeral: true });
+    if (!guildData) return interaction.reply(createErrorV2("Database error.").toPayload({ ephemeral: true }));
 
     if (!guildData.afk) guildData.afk = {};
 
@@ -28,19 +28,13 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     await database.insertGuild(interaction.guild.id, guildData);
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setAuthor({
-            name: `${interaction.user.username} is now AFK`,
-            iconURL: interaction.user.displayAvatarURL(),
-        });
+        .setAuthor(`${interaction.user.username} is now AFK`, interaction.user.displayAvatarURL());
 
     if (reason) {
         embed.setDescription(`${config.emojis.dot} **Reason:** ${reason}`);
     }
 
-    // Change nickname? Often bots add [AFK] tag but permission issues are common. Prizon might have done it.
-    // I'll skip nickname change to be safe for now, or add it with catch.
-
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(embed.toPayload());
 }

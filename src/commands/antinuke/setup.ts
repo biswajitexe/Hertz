@@ -1,8 +1,8 @@
-
 import type { ChatInputCommandInteraction } from "discord.js";
-import { ChannelType, EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { ChannelType, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import * as config from "../../config";
 import type { Database } from "../../database";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('antinuke')
@@ -39,37 +39,38 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Permission Check: Owner or Extra Owner or Bot Owner
     if (!isOwner && !isExtraOwner && !isBotOwner) {
-        await interaction.reply({ content: `${config.emojis.error} **Only the Server Owner, Extra Owners, or Bot Owner can manage the Antinuke system.**`, ephemeral: true });
+        await interaction.reply(createErrorV2('Only the Server Owner, Extra Owners, or Bot Owner can manage the Antinuke system.').toPayload({ ephemeral: true }));
         return;
     }
 
     const sub = interaction.options.getSubcommand();
 
-    const embedStyle = (title: string, description: string) => {
-        return new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setDescription(`**${config.emojis.antinuke} ${title}**\n\n${description}`)
+    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+        return new V2Embed()
+            .setColor(color)
+            .setTitle(`${config.emojis.antinuke} ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
     if (sub === 'enable') {
         if (guildData.antinuke.enabled) {
-            const embed = new EmbedBuilder()
+            const embed = new V2Embed()
                 .setColor(config.colors.error)
                 .setDescription(`${config.emojis.error} **Antinuke is already enabled!**`)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-            await interaction.reply({ embeds: [embed] });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            await interaction.reply(embed.toPayload());
             return;
         }
 
         guildData.antinuke.enabled = true;
 
-        let logChannel = interaction.guild.channels.cache.find(c => c.name === 'xeon-log' && c.type === ChannelType.GuildText);
+        let logChannel = interaction.guild.channels.cache.find(c => c.name === 'hertz-log' && c.type === ChannelType.GuildText);
         if (!logChannel) {
             try {
                 logChannel = await interaction.guild.channels.create({
-                    name: 'xeon-log',
+                    name: 'hertz-log',
                     type: ChannelType.GuildText,
                     permissionOverwrites: [
                         {
@@ -98,7 +99,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         await database.insertGuild(interaction.guild.id, guildData);
 
-        const channelMsg = logChannel ? `\n<:1709locked:1461066037008269434> Log channel set to <#${logChannel.id}>.` : `\n⚠️ Could not create 'xeon-log'. Please set logs manually.`;
+        const channelMsg = logChannel ? `\n<:1709locked:1461066037008269434> Log channel set to <#${logChannel.id}>.` : `\n⚠️ Could not create 'hertz-log'. Please set logs manually.`;
 
         const protections = [
             'Anti Ban', 'Anti Kick', 'Anti Prune', 'Anti Unban', 'Anti Bot Add',
@@ -110,7 +111,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         ].map(p => `> ${config.emojis.success} ${p}`).join('\n');
 
         const embed = embedStyle('Antinuke Panel', `**Antinuke System Enabled.**\n\n**Active Protections:**\n${protections}\n${channelMsg}\n<:527192nikkiworking:1461069361115824168> **Note:** Keep my role on top with Admin perms.`);
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply(embed.toPayload());
 
     } else if (sub === 'disable') {
         guildData.antinuke.enabled = false;
@@ -125,12 +126,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             'Anti AutoMod Rule', 'Anti Thread Create', 'Anti Thread Delete'
         ].map(p => `> ${config.emojis.error} ${p}`).join('\n');
 
-        const embed = embedStyle('Antinuke Panel', `**Antinuke System Disabled.**\n\n**Inactive Protections:**\n${protections}\n\n⚠️ **Your server is now vulnerable.**\nUse \`/antinuke enable\` to restore security.`);
-        await interaction.reply({ embeds: [embed] });
+        const embed = embedStyle('Antinuke Panel', `**Antinuke System Disabled.**\n\n**Inactive Protections:**\n${protections}\n\n⚠️ **Your server is now vulnerable.**\nUse \`/antinuke enable\` to restore security.`, config.colors.error);
+        await interaction.reply(embed.toPayload());
 
     } else if (sub === 'show') {
         const logChannelId = guildData.antinuke.logChannelId;
-        const channelMsg = logChannelId ? `\n<:1709locked:1461066037008269434> **Log Channel:** <#${logChannelId}>` : `\n${config.emojis.warning} Could not find 'xeon-log'. Please set logs manually.`;
+        const channelMsg = logChannelId ? `\n<:1709locked:1461066037008269434> **Log Channel:** <#${logChannelId}>` : `\n${config.emojis.warning} Could not find 'hertz-log'. Please set logs manually.`;
 
         const statusEmoji = guildData.antinuke.enabled ? config.emojis.success : config.emojis.error;
         const protections = [
@@ -151,7 +152,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
 
         const embed = embedStyle('Antinuke Panel', description);
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply(embed.toPayload());
 
     } else {
         // Help Menu
@@ -160,8 +161,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             `\`${config.prefix}antinuke disable\`\n` +
             `\`${config.prefix}antinuke show\``
         );
-        // embed.setFooter({ text: 'Xeon • Automated Security', iconURL: interaction.client.user?.displayAvatarURL() || undefined }); // Removed to use default user footer
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply(embed.toPayload());
     }
 }

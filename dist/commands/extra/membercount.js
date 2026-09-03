@@ -46,6 +46,7 @@ exports.aliases = exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('membercount')
     .setDescription('Display the current member count of the server');
@@ -58,24 +59,18 @@ function run(interaction, database) {
         const totalMembers = guild.memberCount;
         const humans = guild.members.cache.filter(member => !member.user.bot).size;
         const bots = guild.members.cache.filter(member => member.user.bot).size;
-        const embed = new discord_js_1.EmbedBuilder()
-            .setColor(0x2B2D31)
-            .setAuthor({
-            name: guild.name,
-            iconURL: guild.iconURL() || undefined,
-        })
+        const embed = new componentV2_1.V2Embed()
+            .setColor(config.colors.primary)
+            .setAuthor(guild.name, guild.iconURL() || undefined)
             .setThumbnail(guild.iconURL({ size: 4096 }))
-            .setDescription(`\n**Member Statistics**\n` +
-            `${config.emojis.dot} **Total Members:** ${totalMembers.toLocaleString()}\n` +
+            .setTitle("Member Statistics")
+            .setDescription(`${config.emojis.dot} **Total Members:** ${totalMembers.toLocaleString()}\n` +
             `${config.emojis.dot} **Humans:** ${humans.toLocaleString()}\n` +
             `${config.emojis.dot} **Bots:** ${bots.toLocaleString()}`)
-            .setFooter({
-            text: `Requested by ${interaction.user.tag}`,
-            iconURL: interaction.user.displayAvatarURL(),
-        });
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
         if (guild.bannerURL()) {
             embed.setImage(guild.bannerURL({ size: 4096 }));
         }
-        yield interaction.reply({ embeds: [embed] });
+        yield interaction.reply(embed.toPayload());
     });
 }

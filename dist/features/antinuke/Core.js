@@ -43,8 +43,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AntinukeCore = void 0;
-const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 class AntinukeCore {
     constructor(database) {
         this.rateLimits = new Map();
@@ -159,12 +159,12 @@ class AntinukeCore {
             if (guildData === null || guildData === void 0 ? void 0 : guildData.antinuke.logChannelId) {
                 const channel = guild.channels.cache.get(guildData.antinuke.logChannelId);
                 if (channel && channel.isTextBased()) {
-                    const embed = new discord_js_1.EmbedBuilder()
+                    const embed = new componentV2_1.V2Embed()
                         .setColor(config.colors.error)
                         .setTitle(`${config.emojis.error} Antinuke Triggered`)
                         .setDescription(message)
                         .setTimestamp();
-                    yield channel.send({ embeds: [embed] }).catch(() => { });
+                    yield channel.send(embed.toPayload()).catch(() => { });
                 }
             }
         });

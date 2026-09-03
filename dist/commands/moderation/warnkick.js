@@ -48,6 +48,7 @@ const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const modLogger_1 = require("../../utilities/modLogger");
 const permission_1 = require("../../utilities/permission");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('warnkick')
     .setDescription('Kick a user but send them an invite to rejoin (Warning Kick).')
@@ -66,34 +67,34 @@ function run(interaction, database) {
         const user = interaction.options.getMember('user');
         const reason = interaction.options.getString('reason') || "No reason provided";
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.KickMembers)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to kick members.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to kick members.").toPayload({ ephemeral: true }));
         }
         if (!user) {
-            yield interaction.reply({ content: `${config.emojis.error} User not found. Please mention a valid user.`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("User not found. Please mention a valid user.").toPayload({ ephemeral: true }));
             return;
         }
         if (!(user instanceof discord_js_1.GuildMember)) {
-            yield interaction.reply({ content: `${config.emojis.error} User is not in the server.`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("User is not in the server.").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.user.id) {
-            yield interaction.reply({ content: `${config.emojis.error} **You cannot warnkick yourself.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot warnkick yourself.**").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.client.user.id) {
-            yield interaction.reply({ content: `${config.emojis.error} **You cannot warnkick me.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot warnkick me.**").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.guild.ownerId) {
-            yield interaction.reply({ content: `${config.emojis.error} **You cannot warnkick the server owner.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot warnkick the server owner.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!user.kickable) {
-            yield interaction.reply({ content: `${config.emojis.error} **I cannot warnkick this user. My role is likely below theirs.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("**I cannot warnkick this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!(0, permission_1.canModerate)(interaction.member, user, discord_js_1.PermissionFlagsBits.KickMembers)) {
-            yield interaction.reply({ content: `${config.emojis.error} **You cannot warnkick this user due to role hierarchy.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot warnkick this user due to role hierarchy.**").toPayload({ ephemeral: true }));
             return;
         }
         yield interaction.deferReply();
@@ -112,7 +113,7 @@ function run(interaction, database) {
             console.error("Failed to create invite for Warning Kick:", error);
         }
         try {
-            const dmEmbed = new discord_js_1.EmbedBuilder()
+            const dmEmbed = new componentV2_1.V2Embed()
                 .setColor(0xFEE75C)
                 .setTitle(`You have been Warn-Kicked from ${interaction.guild.name}`)
                 .setDescription(`**This is a Warning Kick.**\nYou have been removed but are allowed to rejoin. Please adhere to the rules.`)
@@ -124,24 +125,25 @@ function run(interaction, database) {
             else {
                 dmEmbed.addFields({ name: 'Rejoin', value: 'Please ask a friend for an invite.' });
             }
-            yield user.send({ embeds: [dmEmbed] });
+            yield user.send(dmEmbed.toPayload()).catch(() => { });
         }
         catch (_b) { }
         try {
             yield user.kick(reason);
             yield (0, modLogger_1.logAction)(interaction.guild, user.user, interaction.user, 'KICK', `(WarnKick) ${reason}`, database);
-            const successEmbed = new discord_js_1.EmbedBuilder()
+            const successEmbed = new componentV2_1.V2Embed()
                 .setColor(config.colors.warning)
-                .setDescription(`${config.emojis.success} **Warning Kicked ${user.user.tag}**`)
-                .setFooter({ text: inviteUrl ? "Invite link sent in DM" : "Could not create invite link (Permissions?)" });
+                .setTitle(`${config.emojis.success} Warning Kicked ${user.user.tag}`)
+                .setDescription(`**User has been kicked with an invite sent to their DMs.**`)
+                .setFooter(inviteUrl ? "Invite link sent in DM" : "Could not create invite link (Permissions?)");
             if (reason !== "No reason provided") {
                 successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
             }
-            yield interaction.editReply({ embeds: [successEmbed] });
+            yield interaction.editReply(successEmbed.toPayload());
         }
         catch (error) {
             console.error(error);
-            yield interaction.editReply({ content: `${config.emojis.error} **Failed to kick user.**` });
+            yield interaction.editReply((0, componentV2_1.createErrorV2)("**Failed to kick user.**").toPayload());
         }
     });
 }

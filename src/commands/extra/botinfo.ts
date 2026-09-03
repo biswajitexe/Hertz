@@ -1,8 +1,8 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, version as djsVersion, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, version as djsVersion, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import os from "os";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('botinfo')
@@ -31,11 +31,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const totalUsers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
     const totalChannels = client.channels.cache.size;
 
-    const ownerId = process.env.OWNER_ID || "1082437832087445604"; // Fallback just in case
-
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setTitle(`<:iconfolder:1458160174815514670> About`)
+        .setTitle(`<:iconfolder:1458160174815514670> About ${client.user.username}`)
         .setThumbnail(client.user.displayAvatarURL())
         .addFields(
             {
@@ -69,10 +67,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 inline: true
             }
         )
-        .setFooter({
-            text: `Requested by ${interaction.user.tag}`,
-            iconURL: interaction.user.displayAvatarURL(),
-        })
+        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
         .setTimestamp();
 
     // Buttons
@@ -87,5 +82,5 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setURL("https://discord.gg/alpha")
     );
 
-    await interaction.reply({ embeds: [embed], components: [row] });
+    await interaction.reply(embed.toPayload({ extraComponents: [row] }));
 }

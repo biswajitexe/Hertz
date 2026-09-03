@@ -1,8 +1,8 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import { snipeCache } from "../../structures/SnipeManager";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('snipeall')
@@ -13,18 +13,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const snipes = snipeCache.get(interaction.channelId);
 
     if (!snipes || snipes.length === 0) {
-        return interaction.reply({ content: `${config.emojis.error} There is nothing to snipe here!`, ephemeral: true });
+        return interaction.reply(createErrorV2("There is nothing to snipe here!").toPayload({ ephemeral: true }));
     }
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
         .setTitle(`Recently Deleted Messages in #${(interaction.channel as any).name}`)
-        .setFooter({ text: `Requested by ${interaction.user.tag}` })
+        .setFooter(`Requested by ${interaction.user.tag}`)
         .setTimestamp();
 
     let description = "";
-
-    // Limit to 10 for display to avoid overflow
     const displaySnipes = snipes.slice(0, 10);
 
     displaySnipes.forEach((data, index) => {
@@ -36,5 +34,5 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     embed.setDescription(description);
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(embed.toPayload());
 }

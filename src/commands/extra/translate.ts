@@ -1,16 +1,14 @@
-
 import { 
     SlashCommandBuilder, 
-    EmbedBuilder, 
     ActionRowBuilder, 
     StringSelectMenuBuilder, 
     StringSelectMenuOptionBuilder,
-    ComponentType,
     CommandInteraction,
     Message
 } from "discord.js";
 import { translate } from 'google-translate-api-x';
 import { emojis, colors } from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName("translate")
@@ -57,11 +55,9 @@ export const run = async (interaction: any, database: any) => {
     let isReply = false;
     let replyMessage: Message | null = null;
 
-    // Handle Prefix Command Logic
-    if (!(interaction instanceof CommandInteraction)) { // It's a Message object in prefix handler
+    if (!(interaction instanceof CommandInteraction)) {
         const message = interaction as Message;
 
-        // Check for Reply
         if (message.reference && message.reference.messageId) {
             try {
                 replyMessage = await message.channel.messages.fetch(message.reference.messageId);
@@ -70,34 +66,12 @@ export const run = async (interaction: any, database: any) => {
                     isReply = true;
                 }
             } catch (e) {
-                // Ignore fetch error
             }
         }
         
-        // If no reply or reply has no content, check args
         if (!textToTranslate) {
-            // "translate <text>" OR "tl <text>"
-            // Prefix handler usually strips command name. 
-            // We need to parse args manually if passed as Message.
-            // Assuming 'args' are passed or we parse content.
-            // For now, let's assume if it came from prefix handler, we handle args there 
-            // OR we just take the content after the command.
-            
-            // Simplified: If message content is just "?tl" or "?translate" and it IS a reply -> Show Menu
-            // If message content has extra text -> Translate that text
-            
-            // Note: The main index.ts logic handles distinct args. 
-            // Since we don't have direct access to 'args' here unless passed, we'll try to guess.
-            
-            // Actually, for the dropdown feature, we ONLY want to trigger it if:
-            // 1. It IS a reply
-            // 2. The user did NOT specify a target language (just typed ?tl)
-            
             const args = message.content.split(" ").slice(1);
             if (args.length > 0) {
-                 // Format: ?tl hi Hello World OR ?tl Hello World
-                 // It's hard to distinguish "hi" as lang vs text.
-                 // Simple logic: If arg[0] is 2 chars, assume lang.
                  if (args[0].length === 2 && args.length > 1) {
                      targetLang = args[0];
                      textToTranslate = args.slice(1).join(" ");
@@ -107,15 +81,12 @@ export const run = async (interaction: any, database: any) => {
             }
         }
     } else {
-        // Slash Command
         if (interaction.isChatInputCommand()) {
              textToTranslate = interaction.options.getString("text", true);
              targetLang = interaction.options.getString("to") || "en";
         }
     }
 
-    // If it's a Reply AND User didn't specify text/lang explicitly (just ?tl), Show Dropdown
-    // For Slash Commands, we don't have this 'reply' logic in the same way effectively unless we add a user/message option, but keeping it simple.
     let contentToCheck = "";
     if (interaction instanceof Message) {
         contentToCheck = interaction.content;
@@ -126,10 +97,11 @@ export const run = async (interaction: any, database: any) => {
     }
 
     if (!textToTranslate) {
-        return interaction.reply({ content: `${emojis.error} Please provide text to translate or reply to a message!`, ephemeral: true });
+        const err = createErrorV2("Please provide text to translate or reply to a message!");
+        if (interaction instanceof Message) return interaction.reply(err.toPayload());
+        return interaction.reply(err.toPayload({ ephemeral: true }));
     }
 
-    // Direct Translation
     await performTranslation(interaction, textToTranslate, targetLang);
 };
 
@@ -144,76 +116,60 @@ async function sendLanguageDropdown(interaction: any, text: string) {
 
     const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
     
-    // Convert text to Base64 to store in customId or Cache?
-    // Text can be long. Best to rely on fetching the ORIGINAL message again or cache.
-    // For simplicity, we will encode the text in a temporary cache or just fetch the reference again in handler.
-    // BUT, interaction.customId limit is 100.
-    
-    // STRATEGY: Store the 'messageId' of the message to translate in the customID (if reply).
-    // If we can't get messageId easily in interaction handler (ephemeral?), we might need a DB or Cache.
-    // Let's use the 'message.reference.messageId' logic in the handler.
-    
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(colors.primary)
+        .setTitle("Language Selection")
         .setDescription(`**Select a language to translate the text:**\n> ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
 
     if (interaction instanceof Message) {
-         const msg = await interaction.reply({ embeds: [embed], components: [row] });
-         // Store mapping: interactionMsgId -> targetMsgId
-         // For now, let's rely on the user replying to the same message? No.
-         // Let's modify customId to include target Message ID?
-         // translate_select_<userId>_<targetMessageId>
+         const msg = await interaction.reply(embed.toPayload({ extraComponents: [row] }));
          
          const targetId = interaction.reference?.messageId;
          if (targetId) {
              const newMenu = new StringSelectMenuBuilder(selectMenu.toJSON())
                  .setCustomId(`translate_sel_${interaction.author.id}_${targetId}`);
              const newRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(newMenu);
-             await msg.edit({ components: [newRow] });
+             await msg.edit(embed.toPayload({ extraComponents: [newRow] }));
          }
     } else {
-        // Slash command reply logic (rarely used for this specific reply flow but good to have)
-        await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+        await interaction.reply(embed.toPayload({ extraComponents: [row], ephemeral: true }));
     }
 }
 
 async function performTranslation(interaction: any, text: string, targetLang: string) {
-    // Initial Feedback
-    let replyMsg;
+    let replyMsg: any;
     if (interaction instanceof Message) {
         replyMsg = await interaction.reply({ content: `${emojis.loading || '⏳'} Translating...` });
-    } else if (interaction.isRepliable()) {
+    } else if (interaction.isRepliable && interaction.isRepliable()) {
         await interaction.deferReply();
     }
 
     try {
         const res: any = await translate(text, { to: targetLang });
         
-        const embed = new EmbedBuilder()
-            .setColor(0x4285F4) // Google Blue
-            .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
+        const embed = new V2Embed()
+            .setColor(0x4285F4)
+            .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
             .addFields(
                 { name: `Original (${res.from?.language?.iso || 'auto'})`, value: `> ${text.substring(0, 1000)}` },
                 { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` }
             )
-            .setFooter({ text: `Requested by ${interaction.member?.user?.username || interaction.author?.username}` });
+            .setFooter(`Requested by ${interaction.member?.user?.username || interaction.author?.username}`);
 
         if (interaction instanceof Message) {
-            await replyMsg.edit({ content: null, embeds: [embed], components: [] });
+            await replyMsg.edit({ content: null, ...embed.toPayload() });
         } else {
-            await interaction.editReply({ embeds: [embed], components: [] });
+            await interaction.editReply(embed.toPayload());
         }
 
     } catch (e) {
         console.error(e);
-        const errEmbed = new EmbedBuilder()
-            .setColor(colors.error)
-            .setDescription(`${emojis.error} Failed to translate. Please check the language code.`);
+        const errEmbed = createErrorV2("Failed to translate. Please check the language code.");
             
         if (interaction instanceof Message) {
-            await replyMsg.edit({ content: null, embeds: [errEmbed] });
+            await replyMsg.edit({ content: null, ...errEmbed.toPayload() });
         } else {
-            await interaction.editReply({ embeds: [errEmbed] });
+            await interaction.editReply(errEmbed.toPayload());
         }
     }
 }
@@ -222,7 +178,6 @@ async function performTranslation(interaction: any, text: string, targetLang: st
 export const handleInteraction = async (interaction: any, database: any) => {
     if (!interaction.isStringSelectMenu()) return;
     
-    // CustomId: translate_sel_<userId>_<targetMsgId>
     const parts = interaction.customId.split("_");
     if (parts[0] !== "translate" || parts[1] !== "sel") return;
     
@@ -230,36 +185,34 @@ export const handleInteraction = async (interaction: any, database: any) => {
     const targetMsgId = parts[3];
     
     if (interaction.user.id !== ownerId) {
-        return interaction.reply({ content: `${emojis.error} This menu is not for you!`, ephemeral: true });
+        return interaction.reply(createErrorV2("This menu is not for you!").toPayload({ ephemeral: true }));
     }
     
     const selectedLang = interaction.values[0];
-    
     await interaction.deferUpdate();
     
-    // Fetch original text
     try {
         const targetMsg = await interaction.channel.messages.fetch(targetMsgId);
         if (!targetMsg) {
-            return interaction.followUp({ content: "Original message not found.", ephemeral: true });
+            return interaction.followUp(createErrorV2("Original message not found.").toPayload({ ephemeral: true }));
         }
         
         const text = targetMsg.content;
         const res: any = await translate(text, { to: selectedLang });
         
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(0x4285F4)
-            .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
+            .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
             .addFields(
                 { name: `Original (${res.from?.language?.iso || 'auto'})`, value: `> ${text.substring(0, 1000)}` },
                 { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` }
             )
-            .setFooter({ text: `Requested by ${interaction.user.username}` });
+            .setFooter(`Requested by ${interaction.user.username}`);
             
-        await interaction.editReply({ content: null, embeds: [embed], components: [] });
+        await interaction.editReply({ content: null, ...embed.toPayload() });
         
     } catch (e) {
         console.error(e);
-        await interaction.followUp({ content: "Translation failed.", ephemeral: true });
+        await interaction.followUp(createErrorV2("Translation failed.").toPayload({ ephemeral: true }));
     }
 };

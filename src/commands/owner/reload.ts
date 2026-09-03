@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('reload')
@@ -14,16 +14,17 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
 
     if (!owners.includes(interaction.user.id)) {
-        return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+        return interaction.reply(createErrorV2('Unknown command.').toPayload({ ephemeral: true }));
     }
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setDescription(`**<:74658vipglow:1465051133704798435> Reloading Bot**\n\n> **Reloading bot logic...** (This may take a moment)`)
+        .setTitle('<:74658vipglow:1465051133704798435> Reloading Bot')
+        .setDescription(`> **Reloading bot logic...** (This may take a moment)`)
         .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-        .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+        .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply(embed.toPayload({ ephemeral: true }));
 
     console.log("[Reload] Triggered by owner. Exiting...");
     process.exit(0);

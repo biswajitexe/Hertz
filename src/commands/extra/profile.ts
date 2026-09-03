@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ActivityType, User } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, User } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('profile')
@@ -10,12 +10,10 @@ export const command = new SlashCommandBuilder()
 
 export const aliases = ['pr'];
 
-// Helper function to generate Embed and Components
+// Helper function to generate V2Embed and Components
 async function getProfileData(interaction: ChatInputCommandInteraction, targetUser: User, database: Database) {
-    // Force fetch member to ensure real-time presence (crucial for auto-update)
     const member = await interaction.guild?.members.fetch({ user: targetUser.id, force: true }).catch(() => null);
     
-    // Fetch Data
     let userProfile = await database.getUser(targetUser.id);
     const safeProfile = userProfile || {
         id: targetUser.id, bio: null, reps: 0, lastRepDate: 0, partnerId: null, marryDate: null, color: null
@@ -23,68 +21,52 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
 
     const botConfig = await database.getBotConfig();
 
-    // --- Badges Logic ---
-    // --- Badges Logic ---
     const badgesList: string[] = [];
 
-    // Owner (Env or DB)
     if (targetUser.id === process.env.OWNER_ID || botConfig.ownerUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.owner} **Owner**`);
     }
 
-    // Developer
     if (botConfig.developerUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.developer} **Developer**`);
     }
 
-    // Admin (Bot Admin)
     if (botConfig.adminUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.admin} **Admin**`);
     }
 
-    // Staff
     if (botConfig.staffUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.staff} **Staff**`);
     }
 
-    // VIP
     if (botConfig.vipUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.vip} **VIP**`);
     }
 
-    // Partner
     if (botConfig.partnerUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.partner} **Partner**`);
     }
 
-
-
-    // Premium
     if (botConfig.premiumUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.noprefix} **Premium User**`);
     }
 
-    // No Prefix
     if (botConfig.noPrefixUsers?.includes(targetUser.id)) {
         badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
     }
 
-    // Supporter
     if (botConfig.supporterUsers?.includes(targetUser.id)) {
         badgesList.push(`${config.emojis.supporter} **Supporter**`);
     }
 
     const badgesString = badgesList.length > 0 ? badgesList.join("\n> ") : "None";
 
-    // --- Status Logic ---
     let statusText = "No status set.";
     if (member && member.presence) {
         const customStatus = member.presence.activities.find(act => act.type === 4);
         if (customStatus && customStatus.state) statusText = customStatus.state;
     }
 
-    // --- Activity Logic (Spotify Only) ---
-    // Single newline to reduce spacing gap as requested
     let activityStatus = "\n**Activity**\n> Not listening to Spotify.";
     let activityImage = null;
     let activityUrl = null;
@@ -99,26 +81,22 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
             const album = spotify.assets?.largeText;
             activityImage = spotify.assets?.largeImageURL();
             activityUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
-            // Single newline for compact spacing
             activityStatus = `\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
         }
     }
 
-    // --- Embed Construction ---
-    const embed = new EmbedBuilder()
+    const card = new V2Embed()
         .setColor(safeProfile.color || config.colors.primary)
-        .setAuthor({ name: `${targetUser.username}'s Profile`, iconURL: targetUser.displayAvatarURL() })
-        // Use Use Activity Image as thumbnail if available, else User Avatar
+        .setAuthor(`${targetUser.username}'s Profile`, targetUser.displayAvatarURL())
         .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
             `**Status**\n> ${statusText}\n` +
             `${activityStatus}`
         )
-        .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+        .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL())
         .setTimestamp();
 
-    // --- Buttons ---
     const row = new ActionRowBuilder<ButtonBuilder>();
     const avatarBtn = new ButtonBuilder().setLabel('Avatar').setStyle(ButtonStyle.Link).setURL(targetUser.displayAvatarURL({ size: 1024 }));
     row.addComponents(avatarBtn);
@@ -134,7 +112,7 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
         row.addComponents(activityBtn);
     }
 
-    return { embed, row };
+    return { card, row };
 }
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
@@ -144,22 +122,19 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const targetUser = interaction.options.getUser('user') || interaction.user;
 
     // Initial Send
-    const { embed, row } = await getProfileData(interaction, targetUser, database);
-    await interaction.editReply({ embeds: [embed], components: [row] });
+    const { card, row } = await getProfileData(interaction, targetUser, database);
+    await interaction.editReply(card.toPayload({ extraComponents: [row] }));
 
-    // Auto-Update Loop (Runs every 5 seconds for 60 seconds)
+    // Auto-Update Loop
     const interval = setInterval(async () => {
         try {
             const newData = await getProfileData(interaction, targetUser, database);
-            // Check if message is still editable (not deleted) - tough to check perfectly without fetch, but editReply usually throws if unknown interaction.
-            // Using editReply on the deferred interaction is valid for 15 mins.
-            await interaction.editReply({ embeds: [newData.embed], components: [newData.row] });
+            await interaction.editReply(newData.card.toPayload({ extraComponents: [newData.row] }));
         } catch (e) {
-            clearInterval(interval); // Stop if error (e.g. message deleted)
+            clearInterval(interval);
         }
     }, 5000);
 
-    // Stop after 60 seconds to respect rate limits and resources
     setTimeout(() => {
         clearInterval(interval);
     }, 60000);

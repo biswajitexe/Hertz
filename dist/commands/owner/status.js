@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('status')
     .setDescription('Manage bot status (Owner Only)')
@@ -61,6 +62,7 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .addBooleanOption(opt => opt.setName('state').setDescription('Enable or Disable?').setRequired(true)));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
         let botConfig = yield database.getBotConfig();
         const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
@@ -68,21 +70,22 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.developerUsers)
             owners.push(...botConfig.developerUsers);
         if (!owners.includes(interaction.user.id))
-            return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         const sub = interaction.options.getSubcommand();
         const embedStyle = (title, description, color = config.colors.primary) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(color)
-                .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+                .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (sub === 'set') {
             const typeStr = interaction.options.getString('type', true);
             const text = interaction.options.getString('text', true);
             if (!typeStr || !text) {
-                return interaction.reply({ content: `Usage: \`${config.prefix}status set <type> <text>\`\nTypes: Playing, Watching, Listening, Competing, Streaming`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`Usage: \`${config.prefix}status set <type> <text>\`\nTypes: Playing, Watching, Listening, Competing, Streaming`).toPayload({ ephemeral: true }));
             }
             let type = discord_js_1.ActivityType.Playing;
             if (typeStr === 'Watching')
@@ -93,11 +96,11 @@ function run(interaction, database) {
                 type = discord_js_1.ActivityType.Competing;
             if (typeStr === 'Streaming')
                 type = discord_js_1.ActivityType.Streaming;
-            interaction.client.user.setPresence({
+            (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.setPresence({
                 activities: [{ name: text, type: type }],
                 status: 'online'
             });
-            return interaction.reply({ embeds: [embedStyle('Status Updated', `> Status updated to **${typeStr} ${text}**.`, config.colors.success)], ephemeral: true });
+            return interaction.reply(embedStyle('Status Updated', `> Status updated to **${typeStr} ${text}**.`, config.colors.success).toPayload({ ephemeral: true }));
         }
         if (sub === 'maintenance') {
             const state = interaction.options.getBoolean('state', true);
@@ -106,12 +109,12 @@ function run(interaction, database) {
             botConfig.maintenance = state;
             yield database.insertBotConfig(botConfig);
             if (state) {
-                interaction.client.user.setPresence({ status: 'dnd', activities: [{ name: 'Maintenance Mode', type: discord_js_1.ActivityType.Watching }] });
-                return interaction.reply({ embeds: [embedStyle('Maintenance Enabled', `> **Maintenance Mode ENABLED.** Users cannot use commands.`, config.colors.warning)], ephemeral: true });
+                (_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.setPresence({ status: 'dnd', activities: [{ name: 'Maintenance Mode', type: discord_js_1.ActivityType.Watching }] });
+                return interaction.reply(embedStyle('Maintenance Enabled', `> **Maintenance Mode ENABLED.** Users cannot use commands.`, config.colors.warning).toPayload({ ephemeral: true }));
             }
             else {
-                interaction.client.user.setPresence({ status: 'online', activities: [{ name: 'Ready', type: discord_js_1.ActivityType.Playing }] });
-                return interaction.reply({ embeds: [embedStyle('Maintenance Disabled', `> **Maintenance Mode DISABLED.** Bot is live.`, config.colors.success)], ephemeral: true });
+                (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.setPresence({ status: 'online', activities: [{ name: 'Ready', type: discord_js_1.ActivityType.Playing }] });
+                return interaction.reply(embedStyle('Maintenance Disabled', `> **Maintenance Mode DISABLED.** Bot is live.`, config.colors.success).toPayload({ ephemeral: true }));
             }
         }
     });

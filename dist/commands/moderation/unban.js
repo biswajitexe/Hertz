@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -45,9 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
-const config = __importStar(require("../../config"));
 const embedUtils_1 = require("../../utilities/embedUtils");
 const modLogger_1 = require("../../utilities/modLogger");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('unban')
     .setDescription('Unban a user from the server using their ID.')
@@ -66,32 +33,27 @@ function run(interaction, database) {
         const userId = interaction.options.getString('user_id', true);
         const reason = interaction.options.getString('reason') || "No reason provided";
         if (!userId) {
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User ID.**\nUsage: `?unban <user_id> [reason]`")], ephemeral: true });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User ID.**\nUsage: `?unban <user_id> [reason]`").toPayload({ ephemeral: true }));
         }
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.BanMembers)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to unban members.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to unban members.").toPayload({ ephemeral: true }));
         }
         try {
             yield interaction.deferReply();
-            const banList = yield interaction.guild.bans.fetch();
-            if (!/^\d{17,19}$/.test(userId)) {
-                yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Invalid User ID provided.**")] });
-                return;
-            }
-            const bannedUser = banList.get(userId);
+            const bannedUser = yield interaction.guild.bans.fetch(userId).catch(() => null);
             if (!bannedUser) {
-                yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**This user is not currently banned.**")] });
+                yield interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**This user is not currently banned.**").toPayload());
                 return;
             }
             yield interaction.guild.members.unban(userId, `[Unbanned by ${interaction.user.tag}] ${reason}`);
             yield (0, modLogger_1.logAction)(interaction.guild, bannedUser.user, interaction.user, 'UNBAN', reason, database);
             const embed = (0, embedUtils_1.createSuccessEmbed)(interaction.user, `**Unbanned ${bannedUser.user.tag}**`)
                 .addFields({ name: 'Reason', value: reason, inline: false });
-            yield interaction.editReply({ embeds: [embed] });
+            yield interaction.editReply(embed.toPayload());
         }
         catch (error) {
             console.error(error);
-            yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to unban user. ensure ID is correct.**")] });
+            yield interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to unban user. ensure ID is correct.**").toPayload());
         }
     });
 }

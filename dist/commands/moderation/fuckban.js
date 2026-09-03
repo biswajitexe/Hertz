@@ -48,6 +48,7 @@ const discord_js_1 = require("discord.js");
 const permission_1 = require("../../utilities/permission");
 const config = __importStar(require("../../config"));
 const modLogger_1 = require("../../utilities/modLogger");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('fuckban')
     .setDescription('Aggressively ban a user (Hard Ban).')
@@ -66,60 +67,60 @@ function run(interaction, database) {
         let user = interaction.options.getUser('user');
         const reason = interaction.options.getString('reason') || "No reason provided (Just GTFO)";
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.BanMembers)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to ban members.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to ban members.").toPayload({ ephemeral: true }));
         }
         if (!user) {
-            return interaction.reply({ content: `${config.emojis.error} User/ID not found.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("User/ID not found.").toPayload({ ephemeral: true }));
         }
         const member = yield interaction.guild.members.fetch(user.id).catch(() => null);
         if (member) {
             if (user.id === interaction.user.id) {
-                yield interaction.reply({ content: `${config.emojis.error} **You cannot fuckban yourself.**`, ephemeral: true });
+                yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot fuckban yourself.**").toPayload({ ephemeral: true }));
                 return;
             }
             if (user.id === interaction.client.user.id) {
-                yield interaction.reply({ content: `${config.emojis.error} **You cannot fuckban me.**`, ephemeral: true });
+                yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot fuckban me.**").toPayload({ ephemeral: true }));
                 return;
             }
             if (user.id === interaction.guild.ownerId) {
-                yield interaction.reply({ content: `${config.emojis.error} **You cannot fuckban the server owner.**`, ephemeral: true });
+                yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot fuckban the server owner.**").toPayload({ ephemeral: true }));
                 return;
             }
             if (!member.bannable) {
-                yield interaction.reply({ content: `${config.emojis.error} **I cannot fuckban this user (My role is too low).**`, ephemeral: true });
+                yield interaction.reply((0, componentV2_1.createErrorV2)("**I cannot fuckban this user (My role is too low).**").toPayload({ ephemeral: true }));
                 return;
             }
             if (!(0, permission_1.canModerate)(interaction.member, member, discord_js_1.PermissionFlagsBits.BanMembers)) {
-                yield interaction.reply({ content: `${config.emojis.error} **You cannot moderate this user.**`, ephemeral: true });
+                yield interaction.reply((0, componentV2_1.createErrorV2)("**You cannot moderate this user.**").toPayload({ ephemeral: true }));
                 return;
             }
         }
         yield interaction.deferReply();
         try {
-            const dm = new discord_js_1.EmbedBuilder()
+            const dm = new componentV2_1.V2Embed()
                 .setColor(0x000000)
                 .setTitle(`GTFO from ${interaction.guild.name}`)
                 .setDescription(`**You have been FUCK BANNED!**\nDon't ever come back.\n\n**Reason:** ${reason}`)
                 .setImage('https://media.tenor.com/x8v1k5Ki3aEAAAAC/ban-hammer-discord.gif');
-            yield user.send({ embeds: [dm] });
+            yield user.send(dm.toPayload()).catch(() => { });
         }
         catch (e) { }
         try {
             yield interaction.guild.members.ban(user.id, { reason: `[FUCK BAN] ${reason}`, deleteMessageSeconds: 7 * 24 * 60 * 60 });
             yield (0, modLogger_1.logAction)(interaction.guild, user, interaction.user, 'BAN', `(FUCK BAN) ${reason}`, database);
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.error)
-                .setTitle(`${config.emojis.error} BEGONE THOT!`)
+                .setTitle(`${config.emojis.error} BEGONE!`)
                 .setDescription(`**${user.tag}** has been obliterated from the server.`)
                 .setImage('https://media.tenor.com/x8v1k5Ki3aEAAAAC/ban-hammer-discord.gif');
             if (reason !== "No reason provided (Just GTFO)") {
                 embed.addFields({ name: 'Reason', value: reason, inline: false });
             }
-            yield interaction.editReply({ embeds: [embed] });
+            yield interaction.editReply(embed.toPayload());
         }
         catch (error) {
             console.error(error);
-            yield interaction.editReply({ content: `${config.emojis.error} **Failed to execute fuckban.**` });
+            yield interaction.editReply((0, componentV2_1.createErrorV2)("**Failed to execute fuckban.**").toPayload());
         }
     });
 }

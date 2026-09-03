@@ -1,24 +1,19 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits, TextChannel } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, TextChannel } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('unhideall')
-    .setDescription('Unhide all channels in the server')
-
+    .setDescription('Unhide all channels in the server');
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.guild) return;
 
     await interaction.deferReply();
 
-    // Owner Bypass Check (Since standard perm check is handled by Discord for this command usually, but code level check is good practice if defaults are overridden)
-    // Actually, setDefaultMemberPermissions handles the UI visibility. But if a user force-runs it (api), we should check.
-    // However, for 'Administrator' commands, we might not have a manual check inside. Let's add one to be safe and allow owner bypass.
-
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to use this command.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to use this command.").toPayload({ ephemeral: true }));
     }
 
     const channels = interaction.guild.channels.cache.filter(c => c.isTextBased() && c.manageable);
@@ -35,9 +30,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
     }
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(0x57F287)
-        .setDescription(`${config.emojis.success || "👁️"} **Unhidden ${count} channels.**`);
+        .setTitle(`${config.emojis.success || "👁️"} Channels Unhidden`)
+        .setDescription(`**Unhidden ${count} channels** for everyone.`);
 
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(embed.toPayload());
 }

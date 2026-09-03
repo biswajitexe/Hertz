@@ -15,31 +15,41 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Database = void 0;
 const keyv_1 = __importDefault(require("keyv"));
 const mongo_1 = __importDefault(require("@keyv/mongo"));
+const postgres_1 = __importDefault(require("@keyv/postgres"));
 class Database {
     constructor() {
         var _a;
-        const mongoUrl = (_a = (process.env.MONGO_URL || process.env.MONGO_URI)) === null || _a === void 0 ? void 0 : _a.trim();
-        if (mongoUrl) {
+        const dbUrl = (_a = (process.env.DATABASE || process.env.MONGO_URL || process.env.MONGO_URI || process.env.MONGODB_URI)) === null || _a === void 0 ? void 0 : _a.trim();
+        if (dbUrl) {
             try {
-                console.log("DEBUG: Connecting to MongoDB...");
-                const store = new mongo_1.default(mongoUrl, { dbName: 'xeon', tls: true });
+                let store;
+                if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
+                    console.log("DEBUG: Connecting to PostgreSQL (Supabase)...");
+                    const PostgresAdapter = postgres_1.default.default || postgres_1.default;
+                    store = new PostgresAdapter({ uri: dbUrl, table: 'keyv_store' });
+                }
+                else {
+                    console.log("DEBUG: Connecting to MongoDB...");
+                    store = new mongo_1.default(dbUrl, { dbName: process.env.DB_NAME || 'hertz', tls: true });
+                }
                 this.inner = new keyv_1.default({ store: store, namespace: 'guilds' });
                 this.users = new keyv_1.default({ store: store, namespace: 'users' });
                 this.inner.on('error', (err) => {
-                    console.warn('[Database Warning] MongoDB connection issue. Switching to in-memory storage temporarily.');
+                    console.warn('[Database Warning] Connection issue. Switching to in-memory storage temporarily.');
                     console.error('Connection Error Detail:', err.message);
                     this.inner = new keyv_1.default();
                     this.users = new keyv_1.default();
                 });
             }
-            catch (error) {
-                console.warn("[Database Warning] Failed to connect to MongoDB. Using in-memory storage.");
+            catch (err) {
+                console.warn("[Database Warning] Failed to initialize database adapter. Using in-memory storage.");
+                console.error(err);
                 this.inner = new keyv_1.default();
                 this.users = new keyv_1.default();
             }
         }
         else {
-            console.warn('MONGO_URL not found in .env, falling back to in-memory storage (data will be lost on restart)');
+            console.warn('Database URL not found in .env, falling back to in-memory storage (data will be lost on restart)');
             this.inner = new keyv_1.default();
             this.users = new keyv_1.default();
         }
@@ -56,7 +66,7 @@ class Database {
                     webhooksWhiteList.push(webhook[1].id);
                 }
             }
-            catch (e) {
+            catch (_a) {
                 console.warn(`[Database] Failed to fetch webhooks for guild ${guild.id} (Missing Permissions?)`);
             }
             yield this.insertGuild(guild.id, {

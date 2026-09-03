@@ -1,21 +1,17 @@
-
-import { EmbedBuilder, User, CommandInteraction } from "discord.js";
+import { User } from "discord.js";
 import * as config from "../config";
+import { V2Embed, createSuccessV2, createErrorV2, createWarningV2, replyV2, editReplyV2, sendV2 } from "./componentV2";
 
-export function createSuccessEmbed(user: User, description: string): EmbedBuilder {
-    return new EmbedBuilder()
-        .setColor(config.colors.success)
-        .setDescription(`${config.emojis.success} ${description}`);
+export * from "./componentV2";
+
+export function createSuccessEmbed(user: User, description: string): V2Embed {
+    return createSuccessV2(description);
 }
 
-export function createErrorEmbed(user: User, description: string): EmbedBuilder {
-    return new EmbedBuilder()
-        .setColor(config.colors.error)
-        .setDescription(`${config.emojis.error} ${description}`);
+export function createErrorEmbed(user: User, description: string): V2Embed {
+    return createErrorV2(description);
 }
 
-export function createWarningEmbed(user: User, description: string): EmbedBuilder {
-    return new EmbedBuilder()
-        .setColor(config.colors.warning)
-        .setDescription(`${config.emojis.warning} ${description}`);
+export function createWarningEmbed(user: User, description: string): V2Embed {
+    return createWarningV2(description);
 }

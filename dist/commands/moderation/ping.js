@@ -46,6 +46,7 @@ exports.aliases = exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('ping')
     .setDescription('Replies with Pong!');
@@ -55,11 +56,11 @@ function run(interaction, database) {
         const sent = yield interaction.reply({ content: 'Pinging...', fetchReply: true });
         const latency = sent.createdTimestamp - interaction.createdTimestamp;
         const apiLatency = Math.round(interaction.client.ws.ping);
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
             .setTitle('🏓 Pong!')
             .addFields({ name: 'Bot Latency', value: `${latency}ms`, inline: true }, { name: 'API Latency', value: `${apiLatency}ms`, inline: true })
-            .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
-        yield interaction.editReply({ content: null, embeds: [embed] });
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+        yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
     });
 }

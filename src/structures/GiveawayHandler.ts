@@ -1,14 +1,12 @@
-
 import {
     Client,
-    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    TextChannel,
-    Message,
-    ButtonInteraction
+    ButtonInteraction,
+    TextChannel
 } from "discord.js";
+import { V2Embed } from "../utilities/componentV2";
 import * as config from "../config";
 import fs from "fs";
 import path from "path";
@@ -128,12 +126,12 @@ class GiveawayHandler {
         return interaction.reply({ content: `${config.emojis.success} You have entered the giveaway! (**${giveaway.prize}**)`, ephemeral: true });
     }
 
-    public createGiveawayEmbed(giveaway: GiveawayData) {
+    public createGiveawayEmbed(giveaway: GiveawayData): V2Embed {
         const endTime = Math.floor(giveaway.endTime / 1000);
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: "Giveaway Time!", iconURL: this.client?.user?.displayAvatarURL() })
-            .setTitle(`${config.emojis.giveaway || "🎉"} **${giveaway.prize}**`)
+            .setAuthor("Giveaway Time!", this.client?.user?.displayAvatarURL())
+            .setTitle(`${config.emojis.giveaway || "🎉"} ${giveaway.prize}`)
             .setDescription(
                 [
                     `${config.emojis.dot} **Ends:** <t:${endTime}:R>`,
@@ -147,7 +145,7 @@ class GiveawayHandler {
                 ].join("\n")
             )
             .setThumbnail(this.client?.user?.displayAvatarURL() || null)
-            .setFooter({ text: "Giveaways", iconURL: this.client?.user?.displayAvatarURL() })
+            .setFooter("Giveaways", this.client?.user?.displayAvatarURL())
             .setTimestamp();
     }
 
@@ -175,10 +173,7 @@ class GiveawayHandler {
             const embed = this.createGiveawayEmbed(giveaway);
             const button = this.createGiveawayButton(giveaway.ended || giveaway.paused);
 
-            await message.edit({
-                embeds: [embed],
-                components: [button]
-            });
+            await message.edit(embed.toPayload({ extraComponents: [button] }));
         } catch (err) {
             log(`r{Error updating giveaway message: ${err}}`);
         }
@@ -234,9 +229,9 @@ class GiveawayHandler {
 
             const winners = this.selectWinners(giveaway.participants, giveaway.winners);
 
-            const endEmbed = new EmbedBuilder()
+            const endEmbed = new V2Embed()
                 .setColor(0xFF0000)
-                .setTitle(`${config.emojis.giveaway || "🎉"} **${giveaway.prize}**`)
+                .setTitle(`${config.emojis.giveaway || "🎉"} ${giveaway.prize}`)
                 .setDescription(
                     [
                         `${config.emojis.dot} **Hosted by:** <@${giveaway.hostId}>`,
@@ -246,18 +241,15 @@ class GiveawayHandler {
                         `${config.emojis.end || "🛑"} **This giveaway has ended!**`
                     ].join("\n")
                 )
-                .setFooter({ text: "Ended at" })
+                .setFooter("Ended at")
                 .setTimestamp();
 
-            await message.edit({
-                embeds: [endEmbed],
-                components: [this.createGiveawayButton(true)]
-            });
+            await message.edit(endEmbed.toPayload({ extraComponents: [this.createGiveawayButton(true)] }));
 
             if (winners.length > 0) {
-                const winnerEmbed = new EmbedBuilder()
-                    .setColor(0x000000)
-                    .setTitle(`${config.emojis.giveaway || "🎉"} **Giveaway Winner(s)!**`)
+                const winnerEmbed = new V2Embed()
+                    .setColor(config.colors.primary)
+                    .setTitle(`${config.emojis.giveaway || "🎉"} Giveaway Winner(s)!`)
                     .setDescription(
                         [
                             `**Prize:** ${giveaway.prize}`,
@@ -268,10 +260,7 @@ class GiveawayHandler {
                     )
                     .setTimestamp();
 
-                await channel.send({
-                    content: winners.map(w => `<@${w}>`).join(" "),
-                    embeds: [winnerEmbed]
-                });
+                await channel.send(winnerEmbed.toPayload());
             } else {
                 await channel.send(`${config.emojis.error} No valid participants for the giveaway: **${giveaway.prize}**`);
             }

@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const SnipeManager_1 = require("../../structures/SnipeManager");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('snipe')
     .setDescription('Recover the last deleted message in this channel')
@@ -55,17 +56,17 @@ function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
         const snipes = SnipeManager_1.snipeCache.get(interaction.channelId);
         if (!snipes || snipes.length === 0) {
-            return interaction.reply({ content: `${config.emojis.error} There is nothing to snipe here!`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("There is nothing to snipe here!").toPayload({ ephemeral: true }));
         }
         const data = snipes[0];
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: data.authorTag, iconURL: data.authorAvatar || undefined })
+            .setAuthor(data.authorTag, data.authorAvatar || undefined)
             .setDescription(data.content || "*No content (Image only)*")
-            .setFooter({ text: `Sniped by ${interaction.user.tag} | Deleted` });
+            .setFooter(`Sniped by ${interaction.user.tag} | Deleted`);
         if (data.image) {
             embed.setImage(data.image);
         }
-        yield interaction.reply({ embeds: [embed] });
+        yield interaction.reply(embed.toPayload());
     });
 }

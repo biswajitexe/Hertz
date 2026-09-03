@@ -1,5 +1,4 @@
-
-import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import { canModerate } from "../../utilities/permission";
 import ms from 'ms';
@@ -34,40 +33,40 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // 0. Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You do not have permission to mute members.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You do not have permission to mute members.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!user) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?mute <user> [duration] [reason]`")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?mute <user> [duration] [reason]`").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!(user instanceof GuildMember)) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "User is not in the server.")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "User is not in the server.").toPayload({ ephemeral: true }));
         return;
     }
 
     // 1. Safety Checks
     if (user.id === interaction.user.id) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot mute yourself.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot mute yourself.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.client.user.id) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot mute me.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot mute me.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.guild.ownerId) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot mute the server owner.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot mute the server owner.**").toPayload({ ephemeral: true }));
         return;
     }
     if (!user.moderatable) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**I cannot mute this user. My role is likely below theirs.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**I cannot mute this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!canModerate(interaction.member, user, PermissionFlagsBits.ModerateMembers)) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot moderate this user due to role hierarchy.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot moderate this user due to role hierarchy.**").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -76,11 +75,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     try {
         timeMs = ms(durationStr);
         if (!timeMs || timeMs < 1000 || timeMs > 28 * 24 * 60 * 60 * 1000) {
-            await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "Invalid duration. Must be between 1 second and 28 days. Example: `1h`, `30m`.")], ephemeral: true });
+            await interaction.reply(createErrorEmbed(interaction.user, "Invalid duration. Must be between 1 second and 28 days. Example: `1h`, `30m`.").toPayload({ ephemeral: true }));
             return;
         }
     } catch {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "Invalid duration format.")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "Invalid duration format.").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -104,10 +103,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             successEmbed.addFields({ name: 'Duration', value: durationFormatted, inline: false });
         }
 
-        await interaction.editReply({ embeds: [successEmbed] });
+        await interaction.editReply(successEmbed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "**Failed to mute user.**")] });
+        await interaction.editReply(createErrorEmbed(interaction.user, "**Failed to mute user.**").toPayload());
     }
 }

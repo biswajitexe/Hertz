@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, ActivityType } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, ActivityType } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('status')
@@ -32,16 +32,17 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
     if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
 
-    if (!owners.includes(interaction.user.id)) return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+    if (!owners.includes(interaction.user.id)) return interaction.reply(createErrorV2('Unknown command.').toPayload({ ephemeral: true }));
 
     const sub = interaction.options.getSubcommand();
 
     const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(color)
-            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+            .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
     if (sub === 'set') {
@@ -49,7 +50,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const text = interaction.options.getString('text', true);
 
         if (!typeStr || !text) {
-             return interaction.reply({ content: `Usage: \`${config.prefix}status set <type> <text>\`\nTypes: Playing, Watching, Listening, Competing, Streaming`, ephemeral: true });
+             return interaction.reply(createErrorV2(`Usage: \`${config.prefix}status set <type> <text>\`\nTypes: Playing, Watching, Listening, Competing, Streaming`).toPayload({ ephemeral: true }));
         }
 
         let type = ActivityType.Playing;
@@ -58,27 +59,27 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         if (typeStr === 'Competing') type = ActivityType.Competing;
         if (typeStr === 'Streaming') type = ActivityType.Streaming;
 
-        interaction.client.user.setPresence({
+        interaction.client.user?.setPresence({
             activities: [{ name: text, type: type }],
             status: 'online'
         });
 
-        return interaction.reply({ embeds: [embedStyle('Status Updated', `> Status updated to **${typeStr} ${text}**.`, config.colors.success)], ephemeral: true });
+        return interaction.reply(embedStyle('Status Updated', `> Status updated to **${typeStr} ${text}**.`, config.colors.success).toPayload({ ephemeral: true }));
     }
 
     if (sub === 'maintenance') {
         const state = interaction.options.getBoolean('state', true);
 
-        if (!botConfig) botConfig = await database.getBotConfig(); // Safety check
+        if (!botConfig) botConfig = await database.getBotConfig();
         botConfig.maintenance = state;
         await database.insertBotConfig(botConfig);
 
         if (state) {
-            interaction.client.user.setPresence({ status: 'dnd', activities: [{ name: 'Maintenance Mode', type: ActivityType.Watching }] });
-            return interaction.reply({ embeds: [embedStyle('Maintenance Enabled', `> **Maintenance Mode ENABLED.** Users cannot use commands.`, config.colors.warning)], ephemeral: true });
+            interaction.client.user?.setPresence({ status: 'dnd', activities: [{ name: 'Maintenance Mode', type: ActivityType.Watching }] });
+            return interaction.reply(embedStyle('Maintenance Enabled', `> **Maintenance Mode ENABLED.** Users cannot use commands.`, config.colors.warning).toPayload({ ephemeral: true }));
         } else {
-            interaction.client.user.setPresence({ status: 'online', activities: [{ name: 'Ready', type: ActivityType.Playing }] });
-            return interaction.reply({ embeds: [embedStyle('Maintenance Disabled', `> **Maintenance Mode DISABLED.** Bot is live.`, config.colors.success)], ephemeral: true });
+            interaction.client.user?.setPresence({ status: 'online', activities: [{ name: 'Ready', type: ActivityType.Playing }] });
+            return interaction.reply(embedStyle('Maintenance Disabled', `> **Maintenance Mode DISABLED.** Bot is live.`, config.colors.success).toPayload({ ephemeral: true }));
         }
     }
 }

@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('antilink')
     .setDescription('Configure the anti-link system.')
@@ -61,7 +62,6 @@ exports.command = new discord_js_1.SlashCommandBuilder()
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
-        console.log(`[DEBUG] Antilink run. Command: ${interaction.commandName}, Sub: ${interaction.options.getSubcommand()}`);
         if (!interaction.inCachedGuild())
             return;
         let guildData = yield database.retrieveGuild(interaction.guild.id);
@@ -80,7 +80,7 @@ function run(interaction, database) {
         const isExtraAdmin = guildData.extraAdmins.includes(interaction.user.id);
         const isBotOwner = interaction.user.id === process.env.OWNER_ID;
         if (!isOwner && !isExtraOwner && !isExtraAdmin && !isBotOwner) {
-            yield interaction.reply({ content: `${config.emojis.error} **Only the Server Owner, Trustable Admins, or Bot Owner can manage anti-link settings.**`, ephemeral: true });
+            yield interaction.reply((0, componentV2_1.createErrorV2)('Only the Server Owner, Trustable Admins, or Bot Owner can manage anti-link settings.').toPayload({ ephemeral: true }));
             return;
         }
         const sub = interaction.options.getSubcommand();
@@ -88,21 +88,21 @@ function run(interaction, database) {
         try {
             if (sub === 'enable') {
                 if (guildData.messageFilters.links) {
-                    yield interaction.editReply({ content: `${config.emojis.error} **Anti-Link is already enabled!**` });
+                    yield interaction.editReply((0, componentV2_1.createErrorV2)('Anti-Link is already enabled!').toPayload());
                     return;
                 }
                 guildData.messageFilters.links = true;
                 yield database.insertGuild(interaction.guild.id, guildData);
-                yield interaction.editReply({ content: `${config.emojis.success} **Anti-Link filter has been Enabled.**` });
+                yield interaction.editReply((0, componentV2_1.createSuccessV2)('Anti-Link filter has been Enabled.').toPayload());
             }
             else if (sub === 'disable') {
                 if (!guildData.messageFilters.links) {
-                    yield interaction.editReply({ content: `${config.emojis.error} **Anti-Link is already disabled!**` });
+                    yield interaction.editReply((0, componentV2_1.createErrorV2)('Anti-Link is already disabled!').toPayload());
                     return;
                 }
                 guildData.messageFilters.links = false;
                 yield database.insertGuild(interaction.guild.id, guildData);
-                yield interaction.editReply({ content: `${config.emojis.success} **Anti-Link filter has been DISABLED.**` });
+                yield interaction.editReply((0, componentV2_1.createSuccessV2)('Anti-Link filter has been DISABLED.').toPayload());
             }
             else if (sub === 'status') {
                 const statusEmoji = guildData.messageFilters.links ? config.emojis.success : config.emojis.error;
@@ -111,28 +111,30 @@ function run(interaction, database) {
                 if (!guildData.messageFilters.links) {
                     description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antilink enable\` to activate security and protect your server! <:6581lockkey:1461100873479487559>`;
                 }
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.primary)
-                    .setDescription(`**${config.emojis.automod} Anti-Link Panel**\n\n${description}`)
+                    .setTitle(`${config.emojis.automod} Anti-Link Panel`)
+                    .setDescription(description)
                     .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-                yield interaction.editReply({ embeds: [embed] });
+                    .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                yield interaction.editReply(embed.toPayload());
             }
             else {
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.primary)
-                    .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+                    .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
+                    .setTitle('Anti-Link Commands')
                     .setDescription('`?antilink enable`\n' +
                     '`?antilink disable`\n' +
                     '`?antilink status`')
                     .setThumbnail(((_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || null)
-                    .setFooter({ text: 'Xeon • Automated Security', iconURL: ((_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL()) || undefined });
-                yield interaction.editReply({ embeds: [embed] });
+                    .setFooter('Hertz • Automated Security', ((_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL()) || undefined);
+                yield interaction.editReply(embed.toPayload());
             }
         }
         catch (error) {
             console.error(error);
-            yield interaction.editReply({ content: `${config.emojis.error} **Failed to update settings.**` });
+            yield interaction.editReply((0, componentV2_1.createErrorV2)('Failed to update settings.').toPayload());
         }
     });
 }

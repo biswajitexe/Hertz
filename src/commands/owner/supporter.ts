@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2, createWarningV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('supporter')
@@ -22,52 +22,50 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const isAdmin = botConfig?.adminUsers?.includes(interaction.user.id);
 
     if (!isOwner && !isAdmin) {
-        return interaction.reply({ 
-            embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} You do not have permission to use this command.`)], 
-            ephemeral: true 
-        });
+        return interaction.reply(createErrorV2('You do not have permission to use this command.').toPayload({ ephemeral: true }));
     }
 
     const subcommand = interaction.options.getSubcommand(false);
     if (!botConfig.supporterUsers) botConfig.supporterUsers = [];
 
     const embedStyle = (title: string, description: string) => {
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(config.colors.primary)
-            .setDescription(`**${config.emojis.supporter} ${title}**\n\n${description}`)
+            .setTitle(`${config.emojis.supporter} ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
     if (subcommand === 'add') {
         const targetUser = interaction.options.getUser('user', true);
         if (botConfig.supporterUsers.includes(targetUser.id)) {
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is already a **Supporter**.`)] });
+            return interaction.reply(createErrorV2(`**${targetUser.tag}** is already a **Supporter**.`).toPayload());
         }
         botConfig.supporterUsers.push(targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply({ embeds: [embedStyle('Supporter Added', `> Added **${targetUser.tag}** as a **Bot Supporter**.`)] });
+        return interaction.reply(embedStyle('Supporter Added', `> Added **${targetUser.tag}** as a **Bot Supporter**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
     }
 
     if (subcommand === 'remove') {
         const targetUser = interaction.options.getUser('user', true);
         if (!botConfig.supporterUsers.includes(targetUser.id)) {
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is not a **Supporter**.`)] });
+            return interaction.reply(createErrorV2(`**${targetUser.tag}** is not a **Supporter**.`).toPayload());
         }
         botConfig.supporterUsers = botConfig.supporterUsers.filter(id => id !== targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply({ embeds: [embedStyle('Supporter Removed', `> Removed **${targetUser.tag}** from **Bot Supporters**.`)] });
+        return interaction.reply(embedStyle('Supporter Removed', `> Removed **${targetUser.tag}** from **Bot Supporters**.`).toPayload());
     }
 
     if (subcommand === 'list') {
         const users = botConfig.supporterUsers;
-        if (users.length === 0) return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} No Supporters found.`)] });
+        if (users.length === 0) return interaction.reply(createWarningV2('No Supporters found.').toPayload());
         
         const names = await Promise.all(users.map(async id => {
             try { return (await interaction.client.users.fetch(id)).username; } catch { return `Unknown (${id})`; }
         }));
         const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
-        return interaction.reply({ embeds: [embedStyle('Bot Supporters', list)] });
+        return interaction.reply(embedStyle('Bot Supporters', list).toPayload());
     }
 
     // Default: Help Menu
@@ -76,5 +74,5 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         `\`${config.prefix}supporter remove <user>\`\n` +
         `\`${config.prefix}supporter list\``
     );
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply(embed.toPayload());
 }

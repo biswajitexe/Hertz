@@ -1,6 +1,6 @@
-
-import { EmbedBuilder, Guild, User, TextChannel, ColorResolvable } from 'discord.js';
+import { Guild, User, TextChannel, ColorResolvable } from 'discord.js';
 import { Database } from '../database';
+import { V2Embed } from './componentV2';
 
 export type ModAction = 'BAN' | 'KICK' | 'MUTE' | 'WARN' | 'UNBAN' | 'TIMEOUT' | 'UNKNOWN' | 'UNMUTE';
 
@@ -30,19 +30,20 @@ export async function logAction(
         case 'UNMUTE': color = '#00ff00'; break;
     }
 
-    const embed = new EmbedBuilder()
-        .setAuthor({ name: `${action} | ${target.tag}`, iconURL: target.displayAvatarURL() })
+    const card = new V2Embed()
+        .setAuthor(`${action} | ${target.tag}`, target.displayAvatarURL())
         .setColor(color)
+        .setThumbnail(target.displayAvatarURL())
         .addFields(
-            { name: 'User', value: `${target} (${target.id})`, inline: true },
-            { name: 'Moderator', value: `${moderator} (${moderator.id})`, inline: true },
+            { name: 'User', value: `${target} (\`${target.id}\`)`, inline: true },
+            { name: 'Moderator', value: `${moderator} (\`${moderator.id}\`)`, inline: true },
             { name: 'Reason', value: reason }
         )
         .setTimestamp();
 
     if (extraInfo) {
-        embed.addFields({ name: 'Additional Info', value: extraInfo });
+        card.addFields({ name: 'Additional Info', value: extraInfo });
     }
 
-    await channel.send({ embeds: [embed] }).catch(() => { });
+    await channel.send(card.toPayload()).catch(() => { });
 }

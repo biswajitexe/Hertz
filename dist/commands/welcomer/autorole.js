@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('autorole')
     .setDescription('Manage automatic roles for new members')
@@ -75,7 +76,7 @@ function run(interaction, database) {
         if (!interaction.guild)
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageRoles)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage roles.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('You do not have permission to manage roles.').toPayload({ ephemeral: true }));
         }
         const guildId = interaction.guildId;
         let guildData = yield database.retrieveGuild(guildId);
@@ -92,96 +93,101 @@ function run(interaction, database) {
         const subcommandGroup = interaction.options.getSubcommandGroup(false);
         const subcommand = interaction.options.getSubcommand(false);
         if (!subcommand || subcommand === 'help') {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
                 .setThumbnail(interaction.client.user.displayAvatarURL())
-                .setDescription(`<:rolemanager58:1464579329974603861> **Autorole Commands**\n\n` +
+                .setTitle('Autorole Commands')
+                .setDescription(`<:rolemanager58:1464579329974603861> **Configure Auto-Roles for new members**\n\n` +
                 `\`?autorole humans <add | remove> <role>\`\n` +
                 `\`?autorole bots <add | remove> <role>\`\n` +
                 `\`?autorole show\`\n` +
                 `\`?autorole reset\``)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-            return interaction.reply({ embeds: [embed] });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            return interaction.reply(embed.toPayload());
         }
         if (subcommand === 'show') {
-            const getEmbed = (type) => __awaiter(this, void 0, void 0, function* () {
-                const embed = new discord_js_1.EmbedBuilder()
+            let activeType = 'humans';
+            const getEmbed = (type) => {
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.primary)
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                    .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
                 if (type === 'humans') {
                     const list = guildData.autoroles.map((id, i) => `\`「${i + 1}」\` <@&${id}>`).join('\n') || "None";
-                    embed.setAuthor({ name: 'Autorole Humans', iconURL: 'https://cdn.discordapp.com/emojis/1459604921451020472.png' });
+                    embed.setAuthor('Autorole Humans', 'https://cdn.discordapp.com/emojis/1459604921451020472.png');
                     embed.setDescription(list);
                 }
                 else {
                     const list = guildData.autorolesBots.map((id, i) => `\`「${i + 1}」\` <@&${id}>`).join('\n') || "None";
-                    embed.setAuthor({ name: 'Autorole Bots', iconURL: 'https://cdn.discordapp.com/emojis/1464605545293025395.png' });
+                    embed.setAuthor('Autorole Bots', 'https://cdn.discordapp.com/emojis/1464605545293025395.png');
                     embed.setDescription(list);
                 }
                 return embed;
-            });
-            const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:online:1458160864032194591>'), new discord_js_1.ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:iconbot:1458160287290102008>'));
-            const reply = yield interaction.reply({ embeds: [yield getEmbed('humans')], components: [row] });
+            };
+            const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:online:1458160864032194591>').setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:iconbot:1458160287290102008>').setDisabled(disabled));
+            const reply = yield interaction.reply(getEmbed('humans').toPayload({ extraComponents: [getRow()] }));
             const collector = reply.createMessageComponentCollector({ componentType: discord_js_1.ComponentType.Button, time: 60000 });
             collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {
                 if (i.user.id !== interaction.user.id) {
-                    yield i.reply({ content: `${config.emojis.error} **Only the requester can use these buttons.**`, ephemeral: true });
+                    yield i.reply((0, componentV2_1.createErrorV2)('Only the requester can use these buttons.').toPayload({ ephemeral: true }));
                     return;
                 }
-                if (i.customId === 'ar_show_humans')
-                    yield i.update({ embeds: [yield getEmbed('humans')] });
-                else if (i.customId === 'ar_show_bots')
-                    yield i.update({ embeds: [yield getEmbed('bots')] });
+                if (i.customId === 'ar_show_humans') {
+                    activeType = 'humans';
+                    yield i.update(getEmbed('humans').toPayload({ extraComponents: [getRow()] }));
+                }
+                else if (i.customId === 'ar_show_bots') {
+                    activeType = 'bots';
+                    yield i.update(getEmbed('bots').toPayload({ extraComponents: [getRow()] }));
+                }
             }));
             collector.on('end', () => {
-                const disabledRow = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji('<:online:1458160864032194591>'), new discord_js_1.ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true).setEmoji('<:iconbot:1458160287290102008>'));
-                reply.edit({ components: [disabledRow] }).catch(() => { });
+                reply.edit(getEmbed(activeType).toPayload({ extraComponents: [getRow(true)] })).catch(() => { });
             });
             return;
         }
         if (subcommand === 'reset') {
             if (guildData.autoroles.length === 0 && guildData.autorolesBots.length === 0) {
-                return interaction.reply({ content: `${config.emojis.warning} Autorole configuration is already empty.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)('Autorole configuration is already empty.').toPayload({ ephemeral: true }));
             }
             guildData.autoroles = [];
             guildData.autorolesBots = [];
             yield database.insertGuild(guildId, guildData);
-            return interaction.reply(`${config.emojis.success} All autoroles (humans and bots) have been cleared.`);
+            return interaction.reply((0, componentV2_1.createSuccessV2)('All autoroles (humans and bots) have been cleared.').toPayload());
         }
         const targetArray = subcommandGroup === 'bots' ? guildData.autorolesBots : guildData.autoroles;
         const typeName = subcommandGroup === 'bots' ? 'Bots' : 'Humans';
         const role = interaction.options.getRole('role', false);
         if (!role) {
-            return interaction.reply({ content: `${config.emojis.error} Role not found. Please provide a valid Role or Role ID.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Role not found. Please provide a valid Role or Role ID.').toPayload({ ephemeral: true }));
         }
         if (subcommand === 'add') {
             if (role.managed)
-                return interaction.reply({ content: `${config.emojis.error} Cannot add managed roles.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)('Cannot add managed roles.').toPayload({ ephemeral: true }));
             if (role.name === '@everyone' || role.id === interaction.guildId)
-                return interaction.reply({ content: `${config.emojis.error} Cannot add everyone role.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)('Cannot add everyone role.').toPayload({ ephemeral: true }));
             const botMember = yield interaction.guild.members.fetchMe();
             if (role.position >= botMember.roles.highest.position)
-                return interaction.reply({ content: `${config.emojis.error} I cannot assign this role (it is higher than my highest role).`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)('I cannot assign this role (it is higher than my highest role).').toPayload({ ephemeral: true }));
             if (interaction.user.id !== interaction.guild.ownerId && interaction.user.id !== process.env.OWNER_ID) {
                 const member = interaction.member;
                 if (role.position >= member.roles.highest.position)
-                    return interaction.reply({ content: `${config.emojis.error} You cannot assign a role higher or equal to your own.`, ephemeral: true });
+                    return interaction.reply((0, componentV2_1.createErrorV2)('You cannot assign a role higher or equal to your own.').toPayload({ ephemeral: true }));
             }
             if (targetArray.includes(role.id))
-                return interaction.reply({ content: `${config.emojis.error} Role is already an autorole for ${typeName}.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`Role is already an autorole for ${typeName}.`).toPayload({ ephemeral: true }));
             if (targetArray.length >= 10)
-                return interaction.reply({ content: `${config.emojis.error} Max 10 autoroles allowed per category.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)('Max 10 autoroles allowed per category.').toPayload({ ephemeral: true }));
             targetArray.push(role.id);
             yield database.insertGuild(guildId, guildData);
-            return interaction.reply(`${config.emojis.success} Added ${role} to **${typeName}** autoroles.`);
+            return interaction.reply((0, componentV2_1.createSuccessV2)(`Added ${role} to **${typeName}** autoroles.`).toPayload());
         }
         if (subcommand === 'remove') {
             if (!targetArray.includes(role.id))
-                return interaction.reply({ content: `${config.emojis.error} That role is not in the **${typeName}** autorole list.`, ephemeral: true });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`That role is not in the **${typeName}** autorole list.`).toPayload({ ephemeral: true }));
             const index = targetArray.indexOf(role.id);
             targetArray.splice(index, 1);
             yield database.insertGuild(guildId, guildData);
-            return interaction.reply(`${config.emojis.success} Removed ${role} from **${typeName}** autoroles.`);
+            return interaction.reply((0, componentV2_1.createSuccessV2)(`Removed ${role} from **${typeName}** autoroles.`).toPayload());
         }
     });
 }

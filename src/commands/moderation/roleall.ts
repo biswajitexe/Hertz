@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('roleall')
@@ -24,42 +24,40 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage roles (Admin only).`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to manage roles (Admin only).").toPayload({ ephemeral: true }));
     }
 
     const subcommand = interaction.options.getSubcommand(false);
     const role = interaction.options.getRole('role');
 
     if (!subcommand || !role) {
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setThumbnail(interaction.client.user.displayAvatarURL())
-            .setDescription(`\`?roleall add <role>\`\n\`?roleall remove <role>\``)
-            .setFooter({ text: `Xeon • Advanced Moderation`, iconURL: interaction.client.user.displayAvatarURL() });
-        return interaction.reply({ embeds: [embed] });
+            .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
+            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
+            .setDescription(`\`${config.prefix}roleall add <role>\`\n\`${config.prefix}roleall remove <role>\``)
+            .setFooter(`Hertz • Advanced Moderation`, interaction.client.user?.displayAvatarURL());
+        return interaction.reply(embed.toPayload());
     }
 
-    // Safety Checks
     const botMember = await interaction.guild.members.fetchMe();
     if (role.position >= botMember.roles.highest.position) {
-        return interaction.reply({ content: `${config.emojis.error} I cannot manage this role (it is higher or equal to my highest role).`, ephemeral: true });
+        return interaction.reply(createErrorV2("I cannot manage this role (it is higher or equal to my highest role).").toPayload({ ephemeral: true }));
     }
 
     if (role.managed) {
-        return interaction.reply({ content: `${config.emojis.error} I cannot manage this role (it is managed by an integration).`, ephemeral: true });
+        return interaction.reply(createErrorV2("I cannot manage this role (it is managed by an integration).").toPayload({ ephemeral: true }));
     }
 
     await interaction.deferReply();
 
-    // Fetch all members
     const members = await interaction.guild.members.fetch();
     const allMembers = Array.from(members.values());
-    const validMembers = allMembers.filter(m => !m.user.bot); // Skip bots for roleall
+    const validMembers = allMembers.filter(m => !m.user.bot);
 
     let count = 0;
     let failed = 0;
-    const batchSize = 10; // Process 10 users at a time to avoid heavy RL but improve speed
+    const batchSize = 10;
 
     async function processBatch(batch: any[], action: 'add' | 'remove') {
         const promises = batch.map(async (member) => {
@@ -75,7 +73,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                         return true;
                     }
                 }
-                return false; // No action needed
+                return false;
             } catch (e) {
                 return 'error';
             }
@@ -96,10 +94,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             await processBatch(batch, 'add');
         }
 
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(0x57F287)
-            .setDescription(`${config.emojis.success} **Added role ${role.name} to ${count} members.** (Failed: ${failed})`);
-        await interaction.editReply({ content: '', embeds: [embed] });
+            .setTitle(`${config.emojis.success} Role Added to Members`)
+            .setDescription(`**Added role ${role.name} to ${count} members.** (Failed: ${failed})`);
+        await interaction.editReply({ content: null, ...embed.toPayload() });
 
     } else if (subcommand === 'remove') {
         await interaction.editReply({ content: `${config.emojis.loading || "🔄"} Processing **${validMembers.length}** members... This may take a while.` });
@@ -109,9 +108,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             await processBatch(batch, 'remove');
         }
 
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(0xED4245)
-            .setDescription(`${config.emojis.success} **Removed role ${role.name} from ${count} members.** (Failed: ${failed})`);
-        await interaction.editReply({ content: '', embeds: [embed] });
+            .setTitle(`${config.emojis.success} Role Removed from Members`)
+            .setDescription(`**Removed role ${role.name} from ${count} members.** (Failed: ${failed})`);
+        await interaction.editReply({ content: null, ...embed.toPayload() });
     }
 }

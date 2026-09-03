@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../../config"));
 const giveaway_1 = require("../giveaway");
+const componentV2_1 = require("../../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('gend')
     .setDescription('End a giveaway early')
@@ -59,14 +60,15 @@ function run(interaction, database) {
         if (!interaction.guild)
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageMessages)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage giveaways.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('You do not have permission to manage giveaways.').toPayload({ ephemeral: true }));
         }
         const messageId = interaction.options.getString('message_id');
         if (!messageId) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
+                .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway End`)
                 .setDescription(`**Usage:** \`?gend <message_id>\``);
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply(embed.toPayload());
         }
         yield (0, giveaway_1.handleEnd)(interaction);
     });

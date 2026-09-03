@@ -1,11 +1,10 @@
-
-import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import { canModerate } from "../../utilities/permission";
-import * as config from "../../config";
 import ms from "ms";
 import { logAction } from "../../utilities/modLogger";
 import { createSuccessEmbed, createErrorEmbed } from "../../utilities/embedUtils";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('ban')
@@ -57,41 +56,41 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // 0. Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.BanMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You do not have permission to ban members.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You do not have permission to ban members.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!user) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?ban <user> [reason]`")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?ban <user> [reason]`").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!(user instanceof GuildMember)) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "Target is not a member of this server. (Force ban by ID not implemented yet)")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "Target is not a member of this server.").toPayload({ ephemeral: true }));
         return;
     }
 
     // 1. Check Self/Bot/Owner
     if (user.id === interaction.user.id) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot ban yourself.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot ban yourself.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.client.user.id) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot ban me.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot ban me.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.guild.ownerId && interaction.user.id !== process.env.OWNER_ID) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot ban the server owner.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot ban the server owner.**").toPayload({ ephemeral: true }));
         return;
     }
 
     // 2. Hierarchy Checks
     if (!user.bannable) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**I cannot ban this user. My role is likely below theirs.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**I cannot ban this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
         return;
     }
     if (!canModerate(interaction.member, user, PermissionFlagsBits.BanMembers)) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You cannot ban this user due to role hierarchy.**")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**You cannot ban this user due to role hierarchy.**").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -105,20 +104,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         try {
             const milliseconds = ms(durationStr);
             if (!milliseconds || milliseconds < 1000) {
-                await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "Invalid duration format. Example: `1d`, `30m`")] });
+                await interaction.editReply(createErrorEmbed(interaction.user, "Invalid duration format. Example: `1d`, `30m`").toPayload());
                 return;
             }
             endTime = Date.now() + milliseconds;
             durationFormatted = ms(milliseconds, { long: true });
         } catch (e) {
-            await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "Invalid duration string.")] });
+            await interaction.editReply(createErrorEmbed(interaction.user, "Invalid duration string.").toPayload());
             return;
         }
     }
 
     // 4. DM User
     try {
-        const dmEmbed = new EmbedBuilder()
+        const dmEmbed = new V2Embed()
             .setColor(0xFF0000)
             .setTitle(`You have been banned from ${interaction.guild.name}`)
             .addFields(
@@ -127,7 +126,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 { name: 'Moderator', value: interaction.user.tag }
             )
             .setTimestamp();
-        await user.send({ embeds: [dmEmbed] });
+        await user.send(dmEmbed.toPayload()).catch(() => {});
     } catch (e) { }
 
     // 5. Execute Ban
@@ -161,10 +160,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         if (durationStr) successEmbed.addFields({ name: 'Duration', value: durationFormatted, inline: false });
         if (evidence) successEmbed.setImage(evidence.url);
 
-        await interaction.editReply({ embeds: [successEmbed] });
+        await interaction.editReply(successEmbed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "**Failed to ban user.**")] });
+        await interaction.editReply(createErrorEmbed(interaction.user, "**Failed to ban user.**").toPayload());
     }
 }

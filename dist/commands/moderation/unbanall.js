@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('unbanall')
     .setDescription('Unban ALL banned members from the server.')
@@ -58,7 +59,7 @@ function run(interaction, database) {
         try {
             const bans = yield interaction.guild.bans.fetch();
             if (bans.size === 0) {
-                return interaction.editReply({ content: `${config.emojis.error} There are no banned users to unban.` });
+                return interaction.editReply((0, componentV2_1.createErrorV2)("There are no banned users to unban.").toPayload());
             }
             yield interaction.editReply({ content: `${config.emojis.loading || "🔄"} Unbanning **${bans.size}** members... This may take a while.` });
             let count = 0;
@@ -68,16 +69,16 @@ function run(interaction, database) {
                     .then(() => count++)
                     .catch(() => errors++);
             }
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.success)
                 .setTitle('Unban All Complete')
                 .setDescription(`${config.emojis.success} Successfully unbanned **${count}** members.\n${errors > 0 ? `${config.emojis.warning} Failed to unban **${errors}** members.` : ''}`)
-                .setFooter({ text: `Action by ${interaction.user.tag}` });
-            yield interaction.editReply({ content: null, embeds: [embed] });
+                .setFooter(`Action by ${interaction.user.tag}`);
+            yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
         }
         catch (err) {
             console.error(err);
-            yield interaction.editReply({ content: `${config.emojis.error} An error occurred while fetching or unbanning users.` });
+            yield interaction.editReply((0, componentV2_1.createErrorV2)("An error occurred while fetching or unbanning users.").toPayload());
         }
     });
 }

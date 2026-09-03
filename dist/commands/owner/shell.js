@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const child_process_1 = require("child_process");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('shell')
     .setDescription('Execute terminal commands (Owner Only)')
@@ -60,7 +61,7 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.developerUsers)
             owners.push(...botConfig.developerUsers);
         if (!owners.includes(interaction.user.id)) {
-            return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         }
         const cmd = interaction.options.getString('cmd', true);
         yield interaction.deferReply({ ephemeral: true });
@@ -68,12 +69,13 @@ function run(interaction, database) {
             var _a;
             const output = stdout || stderr || "No output.";
             const cleanOutput = output.length > 4000 ? output.substring(0, 4000) + '...' : output;
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(error ? config.colors.error : config.colors.success)
-                .setDescription(`**<:74658vipglow:1465051133704798435> ${error ? 'Shell Error' : 'Shell Success'}**\n\n> \`\`\`bash\n${cleanOutput}\n\`\`\``)
+                .setTitle(`<:74658vipglow:1465051133704798435> ${error ? 'Shell Error' : 'Shell Success'}`)
+                .setDescription(`> \`\`\`bash\n${cleanOutput}\n\`\`\``)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-            interaction.editReply({ embeds: [embed] });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            interaction.editReply(embed.toPayload());
         });
     });
 }

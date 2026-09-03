@@ -1,8 +1,9 @@
-import { type ChatInputCommandInteraction, EmbedBuilder, GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { type ChatInputCommandInteraction, GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import * as config from "../../config";
 import type { Database } from "../../database";
 import { logAction } from "../../utilities/modLogger";
 import { canModerate } from "../../utilities/permission";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('warnkick')
@@ -25,39 +26,39 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.KickMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to kick members.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to kick members.").toPayload({ ephemeral: true }));
     }
 
     if (!user) {
-        await interaction.reply({ content: `${config.emojis.error} User not found. Please mention a valid user.`, ephemeral: true });
+        await interaction.reply(createErrorV2("User not found. Please mention a valid user.").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!(user instanceof GuildMember)) {
-        await interaction.reply({ content: `${config.emojis.error} User is not in the server.`, ephemeral: true });
+        await interaction.reply(createErrorV2("User is not in the server.").toPayload({ ephemeral: true }));
         return;
     }
 
     // Safety Checks
     if (user.id === interaction.user.id) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot warnkick yourself.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot warnkick yourself.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.client.user.id) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot warnkick me.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot warnkick me.**").toPayload({ ephemeral: true }));
         return;
     }
     if (user.id === interaction.guild.ownerId) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot warnkick the server owner.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot warnkick the server owner.**").toPayload({ ephemeral: true }));
         return;
     }
     if (!user.kickable) {
-        await interaction.reply({ content: `${config.emojis.error} **I cannot warnkick this user. My role is likely below theirs.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**I cannot warnkick this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!canModerate(interaction.member, user, PermissionFlagsBits.KickMembers)) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot warnkick this user due to role hierarchy.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot warnkick this user due to role hierarchy.**").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -80,8 +81,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // DM the user
     try {
-        const dmEmbed = new EmbedBuilder()
-            .setColor(0xFEE75C) // Yellow for Warning
+        const dmEmbed = new V2Embed()
+            .setColor(0xFEE75C)
             .setTitle(`You have been Warn-Kicked from ${interaction.guild.name}`)
             .setDescription(`**This is a Warning Kick.**\nYou have been removed but are allowed to rejoin. Please adhere to the rules.`)
             .addFields(
@@ -96,7 +97,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             dmEmbed.addFields({ name: 'Rejoin', value: 'Please ask a friend for an invite.' });
         }
 
-        await user.send({ embeds: [dmEmbed] });
+        await user.send(dmEmbed.toPayload()).catch(() => {});
     } catch { }
 
     try {
@@ -105,19 +106,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         // Mod Log
         await logAction(interaction.guild, user.user, interaction.user, 'KICK', `(WarnKick) ${reason}`, database);
 
-        const successEmbed = new EmbedBuilder()
-            .setColor(config.colors.warning) // Warnkick
-            .setDescription(`${config.emojis.success} **Warning Kicked ${user.user.tag}**`)
-            .setFooter({ text: inviteUrl ? "Invite link sent in DM" : "Could not create invite link (Permissions?)" });
+        const successEmbed = new V2Embed()
+            .setColor(config.colors.warning)
+            .setTitle(`${config.emojis.success} Warning Kicked ${user.user.tag}`)
+            .setDescription(`**User has been kicked with an invite sent to their DMs.**`)
+            .setFooter(inviteUrl ? "Invite link sent in DM" : "Could not create invite link (Permissions?)");
 
         if (reason !== "No reason provided") {
             successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
         }
 
-        await interaction.editReply({ embeds: [successEmbed] });
+        await interaction.editReply(successEmbed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ content: `${config.emojis.error} **Failed to kick user.**` });
+        await interaction.editReply(createErrorV2("**Failed to kick user.**").toPayload());
     }
 }

@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('avatar')
@@ -15,11 +15,11 @@ export const command = new SlashCommandBuilder()
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     const user = interaction.options.getUser('target') || interaction.user;
 
-    const embed = new EmbedBuilder()
-        .setColor(0x2B2D31)
-        .setAuthor({ name: `${user.username}'s Avatar`, iconURL: user.displayAvatarURL() })
+    const embed = new V2Embed()
+        .setColor(config.colors.primary)
+        .setAuthor(`${user.username}'s Avatar`, user.displayAvatarURL())
         .setImage(user.displayAvatarURL({ size: 4096 }))
-        .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(embed.toPayload());
 }

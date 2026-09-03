@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('afk')
     .setDescription('Set your AFK status')
@@ -59,7 +60,7 @@ function run(interaction, database) {
         const reason = interaction.options.getString('reason');
         const guildData = yield database.retrieveGuild(interaction.guild.id);
         if (!guildData)
-            return interaction.reply({ content: "Database error.", ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Database error.").toPayload({ ephemeral: true }));
         if (!guildData.afk)
             guildData.afk = {};
         guildData.afk[interaction.user.id] = {
@@ -67,15 +68,12 @@ function run(interaction, database) {
             timestamp: Date.now()
         };
         yield database.insertGuild(interaction.guild.id, guildData);
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({
-            name: `${interaction.user.username} is now AFK`,
-            iconURL: interaction.user.displayAvatarURL(),
-        });
+            .setAuthor(`${interaction.user.username} is now AFK`, interaction.user.displayAvatarURL());
         if (reason) {
             embed.setDescription(`${config.emojis.dot} **Reason:** ${reason}`);
         }
-        yield interaction.reply({ embeds: [embed] });
+        yield interaction.reply(embed.toPayload());
     });
 }

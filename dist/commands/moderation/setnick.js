@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('setnick')
     .setDescription('Change a member\'s nickname')
@@ -59,12 +60,12 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageNicknames);
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         if (!interaction.guild)
             return;
         let targetUser = interaction.options.getUser('target');
         let nickname = interaction.options.getString('nickname');
         if (!targetUser) {
-            const rawTargetArg = interaction.options.getString('target');
             const rawTargetStr = interaction.options.getString('target');
             const rawNicknameStr = interaction.options.getString('nickname');
             if (rawTargetStr && !targetUser) {
@@ -79,32 +80,32 @@ function run(interaction, database) {
             }
         }
         if (!targetUser) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
-                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-                .setThumbnail(interaction.client.user.displayAvatarURL())
-                .setDescription(`\`?setnick <user> <name>\`\n\`?resetnick <user>\``)
-                .setFooter({ text: `Xeon • Advanced Moderation`, iconURL: interaction.client.user.displayAvatarURL() });
-            return interaction.reply({ embeds: [embed] });
+                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
+                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
+                .setDescription(`\`${config.prefix}setnick <user> <name>\`\n\`${config.prefix}resetnick <user>\``)
+                .setFooter(`Hertz • Advanced Moderation`, (_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL());
+            return interaction.reply(embed.toPayload());
         }
         const member = yield interaction.guild.members.fetch(targetUser.id).catch(() => null);
         if (!member) {
-            return interaction.reply({ content: `${config.emojis.error} Member not found.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Member not found.").toPayload({ ephemeral: true }));
         }
         if (!member.manageable) {
-            return interaction.reply({ content: `${config.emojis.error} I cannot change this member's nickname (Role hierarchy).`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("I cannot change this member's nickname (Role hierarchy).").toPayload({ ephemeral: true }));
         }
         try {
-            const oldNick = member.nickname || member.user.username;
             yield member.setNickname(nickname || null);
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(0x57F287)
-                .setDescription(`${config.emojis.success} Changed **${targetUser.tag}**'s nickname to **${nickname || "Default"}**.`);
-            yield interaction.reply({ embeds: [embed] });
+                .setTitle(`${config.emojis.success} Nickname Changed`)
+                .setDescription(`Changed **${targetUser.tag}**'s nickname to **${nickname || "Default"}**.`);
+            yield interaction.reply(embed.toPayload());
         }
         catch (err) {
             console.error(err);
-            return interaction.reply({ content: `${config.emojis.error} Failed to change nickname.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Failed to change nickname.").toPayload({ ephemeral: true }));
         }
     });
 }

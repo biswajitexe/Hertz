@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('prefix')
     .setDescription('Manage custom prefix for this server.')
@@ -67,27 +68,28 @@ function run(interaction, database) {
             return;
         const embedStyle = (title, description, color = config.colors.primary) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(color)
-                .setDescription(`**<:32725firehonkaistarrail:1465068073143894106> ${title}**\n\n${description}`)
+                .setTitle(`<:32725firehonkaistarrail:1465068073143894106> ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (sub === 'set') {
             const newPrefix = interaction.options.getString('new_prefix', true);
             if (newPrefix.length > 5) {
-                return interaction.reply({ embeds: [embedStyle('Prefix Error', '> Prefix cannot be longer than 5 characters.', config.colors.error)], ephemeral: true });
+                return interaction.reply(embedStyle('Prefix Error', '> Prefix cannot be longer than 5 characters.', config.colors.error).toPayload({ ephemeral: true }));
             }
             guild.prefix = newPrefix;
             yield database.insertGuild(interaction.guildId, guild);
-            return interaction.reply({ embeds: [embedStyle('Prefix Updated', `> Successfully set custom prefix to **${newPrefix}**\n> Example: \`${newPrefix}help\``, config.colors.success)] });
+            return interaction.reply(embedStyle('Prefix Updated', `> Successfully set custom prefix to **${newPrefix}**\n> Example: \`${newPrefix}help\``, config.colors.success).toPayload());
         }
         if (sub === 'reset') {
             guild.prefix = null;
             yield database.insertGuild(interaction.guildId, guild);
-            return interaction.reply({ embeds: [embedStyle('Prefix Reset', `> Reset prefix to default: **${config.prefix}**`, config.colors.success)] });
+            return interaction.reply(embedStyle('Prefix Reset', `> Reset prefix to default: **${config.prefix}**`, config.colors.success).toPayload());
         }
         const current = guild.prefix || config.prefix;
-        return interaction.reply({ embeds: [embedStyle('Server Prefix', `> Current Prefix: **\`${current}\`**\n\n**Usage:**\n> \`${current}prefix set <new>\`\n> \`${current}prefix reset\``)] });
+        return interaction.reply(embedStyle('Server Prefix', `> Current Prefix: **\`${current}\`**\n\n**Usage:**\n> \`${current}prefix set <new>\`\n> \`${current}prefix reset\``).toPayload());
     });
 }

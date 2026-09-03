@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2, createSuccessV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('extraadmin')
@@ -39,7 +39,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const isExtraOwner = guildData.extraOwners.includes(interaction.user.id);
 
     if (!isOwner && !isExtraOwner) {
-        await interaction.reply({ content: `${config.emojis.error} **Only the Server Owner or Extra Owners can manage Extra Admins.**`, ephemeral: true });
+        await interaction.reply(createErrorV2('Only the Server Owner or Extra Owners can manage Extra Admins.').toPayload({ ephemeral: true }));
         return;
     }
 
@@ -49,35 +49,35 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const user = interaction.options.getUser('user');
 
         if (!user) {
-            await interaction.reply({ content: `${config.emojis.error} **Please specify a user to add.**\nUsage: \`${config.prefix}extraadmin add <@user>\``, ephemeral: true });
+            await interaction.reply(createErrorV2(`Please specify a user to add.\nUsage: \`${config.prefix}extraadmin add <@user>\``).toPayload({ ephemeral: true }));
             return;
         }
 
         if (guildData.extraAdmins.includes(user.id)) {
-            await interaction.reply({ content: `${config.emojis.error} **<@${user.id}> is already an Extra Admin.**`, ephemeral: true });
+            await interaction.reply(createErrorV2(`<@${user.id}> is already an Extra Admin.`).toPayload({ ephemeral: true }));
             return;
         }
 
         guildData.extraAdmins.push(user.id);
         await database.insertGuild(interaction.guild.id, guildData);
-        await interaction.reply({ content: `${config.emojis.success} **Successfully added <@${user.id}> as an Extra Admin.**` });
+        await interaction.reply(createSuccessV2(`Successfully added <@${user.id}> as an Extra Admin.`).toPayload());
 
     } else if (sub === 'remove') {
         const user = interaction.options.getUser('user');
 
         if (!user) {
-            await interaction.reply({ content: `${config.emojis.error} **Please specify a user to remove.**\nUsage: \`${config.prefix}extraadmin remove <@user>\``, ephemeral: true });
+            await interaction.reply(createErrorV2(`Please specify a user to remove.\nUsage: \`${config.prefix}extraadmin remove <@user>\``).toPayload({ ephemeral: true }));
             return;
         }
 
         if (!guildData.extraAdmins.includes(user.id)) {
-            await interaction.reply({ content: `${config.emojis.error} **<@${user.id}> is not an Extra Admin.**`, ephemeral: true });
+            await interaction.reply(createErrorV2(`<@${user.id}> is not an Extra Admin.`).toPayload({ ephemeral: true }));
             return;
         }
 
         guildData.extraAdmins = guildData.extraAdmins.filter(id => id !== user.id);
         await database.insertGuild(interaction.guild.id, guildData);
-        await interaction.reply({ content: `${config.emojis.success} **Successfully removed <@${user.id}> from Extra Admins.**` });
+        await interaction.reply(createSuccessV2(`Successfully removed <@${user.id}> from Extra Admins.`).toPayload());
 
     } else if (sub === 'show') {
         const users = guildData.extraAdmins;
@@ -89,17 +89,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             }))).join('\n')
             : "**No Extra Admins set.**";
 
-        const embed = new EmbedBuilder()
+        const card = new V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: 'Extra Admins', iconURL: 'https://cdn.discordapp.com/emojis/1461692661562871962.png' })
+            .setAuthor('Extra Admins', 'https://cdn.discordapp.com/emojis/1461692661562871962.png')
             .setDescription(description)
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
 
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply(card.toPayload());
     } else {
         // Help Menu
-        const embed = new EmbedBuilder()
+        const card = new V2Embed()
             .setColor(config.colors.primary)
             .setTitle('Extra Admin Commands')
             .setDescription(
@@ -108,8 +107,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 `\`${config.prefix}extraadmin show\``
             )
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply(card.toPayload());
     }
 }

@@ -1,8 +1,8 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
-import { createSuccessEmbed, createErrorEmbed } from "../../utilities/embedUtils";
+import { createErrorEmbed } from "../../utilities/embedUtils";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('sticker')
@@ -22,9 +22,8 @@ export const command = new SlashCommandBuilder()
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.inCachedGuild()) return;
 
-    // 0. Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageEmojisAndStickers) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**You do not have permission to manage stickers.**")], ephemeral: true });
+        return interaction.reply(createErrorEmbed(interaction.user, "**You do not have permission to manage stickers.**").toPayload({ ephemeral: true }));
     }
 
     const attachmentOption = interaction.options.getAttachment('file', false);
@@ -32,24 +31,19 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     let attachment = attachmentOption;
 
-    // Reply Logic (Prefix Only Check)
     if (!attachment) {
-        const msg = (interaction as any).message; // Shimmed message from index.ts
+        const msg = (interaction as any).message;
         if (msg && msg.reference && msg.reference.messageId) {
             try {
                 const referencedMsg = await msg.channel.messages.fetch(msg.reference.messageId);
                 if (referencedMsg) {
-                    // Check for Stickers
                     if (referencedMsg.stickers.size > 0) {
                         const stickerItem = referencedMsg.stickers.first();
-                        // StickerItem format check (PNG/APNG/GIF)
                         if (stickerItem.format === 1 || stickerItem.format === 2 || stickerItem.format === 4) {
                             attachment = { url: stickerItem.url, contentType: 'image/png' } as any;
                             if (!name) name = stickerItem.name;
                         }
-                    }
-                    // Check for Attachments
-                    else if (referencedMsg.attachments.size > 0) {
+                    } else if (referencedMsg.attachments.size > 0) {
                         attachment = referencedMsg.attachments.first() || null;
                     }
                 }
@@ -60,7 +54,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     }
 
     if (!attachment) {
-        return interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Please provide a file or reply to a sticker/image.**")], ephemeral: true });
+        return interaction.reply(createErrorEmbed(interaction.user, "**Please provide a file or reply to a sticker/image.**").toPayload({ ephemeral: true }));
     }
 
     if (!name) {
@@ -71,14 +65,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
     }
 
-    // Sanitize name
     name = name!.replace(/[^a-zA-Z0-9_]/g, '');
     if (name.length < 2) name = "sticker_" + Date.now().toString().slice(-4);
 
-
     const validTypes = ['image/png', 'image/jpeg', 'image/gif'];
     if (attachment.contentType && !validTypes.some(t => attachment.contentType?.startsWith(t))) {
-        return interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Invalid file type. Please provide a PNG, JPG, or GIF.**")], ephemeral: true });
+        return interaction.reply(createErrorEmbed(interaction.user, "**Invalid file type. Please provide a PNG, JPG, or GIF.**").toPayload({ ephemeral: true }));
     }
 
     try {
@@ -86,22 +78,22 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const sticker = await interaction.guild.stickers.create({
             file: attachment.url,
             name: name,
-            tags: name // Required tag
+            tags: name
         });
 
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(config.colors.success)
             .setTitle('Sticker Added')
             .setDescription(`${config.emojis.success} **Added sticker:** \`${name}\``)
             .setImage(sticker.url);
 
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply(embed.toPayload());
 
     } catch (err: any) {
         console.error(err);
         let errorMsg = "Failed to add sticker.";
         if (err.code === 30039) errorMsg = "Maximum number of stickers reached.";
 
-        await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, `**${errorMsg}**`)] });
+        await interaction.editReply(createErrorEmbed(interaction.user, `**${errorMsg}**`).toPayload());
     }
 }

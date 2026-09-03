@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ComponentType, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, InteractionCollector, Message } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ComponentType, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, InteractionCollector, Message } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const aliases = ['wl'];
 
@@ -123,13 +124,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     const roleIds = new Set([...l.roles, ...i.roles, ...s.roles]);
                     const channelIds = new Set([...l.channels, ...i.channels, ...s.channels]);
 
+                    let currentType: 'users' | 'roles' | 'channels' = 'users';
                     const getEmbed = async (type: 'users' | 'roles' | 'channels') => {
-                        const embed = new EmbedBuilder()
+                        const embed = new V2Embed()
                             .setColor(config.colors.primary)
-                            .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+                            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
                         if (type === 'users') {
-                            embed.setAuthor({ name: 'whitelist users', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                            embed.setAuthor('whitelist users', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                             const ids = Array.from(userIds);
                             const names = await Promise.all(ids.map(async id => {
                                 try {
@@ -142,24 +144,24 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                             const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${ids[i]}」\``).join('\n');
                             embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No users whitelisted.**");
                         } else if (type === 'roles') {
-                            embed.setAuthor({ name: 'whitelist roles', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                            embed.setAuthor('whitelist roles', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                             const list = Array.from(roleIds).map((id, i) => `${i + 1}. <@&${id}>`).join('\n');
                             embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No roles whitelisted.**");
                         } else if (type === 'channels') {
-                            embed.setAuthor({ name: 'whitelist channels', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                            embed.setAuthor('whitelist channels', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                             const list = Array.from(channelIds).map((id, i) => `${i + 1}. <#${id}>`).join('\n');
                             embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No channels whitelisted.**");
                         }
                         return embed;
                     };
 
-                    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                        new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.user),
-                        new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>'),
-                        new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.general)
+                    const getRow = (disabled = false) => new ActionRowBuilder<ButtonBuilder>().addComponents(
+                        new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled),
+                        new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled),
+                        new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled)
                     );
 
-                    const reply = await interaction.reply({ embeds: [await getEmbed('users')], components: [row] });
+                    const reply = await interaction.reply((await getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
 
                     const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
@@ -169,18 +171,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                             return;
                         }
 
-                        if (i.customId === 'wl_show_users') await i.update({ embeds: [await getEmbed('users')] });
-                        else if (i.customId === 'wl_show_roles') await i.update({ embeds: [await getEmbed('roles')] });
-                        else if (i.customId === 'wl_show_channels') await i.update({ embeds: [await getEmbed('channels')] });
+                        if (i.customId === 'wl_show_users') {
+                            currentType = 'users';
+                            await i.update((await getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
+                        } else if (i.customId === 'wl_show_roles') {
+                            currentType = 'roles';
+                            await i.update((await getEmbed('roles')).toPayload({ extraComponents: [getRow()] }));
+                        } else if (i.customId === 'wl_show_channels') {
+                            currentType = 'channels';
+                            await i.update((await getEmbed('channels')).toPayload({ extraComponents: [getRow()] }));
+                        }
                     });
 
-                    collector.on('end', () => {
-                        const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                            new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.user),
-                            new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji('<:64851purpleshield:1461677014367998153>'),
-                            new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.general)
-                        );
-                        reply.edit({ components: [disabledRow] }).catch(() => { });
+                    collector.on('end', async () => {
+                        reply.edit((await getEmbed(currentType)).toPayload({ extraComponents: [getRow(true)] })).catch(() => { });
                     });
 
                     return;
@@ -301,14 +305,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         // Usage Help
         // Usage Help
-        const helpEmbed = new EmbedBuilder()
+        const helpEmbed = new V2Embed()
             .setColor(config.colors.primary)
             .setTitle('<:4497kazuhawaiter:1461641597476274332> whitelist command')
             .setDescription('\`?wl add <user>\`\n\`?wl remove <user>\`\n\`?wl show\`\n\`?wl reset all\`')
             .setThumbnail(interaction.client.user.displayAvatarURL())
-            .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
-        await interaction.reply({ embeds: [helpEmbed] });
+        await interaction.reply(helpEmbed.toPayload());
         return;
     }
 
@@ -434,14 +438,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 list.channels.forEach(id => channelIds.add(id));
             }
 
+            let currentType: 'users' | 'roles' | 'channels' = 'users';
             const getEmbed = async (type: 'users' | 'roles' | 'channels') => {
-                const embed = new EmbedBuilder()
+                const embed = new V2Embed()
                     .setColor(config.colors.primary)
-
-                    .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+                    .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
                 if (type === 'users') {
-                    embed.setAuthor({ name: 'whitelist users', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                    embed.setAuthor('whitelist users', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                     const ids = Array.from(userIds);
                     const names = await Promise.all(ids.map(async id => {
                         try {
@@ -454,24 +458,24 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${ids[i]}」\``).join('\n');
                     embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No users whitelisted.**");
                 } else if (type === 'roles') {
-                    embed.setAuthor({ name: 'whitelist roles', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                    embed.setAuthor('whitelist roles', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                     const list = Array.from(roleIds).map((id, i) => `${i + 1}. <@&${id}>`).join('\n');
                     embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No roles whitelisted.**");
                 } else if (type === 'channels') {
-                    embed.setAuthor({ name: 'whitelist channels', iconURL: 'https://cdn.discordapp.com/emojis/1461641597476274332.png' });
+                    embed.setAuthor('whitelist channels', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
                     const list = Array.from(channelIds).map((id, i) => `${i + 1}. <#${id}>`).join('\n');
                     embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No channels whitelisted.**");
                 }
                 return embed;
             };
 
-            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.user),
-                new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>'),
-                new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.general)
+            const getRow = (disabled = false) => new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled),
+                new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled),
+                new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled)
             );
 
-            const reply = await interaction.editReply({ embeds: [await getEmbed('users')], components: [row] });
+            const reply = await interaction.editReply((await getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
 
             const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
@@ -481,18 +485,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     return;
                 }
 
-                if (i.customId === 'wl_show_users') await i.update({ embeds: [await getEmbed('users')] });
-                else if (i.customId === 'wl_show_roles') await i.update({ embeds: [await getEmbed('roles')] });
-                else if (i.customId === 'wl_show_channels') await i.update({ embeds: [await getEmbed('channels')] });
+                if (i.customId === 'wl_show_users') {
+                    currentType = 'users';
+                    await i.update((await getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
+                } else if (i.customId === 'wl_show_roles') {
+                    currentType = 'roles';
+                    await i.update((await getEmbed('roles')).toPayload({ extraComponents: [getRow()] }));
+                } else if (i.customId === 'wl_show_channels') {
+                    currentType = 'channels';
+                    await i.update((await getEmbed('channels')).toPayload({ extraComponents: [getRow()] }));
+                }
             });
 
-            collector.on('end', () => {
-                const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                    new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.user),
-                    new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji('<:64851purpleshield:1461677014367998153>'),
-                    new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setDisabled(true).setEmoji(config.emojis.general)
-                );
-                reply.edit({ components: [disabledRow] }).catch(() => { });
+            collector.on('end', async () => {
+                reply.edit((await getEmbed(currentType)).toPayload({ extraComponents: [getRow(true)] })).catch(() => { });
             });
 
         } else if (sub === 'reset') {

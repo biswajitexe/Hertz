@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: hertz-bot
+    runtime: node
+    region: ohio
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DATABASE
+        sync: false
+      - key: OWNER_ID
+        sync: false

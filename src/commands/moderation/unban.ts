@@ -1,9 +1,10 @@
-
-import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { Database } from "../../database";
+import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import type { ChatInputCommandInteraction } from "discord.js";
+import type { Database } from "../../database";
 import * as config from "../../config";
 import { createSuccessEmbed, createErrorEmbed } from "../../utilities/embedUtils";
 import { logAction } from "../../utilities/modLogger";
+import { createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('unban')
@@ -25,26 +26,20 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const reason = interaction.options.getString('reason') || "No reason provided";
 
     if (!userId) {
-        return interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Please provide a valid User ID.**\nUsage: `?unban <user_id> [reason]`")], ephemeral: true });
+        return interaction.reply(createErrorEmbed(interaction.user, "**Please provide a valid User ID.**\nUsage: `?unban <user_id> [reason]`").toPayload({ ephemeral: true }));
     }
 
     // Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.BanMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to unban members.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to unban members.").toPayload({ ephemeral: true }));
     }
 
     try {
         await interaction.deferReply();
-        const banList = await interaction.guild.bans.fetch();
-        if (!/^\d{17,19}$/.test(userId)) {
-            await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "**Invalid User ID provided.**")] });
-            return;
-        }
-
-        const bannedUser = banList.get(userId);
+        const bannedUser = await interaction.guild.bans.fetch(userId).catch(() => null);
 
         if (!bannedUser) {
-            await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "**This user is not currently banned.**")] });
+            await interaction.editReply(createErrorEmbed(interaction.user, "**This user is not currently banned.**").toPayload());
             return;
         }
 
@@ -56,10 +51,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const embed = createSuccessEmbed(interaction.user, `**Unbanned ${bannedUser.user.tag}**`)
             .addFields({ name: 'Reason', value: reason, inline: false });
 
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply(embed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ embeds: [createErrorEmbed(interaction.user, "**Failed to unban user. ensure ID is correct.**")] });
+        await interaction.editReply(createErrorEmbed(interaction.user, "**Failed to unban user. ensure ID is correct.**").toPayload());
     }
 }

@@ -44,51 +44,47 @@ function run(interaction, database) {
         const durationStr = rawDuration || "5m";
         const reason = interaction.options.getString('reason') || "No reason provided";
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ModerateMembers)) && interaction.user.id !== process.env.OWNER_ID) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to timeout members.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to timeout members.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!user) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**\nUsage: `?timeout <user> [duration] [reason]`")], ephemeral: true });
-            return;
-        }
-        if (!user) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**\nUsage: `?timeout <user> [duration] [reason]`")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**\nUsage: `?timeout <user> [duration] [reason]`").toPayload({ ephemeral: true }));
             return;
         }
         if (!(user instanceof discord_js_1.GuildMember)) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "User is not in the server.")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "User is not in the server.").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.user.id) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot timeout yourself.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot timeout yourself.**").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.client.user.id) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot timeout me.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot timeout me.**").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.guild.ownerId) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot timeout the server owner.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot timeout the server owner.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!user.moderatable) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**I cannot timeout this user. My role is likely below theirs.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**I cannot timeout this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!(0, permission_1.canModerate)(interaction.member, user, discord_js_1.PermissionFlagsBits.ModerateMembers)) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot moderate this user due to role hierarchy.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot moderate this user due to role hierarchy.**").toPayload({ ephemeral: true }));
             return;
         }
         let timeMs;
         try {
             timeMs = (0, ms_1.default)(durationStr);
             if (!timeMs || timeMs < 1000 || timeMs > 28 * 24 * 60 * 60 * 1000) {
-                yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "Invalid duration. Must be between 1 second and 28 days. Example: `1h`, `30m`.")], ephemeral: true });
+                yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "Invalid duration. Must be between 1 second and 28 days. Example: `1h`, `30m`.").toPayload({ ephemeral: true }));
                 return;
             }
         }
         catch (_b) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "Invalid duration format.")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "Invalid duration format.").toPayload({ ephemeral: true }));
             return;
         }
         yield interaction.deferReply();
@@ -102,11 +98,11 @@ function run(interaction, database) {
             if (rawDuration) {
                 successEmbed.addFields({ name: 'Duration', value: durationFormatted, inline: false });
             }
-            yield interaction.editReply({ embeds: [successEmbed] });
+            yield interaction.editReply(successEmbed.toPayload());
         }
         catch (error) {
             console.error(error);
-            yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to timeout user.**")] });
+            yield interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to timeout user.**").toPayload());
         }
     });
 }

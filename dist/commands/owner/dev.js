@@ -52,6 +52,7 @@ const discord_js_1 = require("discord.js");
 const node_fs_1 = __importDefault(require("node:fs"));
 const node_path_1 = __importDefault(require("node:path"));
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('dev')
     .setDescription('Owner Only Control Panel');
@@ -64,7 +65,7 @@ function run(interaction, database) {
         if (!owners.includes(interaction.user.id)) {
             if (!interaction.isRepliable())
                 return;
-            return interaction.reply({ content: "Unknown command.", ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Unknown command.").toPayload({ ephemeral: true }));
         }
         yield sendOwnerPanel(interaction);
     });
@@ -79,7 +80,7 @@ function handleInteraction(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
             owners.push(...botConfig.ownerUsers);
         if (!owners.includes(interaction.user.id)) {
-            return interaction.reply({ content: "You cannot use this menu.", ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You cannot use this menu.").toPayload({ ephemeral: true }));
         }
         if (interaction.isButton() && interaction.customId === 'dev_home') {
             yield sendOwnerPanel(interaction, true);
@@ -101,7 +102,7 @@ function handleInteraction(interaction, database) {
                     catch (_d) { }
                 }
                 if (!foundCmd) {
-                    return interaction.reply({ content: `Command information not found for \`${commandName}\`.`, ephemeral: true });
+                    return interaction.reply((0, componentV2_1.createErrorV2)(`Command information not found for \`${commandName}\`.`).toPayload({ ephemeral: true }));
                 }
                 let description = `> ${foundCmd.command.description || "No description provided."}`;
                 const rawData = typeof foundCmd.command.toJSON === 'function' ? foundCmd.command.toJSON() : foundCmd.command;
@@ -117,18 +118,18 @@ function handleInteraction(interaction, database) {
                 else {
                     description = `> \`${foundCmd.command.name}\``;
                 }
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.primary)
                     .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`)
                     .setDescription(description)
-                    .setFooter({ text: "Xeon • Owner Command", iconURL: (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL() });
+                    .setFooter("Hertz • Owner Command", (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
                 const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("dev_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger));
                 const selectMenu = yield createOwnerSelectMenu();
-                yield interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
+                yield interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
             }
             catch (error) {
                 console.error(error);
-                yield interaction.reply({ content: "Error retrieving command details.", ephemeral: true });
+                yield interaction.reply((0, componentV2_1.createErrorV2)("Error retrieving command details.").toPayload({ ephemeral: true }));
             }
         }
     });
@@ -152,18 +153,18 @@ function sendOwnerPanel(interaction_1) {
                 return null;
             }
         }).filter(c => c !== null).join(", ");
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
             .setTitle('<:74658vipglow:1465051133704798435> Owner Commands')
             .setDescription(`> ${cleanCommands}`)
-            .setFooter({ text: `Xeon • Owner Commands`, iconURL: ((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || undefined });
+            .setFooter(`Hertz • Owner Commands`, ((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || undefined);
         const selectMenu = yield createOwnerSelectMenu();
         const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger));
         if (isUpdate && (interaction.isButton() || interaction.isStringSelectMenu())) {
-            yield interaction.update({ embeds: [embed], components: [selectMenu, buttons] });
+            yield interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
         }
         else if (interaction.isChatInputCommand()) {
-            yield interaction.reply({ embeds: [embed], components: [selectMenu, buttons], ephemeral: true });
+            yield interaction.reply(embed.toPayload({ extraComponents: [selectMenu, buttons], ephemeral: true }));
         }
     });
 }

@@ -27,12 +27,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 console.log(`[DEBUG] Starting bot process... PID: ${process.pid} | Instance: ${Math.floor(Math.random() * 10000)}`);
 const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT) || 3000;
 app.get('/', (req, res) => {
-    res.send('Xeon is Online!');
+    res.send('Hertz is Online!');
 });
-app.listen(port, () => {
-    console.log(`[Express] Keeping alive on port ${port}`);
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'online',
+        bot: 'Hertz',
+        uptime: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString()
+    });
+});
+app.listen(port, '0.0.0.0', () => {
+    console.log(`[Express] Render Web Service keeping alive on 0.0.0.0:${port}`);
 });
 const logging_1 = require("./logging");
 require("dotenv/config");
@@ -58,6 +66,7 @@ const GiveawayHandler_1 = require("./structures/GiveawayHandler");
 const SnipeManager_1 = require("./structures/SnipeManager");
 const messages_1 = require("./utilities/messages");
 const config_1 = require("./config");
+const componentV2_1 = require("./utilities/componentV2");
 const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.GuildMessages,
@@ -167,13 +176,10 @@ client.on("guildMemberAdd", (member) => __awaiter(void 0, void 0, void 0, functi
                     .replace(/{server.icon}/g, member.guild.iconURL() || "")
                     .replace(/{server.banner}/g, member.guild.bannerURL() || "");
             };
-            const embed = new discord_js_1.EmbedBuilder();
+            const embed = new componentV2_1.V2Embed();
             let hasEmbed = false;
             if ((_a = conf.embed.author) === null || _a === void 0 ? void 0 : _a.name) {
-                embed.setAuthor({
-                    name: parse(conf.embed.author.name),
-                    iconURL: conf.embed.author.icon ? parse(conf.embed.author.icon) : undefined
-                });
+                embed.setAuthor(parse(conf.embed.author.name), conf.embed.author.icon ? parse(conf.embed.author.icon) : undefined);
                 hasEmbed = true;
             }
             if (conf.embed.title) {
@@ -202,20 +208,22 @@ client.on("guildMemberAdd", (member) => __awaiter(void 0, void 0, void 0, functi
                 hasEmbed = true;
             }
             if (conf.embed.footer) {
-                embed.setFooter({ text: parse(conf.embed.footer) });
+                embed.setFooter(parse(conf.embed.footer));
                 hasEmbed = true;
             }
             if (conf.embed.timestamp) {
                 embed.setTimestamp();
                 hasEmbed = true;
             }
-            const payload = {};
-            if (conf.content)
-                payload.content = parse(conf.content);
-            if (hasEmbed)
-                payload.embeds = [embed];
-            if (payload.content || payload.embeds) {
-                yield channel.send(payload).catch(console.error);
+            if (hasEmbed) {
+                if (conf.content) {
+                    embed.setDescription(`${parse(conf.content)}\n\n${conf.embed.description ? parse(conf.embed.description) : ""}`.trim());
+                }
+                yield channel.send(embed.toPayload()).catch(console.error);
+            }
+            else if (conf.content) {
+                const textEmbed = new componentV2_1.V2Embed().setDescription(parse(conf.content));
+                yield channel.send(textEmbed.toPayload()).catch(console.error);
             }
         }
     }
@@ -259,23 +267,23 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
     if (message.content === `<@${client.user.id}>` || message.content === `<@!${client.user.id}>`) {
         const guildData = yield database.retrieveGuild(message.guild.id);
         const currentPrefix = (guildData === null || guildData === void 0 ? void 0 : guildData.prefix) || config_1.prefix;
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(0x5865F2)
-            .setAuthor({ name: "Xeon Security", iconURL: client.user.displayAvatarURL() })
-            .setDescription(`**Hey there! I'm Xeon.**\nI am a powerful security and moderation bot designed to protect your server.\n\nType \`${currentPrefix}help\` to see my commands!`)
-            .setFooter({ text: "Protected by Xeon Security System", iconURL: message.guild.iconURL() || undefined })
+            .setAuthor("Hertz Security", client.user.displayAvatarURL())
+            .setTitle("Hey there! I'm Hertz.")
+            .setDescription(`**I am a powerful security and moderation bot designed to protect your server.**\n\nType \`${currentPrefix}help\` to see my commands!`)
+            .setFooter("Protected by Hertz Security System", message.guild.iconURL() || undefined)
             .setTimestamp();
-        const row = {
-            type: 1,
-            components: [
-                { type: 2, style: 5, label: "Invite Me", url: `https://discord.com/api/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands` }
-            ]
-        };
-        yield message.reply({ embeds: [embed], components: [row], allowedMentions: { repliedUser: false } });
+        const inviteBtn = new discord_js_1.ButtonBuilder()
+            .setStyle(discord_js_1.ButtonStyle.Link)
+            .setLabel("Invite Me")
+            .setURL(`https://discord.com/api/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`);
+        const row = new discord_js_1.ActionRowBuilder().addComponents(inviteBtn);
+        yield message.reply(embed.toPayload({ extraComponents: [row] }));
         return;
     }
     const guildData = yield database.retrieveGuild(message.guild.id);
-    if (guildData === null || guildData === void 0 ? void 0 : guildData.afk) {
+    if (guildData) {
         if (guildData.afk[message.author.id]) {
             const afkData = guildData.afk[message.author.id];
             delete guildData.afk[message.author.id];
@@ -293,10 +301,10 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                 duration = `${minutes} min, ${Math.floor((diff / 1000) % 60)} sec`;
             else
                 duration = "a few seconds";
-            const afkEmbed = new discord_js_1.EmbedBuilder()
+            const afkEmbed = new componentV2_1.V2Embed()
                 .setColor(0x00AAFF)
                 .setDescription(`<:6858aventurinebye:1464310768366522616> **Welcome back, ${message.author.username}!**\nAFK removed. \`${duration}\``);
-            yield message.reply({ embeds: [afkEmbed], allowedMentions: { repliedUser: false } })
+            yield message.reply(afkEmbed.toPayload())
                 .then(m => setTimeout(() => m.delete().catch(() => { }), 30000));
         }
         if (message.mentions.members && message.mentions.members.size > 0) {
@@ -309,44 +317,24 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                 }
             });
             if (afkMembers.length > 0) {
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config_1.colors.primary)
                     .setDescription(afkMembers.join("\n"));
-                yield message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+                yield message.reply(embed.toPayload());
             }
         }
     }
-    let guild = yield database.retrieveGuild(message.guildId);
-    try {
-        fs_1.default.appendFileSync('debug.log', `[DEBUG] Guild Retrieve Result: ${!!guild}\n`);
-    }
-    catch (_v) { }
+    let guild = guildData;
     if (!guild) {
         try {
-            fs_1.default.appendFileSync('debug.log', `[DEBUG] Guild missing. Creating default...\n`);
-        }
-        catch (_w) { }
-        try {
             yield database.defaultGuild(message.guild);
-            try {
-                fs_1.default.appendFileSync('debug.log', `[DEBUG] Default guild created.\n`);
-            }
-            catch (_x) { }
+            guild = yield database.retrieveGuild(message.guildId);
         }
         catch (e) {
-            try {
-                fs_1.default.appendFileSync('debug.log', `[DEBUG] Default guild creation failed: ${e.message}\n`);
-            }
-            catch (_y) { }
+            console.error(`[Database] Failed to create default guild: ${e.message}`);
         }
-        guild = yield database.retrieveGuild(message.guildId);
-        if (!guild) {
-            try {
-                fs_1.default.appendFileSync('debug.log', `[DEBUG] Guild still missing after creation. Aborting.\n`);
-            }
-            catch (_z) { }
+        if (!guild)
             return;
-        }
     }
     if (guild === null || guild === void 0 ? void 0 : guild.messageFilters.discordInvites) {
         const inviteRegex = /(discord.gg\/|discord.com\/invite\/|discordapp.com\/invite\/)/i;
@@ -490,7 +478,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                     try {
                         fs_1.default.appendFileSync('debug.log', `[DEBUG] Filter: Spam Triggered\n`);
                     }
-                    catch (_0) { }
+                    catch (_v) { }
                     yield message.delete().catch(() => { });
                     if (data.score <= 10) {
                         const warningMsg = yield message.channel.send(`${config_1.emojis.warning} <@${message.author.id}> **Stop spamming!**\nYour messages are being flagged as spam.`);
@@ -529,12 +517,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
         }
     }
     console.log("[DEBUG] Checking Filters...");
-    const currentPrefix = (guildData === null || guildData === void 0 ? void 0 : guildData.prefix) || config_1.prefix;
-    console.log("[DEBUG] Filters passed. Checking Prefix...");
-    try {
-        fs_1.default.appendFileSync('debug.log', `[DEBUG] Filters passed. Checking Prefix match with '${currentPrefix}'...\n`);
-    }
-    catch (_1) { }
+    const currentPrefix = (guild === null || guild === void 0 ? void 0 : guild.prefix) || config_1.prefix;
     let commandName;
     let args = [];
     let isNoPrefixAction = false;
@@ -688,11 +671,15 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                 const replyHandler = (payload) => __awaiter(void 0, void 0, void 0, function* () {
                     let finalPayload = payload;
                     if (typeof payload === 'string') {
-                        finalPayload = { embeds: [new discord_js_1.EmbedBuilder().setDescription(payload).setColor(0x2f3136)] };
+                        finalPayload = new componentV2_1.V2Embed().setDescription(payload).setColor(0x2f3136).toPayload();
                     }
-                    else if (payload.content && !payload.embeds) {
-                        finalPayload = Object.assign({ embeds: [new discord_js_1.EmbedBuilder().setDescription(payload.content).setColor(0x2f3136)] }, payload);
-                        delete finalPayload.content;
+                    else if (payload instanceof componentV2_1.V2Embed) {
+                        finalPayload = payload.toPayload();
+                    }
+                    else if ((payload === null || payload === void 0 ? void 0 : payload.content) && !(payload === null || payload === void 0 ? void 0 : payload.components) && !(payload === null || payload === void 0 ? void 0 : payload.embeds)) {
+                        finalPayload = new componentV2_1.V2Embed().setDescription(payload.content).setColor(0x2f3136).toPayload({
+                            ephemeral: payload.ephemeral
+                        });
                     }
                     const { ephemeral, fetchReply } = finalPayload, rest = __rest(finalPayload, ["ephemeral", "fetchReply"]);
                     const msgPayload = Object.assign(Object.assign({}, rest), { allowedMentions: { repliedUser: false } });
@@ -773,7 +760,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                             if (!val)
                                 return false;
                             const lower = val.toLowerCase();
-                            return lower === 'true' || lower === 'yes' || lower === '1' || lower === 'bot' || lower === 'bots';
+                            return ['true', 'yes', '1', 'on', 'enable', 'enabled'].includes(lower);
                         },
                         getAttachment: (name) => {
                             return message.attachments.first() || null;
@@ -791,11 +778,15 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                     followUp: (payload) => __awaiter(void 0, void 0, void 0, function* () {
                         let finalPayload = payload;
                         if (typeof payload === 'string') {
-                            finalPayload = { embeds: [new discord_js_1.EmbedBuilder().setDescription(payload).setColor(0x2f3136)] };
+                            finalPayload = new componentV2_1.V2Embed().setDescription(payload).setColor(0x2f3136).toPayload();
                         }
-                        else if (payload.content && !payload.embeds) {
-                            finalPayload = Object.assign({ embeds: [new discord_js_1.EmbedBuilder().setDescription(payload.content).setColor(0x2f3136)] }, payload);
-                            delete finalPayload.content;
+                        else if (payload instanceof componentV2_1.V2Embed) {
+                            finalPayload = payload.toPayload();
+                        }
+                        else if ((payload === null || payload === void 0 ? void 0 : payload.content) && !(payload === null || payload === void 0 ? void 0 : payload.components) && !(payload === null || payload === void 0 ? void 0 : payload.embeds)) {
+                            finalPayload = new componentV2_1.V2Embed().setDescription(payload.content).setColor(0x2f3136).toPayload({
+                                ephemeral: payload.ephemeral
+                            });
                         }
                         const { ephemeral, fetchReply } = finalPayload, rest = __rest(finalPayload, ["ephemeral", "fetchReply"]);
                         const msgPayload = Object.assign(Object.assign({}, rest), { allowedMentions: { repliedUser: false } });

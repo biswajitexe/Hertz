@@ -1,9 +1,8 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits, Role } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, Role } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
-
 import { pagination } from "../../utilities/pagination";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('list')
@@ -21,7 +20,6 @@ export const command = new SlashCommandBuilder()
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.inCachedGuild()) return;
 
-    // Radius Argument Parsing (Prefix Support)
     let subcommand: string | null = null;
     let targetRole: Role | null = null;
 
@@ -30,12 +28,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         targetRole = interaction.options.getRole('role') as Role;
     } catch (e) { }
 
-    // Manual Parsing if Slash failed or Prefix usage
     if (!subcommand) {
-        const msg = interaction as any; // Type casting for prefix shim
+        const msg = interaction as any;
         if (msg.content) {
             const args = msg.content.trim().split(/ +/);
-            // args[0] is command, args[1] is subcommand
             const rawSub = args[1]?.toLowerCase();
 
             if (['role', 'roles'].includes(rawSub)) subcommand = 'roles';
@@ -43,7 +39,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             else if (['admin', 'admins'].includes(rawSub)) subcommand = 'admins';
             else if (['inrole', 'members'].includes(rawSub)) {
                 subcommand = 'inrole';
-                // Try to find role by name or ID in args[2]
                 const roleQuery = args.slice(2).join(' ');
                 if (roleQuery) {
                     targetRole = interaction.guild.roles.cache.find(r => r.id === roleQuery || r.name.toLowerCase() === roleQuery.toLowerCase() || r.toString() === roleQuery) || null;
@@ -53,26 +48,22 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     }
 
     if (!subcommand) {
-        // show help if no subcommand found
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(config.colors.primary)
             .setTitle('<:4497kazuhawaiter:1461641597476274332> List Commands')
-            .setDescription('\`?list roles\`\n\`?list bots\`\n\`?list admins\`\n\`?list inrole <role>\`')
-            .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+            .setDescription(`\`${config.prefix}list roles\`\n\`${config.prefix}list bots\`\n\`${config.prefix}list admins\`\n\`${config.prefix}list inrole <role>\``)
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply(embed.toPayload());
         return;
     }
 
     await interaction.deferReply();
 
-    // Helper for list display (Whitelist Style)
-    // Format: `「1」` | `Name「ID」`
     const getFormattedList = (items: { name: string, id: string, extra?: string }[]) => {
         return items.map((item, i) => `\`「${i + 1}」\` | \`${item.name}「${item.id}」\`${item.extra ? ` (${item.extra})` : ''}`);
     };
 
-    // Generic Icon (Purple Shield style from WL)
     const icon = 'https://cdn.discordapp.com/emojis/1461641597476274332.png';
 
     try {
@@ -101,11 +92,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         } else if (subcommand === 'inrole') {
             if (!targetRole) {
-                await interaction.editReply({ content: `${config.emojis.error} **Please specify a valid role.**` });
+                await interaction.editReply(createErrorV2("**Please specify a valid role.**").toPayload());
                 return;
             }
             title = `Members in ${targetRole.name}`;
-            // Ensure members are fetched
             await interaction.guild.members.fetch();
             items = targetRole.members.map(m => ({ name: m.user.username, id: m.id }));
         }
@@ -115,6 +105,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     } catch (err) {
         console.error(err);
-        await interaction.editReply({ content: `${config.emojis.error} Failed to fetch list.` });
+        await interaction.editReply(createErrorV2("Failed to fetch list.").toPayload());
     }
 }

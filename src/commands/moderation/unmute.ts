@@ -1,9 +1,10 @@
-import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, GuildMember, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import { canModerate } from "../../utilities/permission";
 import * as config from "../../config";
 import { createSuccessEmbed, createErrorEmbed } from "../../utilities/embedUtils";
 import { logAction } from "../../utilities/modLogger";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('unmute')
@@ -28,31 +29,31 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Permission Check
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to unmute members.`, ephemeral: true });
+        return interaction.reply(createErrorV2("You do not have permission to unmute members.").toPayload({ ephemeral: true }));
     }
 
     if (!user) {
-        await interaction.reply({ embeds: [createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?unmute <user> [reason]`")], ephemeral: true });
+        await interaction.reply(createErrorEmbed(interaction.user, "**Please provide a valid User.**\nUsage: `?unmute <user> [reason]`").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!(user instanceof GuildMember)) {
-        await interaction.reply({ content: `${config.emojis.error} User is not in the server.`, ephemeral: true });
+        await interaction.reply(createErrorV2("User is not in the server.").toPayload({ ephemeral: true }));
         return;
     }
 
     // Safety Checks (Standardization)
     if (user.id === interaction.user.id) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot unmute yourself.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot unmute yourself.**").toPayload({ ephemeral: true }));
         return;
     }
     if (!canModerate(interaction.member, user, PermissionFlagsBits.ModerateMembers)) {
-        await interaction.reply({ content: `${config.emojis.error} **You cannot moderate this user due to role hierarchy.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**You cannot moderate this user due to role hierarchy.**").toPayload({ ephemeral: true }));
         return;
     }
 
     if (!user.isCommunicationDisabled()) {
-        await interaction.reply({ content: `${config.emojis.error} **This user is not muted.**`, ephemeral: true });
+        await interaction.reply(createErrorV2("**This user is not muted.**").toPayload({ ephemeral: true }));
         return;
     }
 
@@ -64,18 +65,19 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         // Mod Log
         await logAction(interaction.guild, user.user, interaction.user, 'UNMUTE', reason, database);
 
-        const successEmbed = new EmbedBuilder()
+        const successEmbed = new V2Embed()
             .setColor(0x57F287)
-            .setDescription(`<:icocorrect46:1458159679988432948> **Unmuted ${user.user.tag}**`);
+            .setTitle(`<:icocorrect46:1458159679988432948> Unmuted ${user.user.tag}`)
+            .setDescription(`Successfully removed mute restriction from **${user.user.tag}**.`);
 
         if (reason !== "No reason provided") {
             successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
         }
 
-        await interaction.editReply({ embeds: [successEmbed] });
+        await interaction.editReply(successEmbed.toPayload());
 
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ content: `${config.emojis.error} **Failed to unmute user.**` });
+        await interaction.editReply(createErrorV2("**Failed to unmute user.**").toPayload());
     }
 }

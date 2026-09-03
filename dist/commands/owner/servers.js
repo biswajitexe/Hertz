@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('servers')
     .setDescription('Manage servers (Owner Only)')
@@ -59,49 +60,50 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
             owners.push(...botConfig.ownerUsers);
         if (!owners.includes(interaction.user.id))
-            return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         const sub = interaction.options.getSubcommand();
         const embedStyle = (title, description, color = config.colors.primary) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(color)
-                .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+                .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (sub === 'list') {
             const guilds = interaction.client.guilds.cache.sort((a, b) => b.memberCount - a.memberCount).first(10);
             const description = guilds.map((g, i) => `> \`${i + 1}.\` **${g.name}** \n> ID: \`${g.id}\` | Members: \`${g.memberCount}\` | Owner: <@${g.ownerId}>`).join('\n\n');
             const embed = embedStyle(`Top 10 Servers (${interaction.client.guilds.cache.size} Total)`, description);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         if (sub === 'leave') {
             const id = interaction.options.getString('id', true);
             const guild = interaction.client.guilds.cache.get(id);
             if (!guild)
-                return interaction.reply({ embeds: [embedStyle('Server Error', '> Bot is not in that server.', config.colors.error)], ephemeral: true });
+                return interaction.reply(embedStyle('Server Error', '> Bot is not in that server.', config.colors.error).toPayload({ ephemeral: true }));
             yield guild.leave();
-            return interaction.reply({ embeds: [embedStyle('Left Server', `> Left **${guild.name}** (\`${id}\`).`, config.colors.success)], ephemeral: true });
+            return interaction.reply(embedStyle('Left Server', `> Left **${guild.name}** (\`${id}\`).`, config.colors.success).toPayload({ ephemeral: true }));
         }
         if (sub === 'invite') {
             const id = interaction.options.getString('id', true);
             const guild = interaction.client.guilds.cache.get(id);
             if (!guild)
-                return interaction.reply({ embeds: [embedStyle('Server Error', '> Bot is not in that server.', config.colors.error)], ephemeral: true });
+                return interaction.reply(embedStyle('Server Error', '> Bot is not in that server.', config.colors.error).toPayload({ ephemeral: true }));
             const channel = guild.channels.cache.find(c => {
                 var _a;
                 return c.type === discord_js_1.ChannelType.GuildText &&
                     ((_a = c.permissionsFor(guild.members.me)) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionsBitField.Flags.CreateInstantInvite));
             });
             if (!channel) {
-                return interaction.reply({ embeds: [embedStyle('Invite Error', `> Could not find a channel to create invite in **${guild.name}**. Missing permissions?`, config.colors.error)], ephemeral: true });
+                return interaction.reply(embedStyle('Invite Error', `> Could not find a channel to create invite in **${guild.name}**. Missing permissions?`, config.colors.error).toPayload({ ephemeral: true }));
             }
             try {
                 const invite = yield channel.createInvite({ maxAge: 0, maxUses: 1 });
-                return interaction.reply({ embeds: [embedStyle(`Invite for ${guild.name}`, `> [Click to Join](${invite.url})`)], ephemeral: true });
+                return interaction.reply(embedStyle(`Invite for ${guild.name}`, `> [Click to Join](${invite.url})`).toPayload({ ephemeral: true }));
             }
             catch (e) {
-                return interaction.reply({ embeds: [embedStyle('Invite Error', '> Failed to create invite.', config.colors.error)], ephemeral: true });
+                return interaction.reply(embedStyle('Invite Error', '> Failed to create invite.', config.colors.error).toPayload({ ephemeral: true }));
             }
         }
     });

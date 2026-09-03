@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2, createSuccessV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('antispam')
@@ -37,7 +38,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const isBotOwner = interaction.user.id === process.env.OWNER_ID;
 
     if (!isOwner && !isExtraOwner && !isExtraAdmin && !isBotOwner) {
-        await interaction.reply({ content: `${config.emojis.error} **Only the Server Owner, Trustable Admins, or Bot Owner can manage anti-spam settings.**`, ephemeral: true });
+        await interaction.reply(createErrorV2('Only the Server Owner, Trustable Admins, or Bot Owner can manage anti-spam settings.').toPayload({ ephemeral: true }));
         return;
     }
 
@@ -45,23 +46,22 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     await interaction.deferReply();
 
     try {
-
         if (sub === 'enable') {
             if (guildData.messageFilters.spam) {
-                await interaction.editReply({ content: `${config.emojis.error} **Anti-Spam is already enabled!**` });
+                await interaction.editReply(createErrorV2('Anti-Spam is already enabled!').toPayload());
                 return;
             }
             guildData.messageFilters.spam = true;
             await database.insertGuild(interaction.guild.id, guildData);
-            await interaction.editReply({ content: `${config.emojis.success} **Anti-Spam filter has been Enabled.**` });
+            await interaction.editReply(createSuccessV2('Anti-Spam filter has been Enabled.').toPayload());
         } else if (sub === 'disable') {
             if (!guildData.messageFilters.spam) {
-                await interaction.editReply({ content: `${config.emojis.error} **Anti-Spam is already disabled!**` });
+                await interaction.editReply(createErrorV2('Anti-Spam is already disabled!').toPayload());
                 return;
             }
             guildData.messageFilters.spam = false;
             await database.insertGuild(interaction.guild.id, guildData);
-            await interaction.editReply({ content: `${config.emojis.success} **Anti-Spam filter has been DISABLED.**` });
+            await interaction.editReply(createSuccessV2('Anti-Spam filter has been DISABLED.').toPayload());
         } else if (sub === 'status') {
             const statusEmoji = guildData.messageFilters.spam ? config.emojis.success : config.emojis.error;
             const statusText = guildData.messageFilters.spam ? "Enabled" : "Disabled";
@@ -72,29 +72,31 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antispam enable\` to activate security and protect your server! <:6581lockkey:1461100873479487559>`;
             }
 
-            const embed = new EmbedBuilder()
+            const embed = new V2Embed()
                 .setColor(config.colors.primary)
-                .setDescription(`**${config.emojis.automod} Anti-Spam Panel**\n\n${description}`)
+                .setTitle(`${config.emojis.automod} Anti-Spam Panel`)
+                .setDescription(description)
                 .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply(embed.toPayload());
         } else {
             // Subcommand not found (likely prefix command empty call)
-            const embed = new EmbedBuilder()
+            const embed = new V2Embed()
                 .setColor(config.colors.primary)
-                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
+                .setTitle('Anti-Spam Commands')
                 .setDescription(
                     '`?antispam enable`\n' +
                     '`?antispam disable`\n' +
                     '`?antispam status`'
                 )
                 .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter({ text: 'Xeon • Automated Security', iconURL: interaction.client.user?.displayAvatarURL() || undefined });
-            await interaction.editReply({ embeds: [embed] });
+                .setFooter('Hertz • Automated Security', interaction.client.user?.displayAvatarURL() || undefined);
+            await interaction.editReply(embed.toPayload());
         }
     } catch (error) {
         console.error(error);
-        await interaction.editReply({ content: `${config.emojis.error} **Failed to update settings.**` });
+        await interaction.editReply(createErrorV2('Failed to update settings.').toPayload());
     }
 }

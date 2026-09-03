@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('owner')
     .setDescription('Manage Bot Owners')
@@ -61,44 +62,42 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
             owners.push(...botConfig.ownerUsers);
         if (!owners.includes(interaction.user.id)) {
-            return interaction.reply({
-                embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Only the **Bot Owner** can use this command.`)],
-                ephemeral: true
-            });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Only the **Bot Owner** can use this command.').toPayload({ ephemeral: true }));
         }
         const subcommand = interaction.options.getSubcommand(false);
         if (!botConfig.ownerUsers)
             botConfig.ownerUsers = [];
         const embedStyle = (title, description) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
-                .setDescription(`**${config.emojis.owner} ${title}**\n\n${description}`)
+                .setTitle(`${config.emojis.owner} ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (subcommand === 'add') {
             const targetUser = interaction.options.getUser('user', true);
             if (botConfig.ownerUsers.includes(targetUser.id)) {
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is already an **Owner**.`)] });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`**${targetUser.tag}** is already an **Owner**.`).toPayload());
             }
             botConfig.ownerUsers.push(targetUser.id);
             yield database.updateBotConfig(botConfig);
-            return interaction.reply({ embeds: [embedStyle('Owner Added', `> Added **${targetUser.tag}** as a **Bot Owner**.`)] });
+            return interaction.reply(embedStyle('Owner Added', `> Added **${targetUser.tag}** as a **Bot Owner**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
         }
         if (subcommand === 'remove') {
             const targetUser = interaction.options.getUser('user', true);
             if (!botConfig.ownerUsers.includes(targetUser.id)) {
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is not an **Owner**.`)] });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`**${targetUser.tag}** is not an **Owner**.`).toPayload());
             }
             botConfig.ownerUsers = botConfig.ownerUsers.filter(id => id !== targetUser.id);
             yield database.updateBotConfig(botConfig);
-            return interaction.reply({ embeds: [embedStyle('Owner Removed', `> Removed **${targetUser.tag}** from **Bot Owners**.`)] });
+            return interaction.reply(embedStyle('Owner Removed', `> Removed **${targetUser.tag}** from **Bot Owners**.`).toPayload());
         }
         if (subcommand === 'list') {
             const users = botConfig.ownerUsers;
             if (users.length === 0)
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} No Database Owners found.`)] });
+                return interaction.reply((0, componentV2_1.createWarningV2)('No Database Owners found.').toPayload());
             const names = yield Promise.all(users.map((id) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     return (yield interaction.client.users.fetch(id)).username;
@@ -108,11 +107,11 @@ function run(interaction, database) {
                 }
             })));
             const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
-            return interaction.reply({ embeds: [embedStyle('Bot Owners', list)] });
+            return interaction.reply(embedStyle('Bot Owners', list).toPayload());
         }
         const embed = embedStyle('Owner Commands', `\`${config.prefix}owner add <user>\`\n` +
             `\`${config.prefix}owner remove <user>\`\n` +
             `\`${config.prefix}owner list\``);
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     });
 }

@@ -1,8 +1,8 @@
-
-import { Client, Guild, User, TextChannel, EmbedBuilder, AuditLogEvent, GuildMember, GuildChannel, Role, PermissionsBitField, PartialUser, ChannelType, PermissionFlagsBits } from "discord.js";
+import { Client, Guild, User, TextChannel, AuditLogEvent, GuildMember, GuildChannel, Role, PermissionsBitField, PartialUser, ChannelType, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import { AntinukeCore } from "./Core";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export class AntinukeManager {
     private core: AntinukeCore;
@@ -110,7 +110,7 @@ export class AntinukeManager {
         if (guildData && guildData.antinuke && guildData.antinuke.enabled && guildData.antinuke.logChannelId === channel.id) {
             try {
                 const newChannel = await channel.guild.channels.create({
-                    name: 'xeon-log',
+                    name: 'hertz-log',
                     type: ChannelType.GuildText,
                     permissionOverwrites: [
                         {
@@ -128,14 +128,14 @@ export class AntinukeManager {
                 guildData.antinuke.logChannelId = newChannel.id;
                 await this.database.insertGuild(channel.guild.id, guildData);
 
-                const embed = new EmbedBuilder()
+                const embed = new V2Embed()
                     .setColor(config.colors.primary)
                     .setTitle(`${config.emojis.antinuke} Security Alert`)
                     .setDescription(`${config.emojis.warning} **The previous log channel was deleted.**\n\nI have automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
                     .setThumbnail(channel.guild.iconURL() || this.client.user?.displayAvatarURL() || null)
-                    .setFooter({ text: 'Antinuke Security System', iconURL: this.client.user?.displayAvatarURL() || undefined });
+                    .setFooter('Antinuke Security System', this.client.user?.displayAvatarURL() || undefined);
 
-                await newChannel.send({ embeds: [embed] });
+                await newChannel.send(embed.toPayload());
             } catch (e) {
                 console.error("Failed to recover log channel", e);
             }

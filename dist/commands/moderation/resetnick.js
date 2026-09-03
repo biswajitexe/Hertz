@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const embedUtils_1 = require("../../utilities/embedUtils");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('resetnick')
     .setDescription('Reset a member\'s nickname to their username')
@@ -60,26 +61,27 @@ function run(interaction, database) {
             return;
         const targetUser = interaction.options.getMember('user');
         if (!targetUser) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!(targetUser instanceof discord_js_1.GuildMember)) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "Target is not a member of this server.")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "Target is not a member of this server.").toPayload({ ephemeral: true }));
             return;
         }
         if (!targetUser.manageable) {
-            return interaction.reply({ content: `${config.emojis.error} I cannot change this member's nickname (Role hierarchy).`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("I cannot change this member's nickname (Role hierarchy).").toPayload({ ephemeral: true }));
         }
         try {
             yield targetUser.setNickname(null);
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.success)
-                .setDescription(`${config.emojis.success} Reset **${targetUser.user.tag}**'s nickname.`);
-            yield interaction.reply({ embeds: [embed] });
+                .setTitle(`${config.emojis.success} Nickname Reset`)
+                .setDescription(`Reset **${targetUser.user.tag}**'s nickname.`);
+            yield interaction.reply(embed.toPayload());
         }
         catch (err) {
             console.error(err);
-            return interaction.reply({ content: `${config.emojis.error} Failed to reset nickname.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Failed to reset nickname.").toPayload({ ephemeral: true }));
         }
     });
 }

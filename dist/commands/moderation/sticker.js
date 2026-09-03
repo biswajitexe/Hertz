@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const embedUtils_1 = require("../../utilities/embedUtils");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('sticker')
     .setDescription('Steal a sticker (from attachment or URL)')
@@ -63,7 +64,7 @@ function run(interaction, database) {
         if (!interaction.inCachedGuild())
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageEmojisAndStickers)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to manage stickers.**")], ephemeral: true });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to manage stickers.**").toPayload({ ephemeral: true }));
         }
         const attachmentOption = interaction.options.getAttachment('file', false);
         let name = interaction.options.getString('name', false);
@@ -93,7 +94,7 @@ function run(interaction, database) {
             }
         }
         if (!attachment) {
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a file or reply to a sticker/image.**")], ephemeral: true });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a file or reply to a sticker/image.**").toPayload({ ephemeral: true }));
         }
         if (!name) {
             if (attachment.name) {
@@ -108,7 +109,7 @@ function run(interaction, database) {
             name = "sticker_" + Date.now().toString().slice(-4);
         const validTypes = ['image/png', 'image/jpeg', 'image/gif'];
         if (attachment.contentType && !validTypes.some(t => { var _a; return (_a = attachment.contentType) === null || _a === void 0 ? void 0 : _a.startsWith(t); })) {
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Invalid file type. Please provide a PNG, JPG, or GIF.**")], ephemeral: true });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Invalid file type. Please provide a PNG, JPG, or GIF.**").toPayload({ ephemeral: true }));
         }
         try {
             yield interaction.deferReply();
@@ -117,19 +118,19 @@ function run(interaction, database) {
                 name: name,
                 tags: name
             });
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.success)
                 .setTitle('Sticker Added')
                 .setDescription(`${config.emojis.success} **Added sticker:** \`${name}\``)
                 .setImage(sticker.url);
-            yield interaction.editReply({ embeds: [embed] });
+            yield interaction.editReply(embed.toPayload());
         }
         catch (err) {
             console.error(err);
             let errorMsg = "Failed to add sticker.";
             if (err.code === 30039)
                 errorMsg = "Maximum number of stickers reached.";
-            yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, `**${errorMsg}**`)] });
+            yield interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, `**${errorMsg}**`).toPayload());
         }
     });
 }

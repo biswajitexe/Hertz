@@ -33,44 +33,43 @@ function run(interaction, database) {
         const user = interaction.options.getMember('user');
         const reason = interaction.options.getString('reason') || "No reason provided";
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.KickMembers)) && interaction.user.id !== process.env.OWNER_ID) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to kick members.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to kick members.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!user) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**\nUsage: `?kick <user> [reason]`")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Please provide a valid User.**\nUsage: `?kick <user> [reason]`").toPayload({ ephemeral: true }));
             return;
         }
         if (!(user instanceof discord_js_1.GuildMember)) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "User is not in the server.")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "User is not in the server.").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.user.id) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick yourself.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick yourself.**").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.client.user.id) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick me.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick me.**").toPayload({ ephemeral: true }));
             return;
         }
         if (user.id === interaction.guild.ownerId) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick the server owner.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick the server owner.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!user.kickable) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**I cannot kick this user. My role is likely below theirs.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**I cannot kick this user. My role is likely below theirs.**").toPayload({ ephemeral: true }));
             return;
         }
         if (!(0, permission_1.canModerate)(interaction.member, user, discord_js_1.PermissionFlagsBits.KickMembers)) {
-            yield interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick this user due to role hierarchy.**")], ephemeral: true });
+            yield interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You cannot kick this user due to role hierarchy.**").toPayload({ ephemeral: true }));
             return;
         }
         yield interaction.deferReply();
         try {
             const dmEmbed = (0, embedUtils_1.createErrorEmbed)(interaction.user, `You have been kicked from **${interaction.guild.name}**`)
                 .setTitle(`You have been kicked from ${interaction.guild.name}`)
-                .setDescription(null)
                 .addFields({ name: 'Reason', value: reason }, { name: 'Moderator', value: interaction.user.tag });
-            yield user.send({ embeds: [dmEmbed] });
+            yield user.send(dmEmbed.toPayload()).catch(() => { });
         }
         catch (e) { }
         try {
@@ -78,11 +77,11 @@ function run(interaction, database) {
             yield (0, modLogger_1.logAction)(interaction.guild, user.user, interaction.user, 'KICK', reason, database);
             const successEmbed = (0, embedUtils_1.createSuccessEmbed)(interaction.user, `**Kicked ${user.user.tag}**`)
                 .addFields({ name: 'Reason', value: reason, inline: false });
-            yield interaction.editReply({ embeds: [successEmbed] });
+            yield interaction.editReply(successEmbed.toPayload());
         }
         catch (error) {
             console.error(error);
-            yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to kick user.**")] });
+            yield interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Failed to kick user.**").toPayload());
         }
     });
 }

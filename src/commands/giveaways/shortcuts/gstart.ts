@@ -1,8 +1,8 @@
-// Update imports to include EmbedBuilder
-import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../../database";
 import * as config from "../../../config";
 import { handleStart } from "../giveaway";
+import { V2Embed, createErrorV2 } from "../../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('gstart')
@@ -29,7 +29,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (!interaction.guild) return;
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages) && interaction.user.id !== process.env.OWNER_ID) {
-        return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage giveaways.`, ephemeral: true });
+        return interaction.reply(createErrorV2('You do not have permission to manage giveaways.').toPayload({ ephemeral: true }));
     }
 
     const time = interaction.options.getString('time');
@@ -37,11 +37,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const prize = interaction.options.getString('prize');
 
     if (!time || !winners || !prize) {
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(config.colors.primary)
+            .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Start`)
             .setDescription(`**Usage:** \`?gstart <time> <winners> <prize>\`\n**Example:** \`?gstart 10m 1 Nitro\``);
 
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     }
 
     await handleStart(interaction);

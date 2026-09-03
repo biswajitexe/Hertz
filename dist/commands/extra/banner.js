@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('banner')
     .setDescription('Get a user\'s banner')
@@ -57,13 +58,13 @@ function run(interaction, database) {
         const rawUser = interaction.options.getUser('target') || interaction.user;
         const user = yield interaction.client.users.fetch(rawUser.id, { force: true });
         if (!user.bannerURL()) {
-            return interaction.reply({ content: `${config.emojis.error} ${user.username} does not have a banner.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)(`${user.username} does not have a banner.`).toPayload({ ephemeral: true }));
         }
-        const embed = new discord_js_1.EmbedBuilder()
-            .setColor(0x2B2D31)
-            .setAuthor({ name: `${user.username}'s Banner`, iconURL: user.displayAvatarURL() })
+        const embed = new componentV2_1.V2Embed()
+            .setColor(config.colors.primary)
+            .setAuthor(`${user.username}'s Banner`, user.displayAvatarURL())
             .setImage(user.bannerURL({ size: 4096 }))
-            .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
-        yield interaction.reply({ embeds: [embed] });
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+        yield interaction.reply(embed.toPayload());
     });
 }

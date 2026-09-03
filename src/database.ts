@@ -1,4 +1,4 @@
-import { Guild as DiscordGuild } from "discord.js";
+import type { Guild as DiscordGuild } from "discord.js";
 import Keyv from "keyv";
 import * as fs from 'fs';
 
@@ -7,7 +7,7 @@ export interface RaidCache {
     bannedUsers: string[],
 }
 
-export interface SpamFilter { }
+export type SpamFilter = Record<string, unknown>;
 
 export interface MessageFilter {
     blacklist: string[],
@@ -102,7 +102,7 @@ export interface Guild {
 
 
     // Custom Embeds Storage
-    customEmbeds: { [name: string]: any }, // Stores JSON embed objects
+    customEmbeds: { [name: string]: Record<string, unknown> }, // Stores JSON embed objects
 
     // Legacy whitelist (Deprecated) - Keeping for potential compilation errors until fully migrated
     whitelist?: {
@@ -146,39 +146,45 @@ export interface UserProfile {
 }
 
 import KeyvMongo from '@keyv/mongo';
+// @ts-ignore
+import KeyvPostgres from '@keyv/postgres';
 
 export class Database {
     inner: Keyv<Guild>
     users: Keyv<UserProfile>
 
     constructor() {
-        const mongoUrl = (process.env.MONGO_URL || process.env.MONGO_URI)?.trim();
-        if (mongoUrl) {
+        const dbUrl = (process.env.DATABASE || process.env.MONGO_URL || process.env.MONGO_URI || process.env.MONGODB_URI)?.trim();
+        if (dbUrl) {
             try {
-                // Append SSL bypass option to existing URL
-                console.log("DEBUG: Connecting to MongoDB...");
-                // @ts-ignore
-                // @ts-ignore
-                // Using different namespaces (collections) for Guilds and Users if possible, or just prefixes
-                const store = new KeyvMongo(mongoUrl, { dbName: 'xeon', tls: true });
-                this.inner = new Keyv({ store: store as any, namespace: 'guilds' });
-                this.users = new Keyv({ store: store as any, namespace: 'users' });
+                let store: any;
+                if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
+                    console.log("DEBUG: Connecting to PostgreSQL (Supabase)...");
+                    const PostgresAdapter = (KeyvPostgres as any).default || KeyvPostgres;
+                    store = new PostgresAdapter({ uri: dbUrl, table: 'keyv_store' });
+                } else {
+                    console.log("DEBUG: Connecting to MongoDB...");
+                    store = new KeyvMongo(dbUrl, { dbName: process.env.DB_NAME || 'hertz', tls: true });
+                }
 
-                // monitor connection errors if possible
+                this.inner = new Keyv({ store: store, namespace: 'guilds' });
+                this.users = new Keyv({ store: store, namespace: 'users' });
+
                 this.inner.on('error', (err: any) => {
-                    console.warn('[Database Warning] MongoDB connection issue. Switching to in-memory storage temporarily.');
+                    console.warn('[Database Warning] Connection issue. Switching to in-memory storage temporarily.');
                     console.error('Connection Error Detail:', err.message);
                     this.inner = new Keyv();
                     this.users = new Keyv();
                 });
 
-            } catch (error) {
-                console.warn("[Database Warning] Failed to connect to MongoDB. Using in-memory storage.");
+            } catch (err: any) {
+                console.warn("[Database Warning] Failed to initialize database adapter. Using in-memory storage.");
+                console.error(err);
                 this.inner = new Keyv();
                 this.users = new Keyv();
             }
         } else {
-            console.warn('MONGO_URL not found in .env, falling back to in-memory storage (data will be lost on restart)');
+            console.warn('Database URL not found in .env, falling back to in-memory storage (data will be lost on restart)');
             this.inner = new Keyv();
             this.users = new Keyv();
         }
@@ -196,7 +202,7 @@ export class Database {
             for (const webhook of webhooks) {
                 webhooksWhiteList.push(webhook[1].id);
             }
-        } catch (e) {
+        } catch {
             console.warn(`[Database] Failed to fetch webhooks for guild ${guild.id} (Missing Permissions?)`);
         }
 

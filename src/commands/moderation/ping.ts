@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('ping')
@@ -14,14 +14,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
     const apiLatency = Math.round(interaction.client.ws.ping);
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
         .setTitle('🏓 Pong!')
         .addFields(
             { name: 'Bot Latency', value: `${latency}ms`, inline: true },
             { name: 'API Latency', value: `${apiLatency}ms`, inline: true }
         )
-        .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
-    await interaction.editReply({ content: null, embeds: [embed] });
+    await interaction.editReply({ content: null, ...embed.toPayload() });
 }

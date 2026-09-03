@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logAction = logAction;
-const discord_js_1 = require("discord.js");
+const componentV2_1 = require("./componentV2");
 function logAction(guild, target, moderator, action, reason, database, extraInfo) {
     return __awaiter(this, void 0, void 0, function* () {
         const guildData = yield database.retrieveGuild(guild.id);
@@ -43,14 +43,15 @@ function logAction(guild, target, moderator, action, reason, database, extraInfo
                 color = '#00ff00';
                 break;
         }
-        const embed = new discord_js_1.EmbedBuilder()
-            .setAuthor({ name: `${action} | ${target.tag}`, iconURL: target.displayAvatarURL() })
+        const card = new componentV2_1.V2Embed()
+            .setAuthor(`${action} | ${target.tag}`, target.displayAvatarURL())
             .setColor(color)
-            .addFields({ name: 'User', value: `${target} (${target.id})`, inline: true }, { name: 'Moderator', value: `${moderator} (${moderator.id})`, inline: true }, { name: 'Reason', value: reason })
+            .setThumbnail(target.displayAvatarURL())
+            .addFields({ name: 'User', value: `${target} (\`${target.id}\`)`, inline: true }, { name: 'Moderator', value: `${moderator} (\`${moderator.id}\`)`, inline: true }, { name: 'Reason', value: reason })
             .setTimestamp();
         if (extraInfo) {
-            embed.addFields({ name: 'Additional Info', value: extraInfo });
+            card.addFields({ name: 'Additional Info', value: extraInfo });
         }
-        yield channel.send({ embeds: [embed] }).catch(() => { });
+        yield channel.send(card.toPayload()).catch(() => { });
     });
 }

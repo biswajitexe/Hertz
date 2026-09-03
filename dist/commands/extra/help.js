@@ -48,6 +48,7 @@ exports.handleInteraction = handleInteraction;
 const discord_js_1 = require("discord.js");
 const builders_1 = require("@discordjs/builders");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new builders_1.SlashCommandBuilder()
     .setName('help')
     .setDescription('Get help about the bot commands')
@@ -56,7 +57,6 @@ exports.aliases = ['h', 'commands'];
 const activeHelpMessages = new Map();
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("[HelpCommand] Run started");
         const commandName = interaction.options.getString('command');
         if (commandName) {
             yield sendCommandHelp(interaction, commandName);
@@ -71,18 +71,12 @@ function handleInteraction(interaction, database) {
         if (!interaction.customId.startsWith('help_'))
             return;
         if (interaction.customId.includes("_disabled")) {
-            return interaction.reply({
-                content: "This help session has expired. Please use `/help` command again.",
-                ephemeral: true,
-            });
+            return interaction.reply((0, componentV2_1.createErrorV2)("This help session has expired. Please use `/help` command again.").toPayload({ ephemeral: true }));
         }
         const messageId = interaction.message.id;
         const helpData = activeHelpMessages.get(messageId);
         if (helpData && helpData.userId !== interaction.user.id) {
-            return interaction.reply({
-                content: "You can only interact with your own help menu. Use `/help` to get your own menu.",
-                ephemeral: true,
-            });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You can only interact with your own help menu. Use `/help` to get your own menu.").toPayload({ ephemeral: true }));
         }
         try {
             yield interaction.deferUpdate();
@@ -92,7 +86,6 @@ function handleInteraction(interaction, database) {
             if (interaction.isStringSelectMenu() && interaction.customId === "help_category") {
                 const selectedValue = interaction.values[0];
                 const moduleKey = selectedValue.replace("help_", "");
-                console.log(`[HelpDebug] Selecting module: ${moduleKey}`);
                 yield sendModuleHelp(interaction, moduleKey);
             }
             else if (interaction.isButton()) {
@@ -121,16 +114,16 @@ function sendHelpMenu(context_1) {
         var _a, _b, _c, _d;
         const client = context.client;
         const user = context.user || context.author;
-        const totalCommands = Object.values(config.modules).reduce((acc, mod) => acc + (mod.commands.length || 0), 0);
-        const embed = new discord_js_1.EmbedBuilder()
+        const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: `Hi, ${user.username}!`, iconURL: user.displayAvatarURL() })
+            .setAuthor(`Hi, ${user.username}!`, user.displayAvatarURL())
             .setThumbnail((_a = client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL())
-            .setDescription(`> **Xeon is a powerful, advanced server automation tool.**\n> **Prefix:** \`${config.prefix}\``)
+            .setTitle(`<:iconfolder:1458160174815514670> Hertz Security Command Center`)
+            .setDescription(`> **Hertz is a powerful, advanced server automation & security tool.**\n> **Prefix:** \`${config.prefix}\` • **Slash Commands:** Enabled`)
             .addFields({
             name: "Modules",
             value: ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
-                .map(key => { var _a; return `> [${((_a = config.modules[key]) === null || _a === void 0 ? void 0 : _a.name) || key}](https://discord.gg/xeon)`; })
+                .map(key => { var _a; return `> ${config.emojis[key] || "📁"} [${((_a = config.modules[key]) === null || _a === void 0 ? void 0 : _a.name) || key}](https://discord.gg/hertz)`; })
                 .join("\n"),
             inline: false
         }, {
@@ -138,16 +131,16 @@ function sendHelpMenu(context_1) {
             value: `> [Support Server](https://discord.gg/suttabar) • [Invite Me](https://discord.com/api/oauth2/authorize?client_id=${(_b = client.user) === null || _b === void 0 ? void 0 : _b.id}&permissions=8&scope=bot%20applications.commands) • [Vote](https://top.gg/bot/${(_c = client.user) === null || _c === void 0 ? void 0 : _c.id})`,
             inline: false
         })
-            .setFooter({ text: `Developed by Vasudev AI Team`, iconURL: (_d = client.user) === null || _d === void 0 ? void 0 : _d.displayAvatarURL() })
+            .setFooter(`Developed by Vasudev AI Team`, (_d = client.user) === null || _d === void 0 ? void 0 : _d.displayAvatarURL())
             .setTimestamp();
         const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(discord_js_1.ButtonStyle.Primary));
         const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select a Category"));
         let sentMessage;
         if (isUpdate) {
-            sentMessage = yield context.editReply({ embeds: [embed], components: [selectMenu, buttons] });
+            sentMessage = yield context.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
         }
         else {
-            sentMessage = yield context.reply({ embeds: [embed], components: [selectMenu, buttons], fetchReply: true });
+            sentMessage = yield context.reply(Object.assign(Object.assign({}, card.toPayload({ extraComponents: [selectMenu, buttons] })), { fetchReply: true }));
         }
         if (sentMessage)
             setupTimeout(sentMessage, context.user.id);
@@ -155,36 +148,39 @@ function sendHelpMenu(context_1) {
 }
 function sendModuleHelp(interaction, moduleKey) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
+        var _a, _b;
         const module = config.modules[moduleKey];
         if (!module)
             return;
         const commandsText = module.commands.map(cmd => `\`${cmd.name}\``).join(", ");
-        const embed = new discord_js_1.EmbedBuilder()
+        const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setTitle(module.name)
+            .setAuthor(`Module Help`, (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL())
+            .setTitle(`${config.emojis[moduleKey] || "📁"} ${module.name}`)
             .setDescription(`> ${commandsText.substring(0, 4096)}`)
-            .setFooter({ text: `Xeon • ${module.name}`, iconURL: (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL() });
+            .setFooter(`Hertz • ${module.name}`, (_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL());
         const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(discord_js_1.ButtonStyle.Primary));
         const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Choose another Category"));
-        yield interaction.editReply({ embeds: [embed], components: [selectMenu, buttons] });
+        yield interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
     });
 }
 function sendAllCommands(interaction) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
-        const embed = new discord_js_1.EmbedBuilder()
+        const totalCount = Object.values(config.modules).reduce((acc, mod) => acc + (mod.commands.length || 0), 0);
+        const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setDescription(`Full list of available commands.`)
-            .setFooter({ text: `Xeon • Total Commands: ${Object.values(config.modules).reduce((acc, mod) => acc + (mod.commands.length || 0), 0)}`, iconURL: (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL() })
+            .setTitle(`${config.emojis.commands} All Commands (${totalCount})`)
+            .setDescription(`Full list of available commands across all categories:`)
+            .setFooter(`Hertz • Total Commands: ${totalCount}`, (_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL())
             .setTimestamp();
         const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
         moduleOrder.forEach(key => {
             const module = config.modules[key];
             if (module) {
                 const cmds = module.commands.map(c => `\`${c.name}\``).join(", ");
-                embed.addFields({
-                    name: `${module.name}`,
+                card.addFields({
+                    name: `${config.emojis[key] || "📁"} ${module.name}`,
                     value: `> ${cmds}`,
                     inline: false
                 });
@@ -192,7 +188,7 @@ function sendAllCommands(interaction) {
         });
         const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setEmoji(config.emojis.home).setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setEmoji(config.emojis.delete).setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setEmoji(config.emojis.commands).setStyle(discord_js_1.ButtonStyle.Primary).setDisabled(true));
         const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Choose a specific Category"));
-        yield interaction.editReply({ embeds: [embed], components: [selectMenu, buttons] });
+        yield interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
     });
 }
 function sendCommandHelp(interaction, commandName) {
@@ -206,13 +202,13 @@ function sendCommandHelp(interaction, commandName) {
             }
         }
         if (!foundCmd) {
-            return interaction.reply({ content: `Command \`${commandName}\` not found.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)(`Command \`${commandName}\` not found.`).toPayload({ ephemeral: true }));
         }
-        const embed = new discord_js_1.EmbedBuilder()
+        const card = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
             .setTitle(`Command: /${foundCmd.name}`)
             .addFields({ name: "Description", value: foundCmd.description }, { name: "Module", value: (foundModule === null || foundModule === void 0 ? void 0 : foundModule.name) || "Unknown" });
-        yield interaction.reply({ embeds: [embed], ephemeral: true });
+        yield interaction.reply(card.toPayload({ ephemeral: true }));
     });
 }
 function createModuleSelectMenu(placeholder) {

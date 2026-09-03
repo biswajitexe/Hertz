@@ -46,6 +46,7 @@ exports.aliases = exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('serverinfo')
     .setDescription('Display detailed server information with categorized pages');
@@ -53,15 +54,15 @@ exports.aliases = ["si", "server"];
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!interaction.guild)
-            return interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("This command can only be used in a server.").toPayload({ ephemeral: true }));
         const guild = interaction.guild;
         const owner = yield guild.fetchOwner().catch(() => null);
         const generateEmbed = (page) => {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
-                .setAuthor({ name: guild.name, iconURL: guild.iconURL() || undefined })
+                .setAuthor(guild.name, guild.iconURL() || undefined)
                 .setThumbnail(guild.iconURL({ size: 4096 }))
-                .setFooter({ text: `Requested by ${interaction.user.tag} • Page: ${page}`, iconURL: interaction.user.displayAvatarURL() })
+                .setFooter(`Requested by ${interaction.user.tag} • Page: ${page}`, interaction.user.displayAvatarURL())
                 .setTimestamp();
             if (guild.bannerURL())
                 embed.setImage(guild.bannerURL({ size: 4096 }));
@@ -124,10 +125,6 @@ function run(interaction, database) {
                     const total = guild.memberCount;
                     const humans = guild.members.cache.filter(m => !m.user.bot).size;
                     const bots = guild.members.cache.filter(m => m.user.bot).size;
-                    const online = guild.members.cache.filter(m => { var _a; return ((_a = m.presence) === null || _a === void 0 ? void 0 : _a.status) === 'online'; }).size;
-                    const idle = guild.members.cache.filter(m => { var _a; return ((_a = m.presence) === null || _a === void 0 ? void 0 : _a.status) === 'idle'; }).size;
-                    const dnd = guild.members.cache.filter(m => { var _a; return ((_a = m.presence) === null || _a === void 0 ? void 0 : _a.status) === 'dnd'; }).size;
-                    const offline = total - (online + idle + dnd);
                     let maxUpload = "25MB";
                     if (guild.premiumTier === discord_js_1.GuildPremiumTier.Tier2)
                         maxUpload = "50MB";
@@ -233,18 +230,14 @@ function run(interaction, database) {
                 row2.addComponents(new discord_js_1.ButtonBuilder().setLabel('Splash').setStyle(discord_js_1.ButtonStyle.Link).setURL(guild.splashURL({ size: 4096 })));
             return row2.components.length > 0 ? [row1, row2] : [row1];
         };
-        const message = yield interaction.reply({
-            embeds: [generateEmbed('General')],
-            components: getButtons('General'),
-            fetchReply: true
-        });
+        const message = yield interaction.reply(Object.assign(Object.assign({}, generateEmbed('General').toPayload({ extraComponents: getButtons('General') })), { fetchReply: true }));
         const collector = message.createMessageComponentCollector({
             componentType: discord_js_1.ComponentType.Button,
             time: 60000
         });
         collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {
             if (i.user.id !== interaction.user.id) {
-                yield i.reply({ content: `${config.emojis.error} You cannot interact with this menu.`, ephemeral: true });
+                yield i.reply((0, componentV2_1.createErrorV2)("You cannot interact with this menu.").toPayload({ ephemeral: true }));
                 return;
             }
             let pageName = 'General';
@@ -256,30 +249,12 @@ function run(interaction, database) {
                 pageName = 'Channels';
             if (i.customId === 'si_feat')
                 pageName = 'Features';
-            yield i.update({
-                embeds: [generateEmbed(pageName)],
-                components: getButtons(pageName)
-            });
+            yield i.update(generateEmbed(pageName).toPayload({ extraComponents: getButtons(pageName) }));
         }));
         collector.on('end', () => __awaiter(this, void 0, void 0, function* () {
-            yield interaction.editReply({ components: getButtons('General', true) }).catch(() => { });
+            yield interaction.editReply(generateEmbed('General').toPayload({ extraComponents: getButtons('General', true) })).catch(() => { });
         }));
     });
-}
-function getNextTierGoal(currentTier) {
-    if (currentTier === discord_js_1.GuildPremiumTier.None)
-        return 2;
-    if (currentTier === discord_js_1.GuildPremiumTier.Tier1)
-        return 7;
-    if (currentTier === discord_js_1.GuildPremiumTier.Tier2)
-        return 14;
-    return 14;
-}
-function getProgressBar(current, goal) {
-    const percent = Math.min(current / goal, 1);
-    const filled = Math.round(percent * 10);
-    const empty = 10 - filled;
-    return "[" + "🟦".repeat(filled) + "⬜".repeat(empty) + `] ${current}/${goal}`;
 }
 function getEmojiLimit(tier) {
     if (tier === discord_js_1.GuildPremiumTier.Tier1)

@@ -1,4 +1,4 @@
-DISPLAY_NAME=Xeon
+DISPLAY_NAME=Hertz
 DESCRIPTION=Advanced Discord Bot
 MAIN=dist/index.js
 MEMORY=256

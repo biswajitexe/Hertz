@@ -50,6 +50,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const os_1 = __importDefault(require("os"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('botinfo')
     .setDescription('Display detailed bot information and statistics');
@@ -69,10 +70,9 @@ function run(interaction, database) {
         const totalGuilds = client.guilds.cache.size;
         const totalUsers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
         const totalChannels = client.channels.cache.size;
-        const ownerId = process.env.OWNER_ID || "1082437832087445604";
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setTitle(`<:iconfolder:1458160174815514670> About`)
+            .setTitle(`<:iconfolder:1458160174815514670> About ${client.user.username}`)
             .setThumbnail(client.user.displayAvatarURL())
             .addFields({
             name: "Identity",
@@ -102,10 +102,7 @@ function run(interaction, database) {
             ].join("\n"),
             inline: true
         })
-            .setFooter({
-            text: `Requested by ${interaction.user.tag}`,
-            iconURL: interaction.user.displayAvatarURL(),
-        })
+            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
             .setTimestamp();
         const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
             .setLabel("Invite Me")
@@ -114,6 +111,6 @@ function run(interaction, database) {
             .setLabel("Support Server")
             .setStyle(discord_js_1.ButtonStyle.Link)
             .setURL("https://discord.gg/alpha"));
-        yield interaction.reply({ embeds: [embed], components: [row] });
+        yield interaction.reply(embed.toPayload({ extraComponents: [row] }));
     });
 }

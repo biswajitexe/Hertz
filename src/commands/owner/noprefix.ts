@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2, createWarningV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('noprefix')
@@ -30,8 +30,6 @@ export const aliases = ['np'];
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     if (!interaction.inCachedGuild()) return;
 
-    // Global Config
-    // Global Config
     const botConfig = await database.getBotConfig();
     const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
     if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
@@ -39,84 +37,55 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (botConfig?.adminUsers) owners.push(...botConfig.adminUsers);
 
     if (!owners.includes(interaction.user.id)) {
-        return interaction.reply({
-            embeds: [new EmbedBuilder()
-                .setColor(config.colors.error)
-                .setDescription(`${config.emojis.error} Only the **Bot Owner** can manage No-Prefix users.`)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
-            ],
-            ephemeral: true
-        });
+        return interaction.reply(createErrorV2('Only the **Bot Owner** can manage No-Prefix users.').toPayload({ ephemeral: true }));
     }
 
     const subcommand = interaction.options.getSubcommand();
 
     const embedStyle = (title: string, description: string) => {
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(config.colors.primary)
-            .setDescription(`**<:3852diamond:1466392074189410421> ${title}**\n\n${description}`)
+            .setTitle(`<:3852diamond:1466392074189410421> ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
-    // Ensure array exists
     if (!botConfig.noPrefixUsers) botConfig.noPrefixUsers = [];
 
     if (subcommand === 'add') {
         const user = interaction.options.getUser('user', true);
 
         if (botConfig.noPrefixUsers.includes(user.id)) {
-            return interaction.reply({
-                embeds: [new EmbedBuilder()
-                    .setColor(config.colors.error)
-                    .setDescription(`${config.emojis.error} **${user.tag}** is already in the No-Prefix list.`)
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
-                ],
-                ephemeral: true
-            });
+            return interaction.reply(createErrorV2(`**${user.tag}** is already in the No-Prefix list.`).toPayload({ ephemeral: true }));
         }
 
         botConfig.noPrefixUsers.push(user.id);
-        await database.updateBotConfig(botConfig); // Assuming this method exists or similar logic
+        await database.updateBotConfig(botConfig);
 
-
-        const embed = embedStyle('No Prefix Added', `> Added **${user.tag}** to the No-Prefix list.\n> They can now use commands without a prefix in this server.`);
-        return interaction.reply({ embeds: [embed] });
+        const embed = embedStyle('No Prefix Added', `> Added **${user.tag}** to the No-Prefix list.\n> They can now use commands without a prefix globally.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`);
+        return interaction.reply(embed.toPayload());
     }
 
     if (subcommand === 'remove') {
         const user = interaction.options.getUser('user', true);
 
         if (!botConfig.noPrefixUsers.includes(user.id)) {
-            return interaction.reply({
-                embeds: [new EmbedBuilder()
-                    .setColor(config.colors.error)
-                    .setDescription(`${config.emojis.error} **${user.tag}** is not in the No-Prefix list.`)
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
-                ],
-                ephemeral: true
-            });
+            return interaction.reply(createErrorV2(`**${user.tag}** is not in the No-Prefix list.`).toPayload({ ephemeral: true }));
         }
 
         botConfig.noPrefixUsers = botConfig.noPrefixUsers.filter(id => id !== user.id);
         await database.updateBotConfig(botConfig);
 
         const embed = embedStyle('No Prefix Removed', `> Removed **${user.tag}** from the No-Prefix list.`);
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     }
 
     if (subcommand === 'list') {
         const users = botConfig.noPrefixUsers;
 
         if (users.length === 0) {
-            return interaction.reply({
-                embeds: [new EmbedBuilder()
-                    .setColor(config.colors.warning)
-                    .setDescription(`${config.emojis.warning} There are no No-Prefix users.`)
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
-                ],
-                ephemeral: true
-            });
+            return interaction.reply(createWarningV2('There are no No-Prefix users.').toPayload({ ephemeral: true }));
         }
 
         const names = await Promise.all(users.map(async id => {
@@ -130,14 +99,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
         const embed = embedStyle('No Prefix Users', list);
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     }
 
-    // Default: Help Menu (if no subcommand matches or is provided)
+    // Default: Help Menu
     const embed = embedStyle('No Prefix Commands',
         `\`${config.prefix}noprefix add <user>\`\n` +
         `\`${config.prefix}noprefix remove <user>\`\n` +
         `\`${config.prefix}noprefix list\``
     );
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply(embed.toPayload());
 }

@@ -13,6 +13,7 @@ exports.handleInteraction = exports.run = exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const google_translate_api_x_1 = require("google-translate-api-x");
 const config_1 = require("../../config");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName("translate")
     .setDescription("Translate text to another language")
@@ -89,7 +90,10 @@ const run = (interaction, database) => __awaiter(void 0, void 0, void 0, functio
         return sendLanguageDropdown(interaction, textToTranslate);
     }
     if (!textToTranslate) {
-        return interaction.reply({ content: `${config_1.emojis.error} Please provide text to translate or reply to a message!`, ephemeral: true });
+        const err = (0, componentV2_1.createErrorV2)("Please provide text to translate or reply to a message!");
+        if (interaction instanceof discord_js_1.Message)
+            return interaction.reply(err.toPayload());
+        return interaction.reply(err.toPayload({ ephemeral: true }));
     }
     yield performTranslation(interaction, textToTranslate, targetLang);
 });
@@ -102,21 +106,22 @@ function sendLanguageDropdown(interaction, text) {
             .setPlaceholder("Select a Language (Indian Languages prioritized)")
             .addOptions(...INDIAN_LANGUAGES.map(l => new discord_js_1.StringSelectMenuOptionBuilder().setLabel(l.label).setValue(l.value).setEmoji(l.emoji)), ...GLOBAL_LANGUAGES.map(l => new discord_js_1.StringSelectMenuOptionBuilder().setLabel(l.label).setValue(l.value).setEmoji(l.emoji)));
         const row = new discord_js_1.ActionRowBuilder().addComponents(selectMenu);
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config_1.colors.primary)
+            .setTitle("Language Selection")
             .setDescription(`**Select a language to translate the text:**\n> ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
         if (interaction instanceof discord_js_1.Message) {
-            const msg = yield interaction.reply({ embeds: [embed], components: [row] });
+            const msg = yield interaction.reply(embed.toPayload({ extraComponents: [row] }));
             const targetId = (_c = interaction.reference) === null || _c === void 0 ? void 0 : _c.messageId;
             if (targetId) {
                 const newMenu = new discord_js_1.StringSelectMenuBuilder(selectMenu.toJSON())
                     .setCustomId(`translate_sel_${interaction.author.id}_${targetId}`);
                 const newRow = new discord_js_1.ActionRowBuilder().addComponents(newMenu);
-                yield msg.edit({ components: [newRow] });
+                yield msg.edit(embed.toPayload({ extraComponents: [newRow] }));
             }
         }
         else {
-            yield interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+            yield interaction.reply(embed.toPayload({ extraComponents: [row], ephemeral: true }));
         }
     });
 }
@@ -127,33 +132,31 @@ function performTranslation(interaction, text, targetLang) {
         if (interaction instanceof discord_js_1.Message) {
             replyMsg = yield interaction.reply({ content: `${config_1.emojis.loading || '⏳'} Translating...` });
         }
-        else if (interaction.isRepliable()) {
+        else if (interaction.isRepliable && interaction.isRepliable()) {
             yield interaction.deferReply();
         }
         try {
             const res = yield (0, google_translate_api_x_1.translate)(text, { to: targetLang });
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(0x4285F4)
-                .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
+                .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
                 .addFields({ name: `Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` })
-                .setFooter({ text: `Requested by ${((_d = (_c = interaction.member) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.username) || ((_e = interaction.author) === null || _e === void 0 ? void 0 : _e.username)}` });
+                .setFooter(`Requested by ${((_d = (_c = interaction.member) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.username) || ((_e = interaction.author) === null || _e === void 0 ? void 0 : _e.username)}`);
             if (interaction instanceof discord_js_1.Message) {
-                yield replyMsg.edit({ content: null, embeds: [embed], components: [] });
+                yield replyMsg.edit(Object.assign({ content: null }, embed.toPayload()));
             }
             else {
-                yield interaction.editReply({ embeds: [embed], components: [] });
+                yield interaction.editReply(embed.toPayload());
             }
         }
         catch (e) {
             console.error(e);
-            const errEmbed = new discord_js_1.EmbedBuilder()
-                .setColor(config_1.colors.error)
-                .setDescription(`${config_1.emojis.error} Failed to translate. Please check the language code.`);
+            const errEmbed = (0, componentV2_1.createErrorV2)("Failed to translate. Please check the language code.");
             if (interaction instanceof discord_js_1.Message) {
-                yield replyMsg.edit({ content: null, embeds: [errEmbed] });
+                yield replyMsg.edit(Object.assign({ content: null }, errEmbed.toPayload()));
             }
             else {
-                yield interaction.editReply({ embeds: [errEmbed] });
+                yield interaction.editReply(errEmbed.toPayload());
             }
         }
     });
@@ -168,27 +171,27 @@ const handleInteraction = (interaction, database) => __awaiter(void 0, void 0, v
     const ownerId = parts[2];
     const targetMsgId = parts[3];
     if (interaction.user.id !== ownerId) {
-        return interaction.reply({ content: `${config_1.emojis.error} This menu is not for you!`, ephemeral: true });
+        return interaction.reply((0, componentV2_1.createErrorV2)("This menu is not for you!").toPayload({ ephemeral: true }));
     }
     const selectedLang = interaction.values[0];
     yield interaction.deferUpdate();
     try {
         const targetMsg = yield interaction.channel.messages.fetch(targetMsgId);
         if (!targetMsg) {
-            return interaction.followUp({ content: "Original message not found.", ephemeral: true });
+            return interaction.followUp((0, componentV2_1.createErrorV2)("Original message not found.").toPayload({ ephemeral: true }));
         }
         const text = targetMsg.content;
         const res = yield (0, google_translate_api_x_1.translate)(text, { to: selectedLang });
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(0x4285F4)
-            .setAuthor({ name: "Translation Result", iconURL: "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png" })
+            .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
             .addFields({ name: `Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` })
-            .setFooter({ text: `Requested by ${interaction.user.username}` });
-        yield interaction.editReply({ content: null, embeds: [embed], components: [] });
+            .setFooter(`Requested by ${interaction.user.username}`);
+        yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
     }
     catch (e) {
         console.error(e);
-        yield interaction.followUp({ content: "Translation failed.", ephemeral: true });
+        yield interaction.followUp((0, componentV2_1.createErrorV2)("Translation failed.").toPayload({ ephemeral: true }));
     }
 });
 exports.handleInteraction = handleInteraction;

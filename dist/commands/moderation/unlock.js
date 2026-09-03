@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('unlock')
     .setDescription('Unlock the current or specified channel')
@@ -58,29 +59,30 @@ function run(interaction, database) {
             return;
         const channel = interaction.options.getChannel('channel') || interaction.channel;
         if (!channel)
-            return interaction.reply({ content: `${config.emojis.error} Could not resolve channel.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Could not resolve channel.").toPayload({ ephemeral: true }));
         if (channel.isThread()) {
-            return interaction.reply({ content: `${config.emojis.error} Threads cannot be unlocked individually via this command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Threads cannot be unlocked individually via this command.").toPayload({ ephemeral: true }));
         }
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageChannels)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ content: `${config.emojis.error} You do not have permission to manage channels.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to manage channels.").toPayload({ ephemeral: true }));
         }
         const currentOverwrites = channel.permissionOverwrites.cache.get(interaction.guild.id);
         if (!currentOverwrites || !currentOverwrites.deny.has(discord_js_1.PermissionFlagsBits.SendMessages)) {
-            return interaction.reply({ content: `${config.emojis.error} **This channel is already unlocked.**`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("**This channel is already unlocked.**").toPayload({ ephemeral: true }));
         }
         try {
             yield channel.permissionOverwrites.edit(interaction.guild.id, {
                 SendMessages: true
             });
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(0x57F287)
-                .setDescription(`${config.emojis.success || "🔓"} **Channel Unlocked**`);
-            return interaction.reply({ embeds: [embed] });
+                .setTitle(`${config.emojis.success || "🔓"} Channel Unlocked`)
+                .setDescription(`Successfully unlocked **<#${channel.id}>** for regular messages.`);
+            return interaction.reply(embed.toPayload());
         }
         catch (err) {
             console.error(err);
-            return interaction.reply({ content: `${config.emojis.error} Failed to manage channel permissions. Check my role permissions.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)("Failed to manage channel permissions. Check my role permissions.").toPayload({ ephemeral: true }));
         }
     });
 }

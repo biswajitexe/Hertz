@@ -47,6 +47,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.giveawayHandler = void 0;
 const discord_js_1 = require("discord.js");
+const componentV2_1 = require("../utilities/componentV2");
 const config = __importStar(require("../config"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
@@ -130,10 +131,10 @@ class GiveawayHandler {
     createGiveawayEmbed(giveaway) {
         var _a, _b, _c, _d, _e, _f;
         const endTime = Math.floor(giveaway.endTime / 1000);
-        return new discord_js_1.EmbedBuilder()
+        return new componentV2_1.V2Embed()
             .setColor(config.colors.primary)
-            .setAuthor({ name: "Giveaway Time!", iconURL: (_b = (_a = this.client) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL() })
-            .setTitle(`${config.emojis.giveaway || "🎉"} **${giveaway.prize}**`)
+            .setAuthor("Giveaway Time!", (_b = (_a = this.client) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL())
+            .setTitle(`${config.emojis.giveaway || "🎉"} ${giveaway.prize}`)
             .setDescription([
             `${config.emojis.dot} **Ends:** <t:${endTime}:R>`,
             `${config.emojis.dot} **Winners:** ${giveaway.winners}`,
@@ -145,7 +146,7 @@ class GiveawayHandler {
                 : "**React with the button below to enter!**"
         ].join("\n"))
             .setThumbnail(((_d = (_c = this.client) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.displayAvatarURL()) || null)
-            .setFooter({ text: "Giveaways", iconURL: (_f = (_e = this.client) === null || _e === void 0 ? void 0 : _e.user) === null || _f === void 0 ? void 0 : _f.displayAvatarURL() })
+            .setFooter("Giveaways", (_f = (_e = this.client) === null || _e === void 0 ? void 0 : _e.user) === null || _f === void 0 ? void 0 : _f.displayAvatarURL())
             .setTimestamp();
     }
     createGiveawayButton(disabled = false) {
@@ -172,10 +173,7 @@ class GiveawayHandler {
                     return;
                 const embed = this.createGiveawayEmbed(giveaway);
                 const button = this.createGiveawayButton(giveaway.ended || giveaway.paused);
-                yield message.edit({
-                    embeds: [embed],
-                    components: [button]
-                });
+                yield message.edit(embed.toPayload({ extraComponents: [button] }));
             }
             catch (err) {
                 (0, logging_1.log)(`r{Error updating giveaway message: ${err}}`);
@@ -229,9 +227,9 @@ class GiveawayHandler {
                 if (!message)
                     return;
                 const winners = this.selectWinners(giveaway.participants, giveaway.winners);
-                const endEmbed = new discord_js_1.EmbedBuilder()
+                const endEmbed = new componentV2_1.V2Embed()
                     .setColor(0xFF0000)
-                    .setTitle(`${config.emojis.giveaway || "🎉"} **${giveaway.prize}**`)
+                    .setTitle(`${config.emojis.giveaway || "🎉"} ${giveaway.prize}`)
                     .setDescription([
                     `${config.emojis.dot} **Hosted by:** <@${giveaway.hostId}>`,
                     `${config.emojis.dot} **Winners:** ${winners.length > 0 ? winners.map(w => `<@${w}>`).join(", ") : "No valid participants"}`,
@@ -239,16 +237,13 @@ class GiveawayHandler {
                     "",
                     `${config.emojis.end || "🛑"} **This giveaway has ended!**`
                 ].join("\n"))
-                    .setFooter({ text: "Ended at" })
+                    .setFooter("Ended at")
                     .setTimestamp();
-                yield message.edit({
-                    embeds: [endEmbed],
-                    components: [this.createGiveawayButton(true)]
-                });
+                yield message.edit(endEmbed.toPayload({ extraComponents: [this.createGiveawayButton(true)] }));
                 if (winners.length > 0) {
-                    const winnerEmbed = new discord_js_1.EmbedBuilder()
-                        .setColor(0x000000)
-                        .setTitle(`${config.emojis.giveaway || "🎉"} **Giveaway Winner(s)!**`)
+                    const winnerEmbed = new componentV2_1.V2Embed()
+                        .setColor(config.colors.primary)
+                        .setTitle(`${config.emojis.giveaway || "🎉"} Giveaway Winner(s)!`)
                         .setDescription([
                         `**Prize:** ${giveaway.prize}`,
                         `**Winner(s):** ${winners.map(w => `<@${w}>`).join(", ")}`,
@@ -256,10 +251,7 @@ class GiveawayHandler {
                         `Congratulations! You have won **${giveaway.prize}**!`
                     ].join("\n"))
                         .setTimestamp();
-                    yield channel.send({
-                        content: winners.map(w => `<@${w}>`).join(" "),
-                        embeds: [winnerEmbed]
-                    });
+                    yield channel.send(winnerEmbed.toPayload());
                 }
                 else {
                     yield channel.send(`${config.emojis.error} No valid participants for the giveaway: **${giveaway.prize}**`);

@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('premium')
     .setDescription('Manage premium access (Owner Only)')
@@ -68,44 +69,45 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.adminUsers)
             owners.push(...botConfig.adminUsers);
         if (!owners.includes(interaction.user.id))
-            return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         const sub = interaction.options.getSubcommand();
         const id = interaction.options.getString('id', true);
         const type = interaction.options.getString('type', true);
         const embedStyle = (title, description, color = config.colors.primary) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(color)
-                .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+                .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (sub === 'add') {
             if (type === 'user') {
                 if (botConfig.premiumUsers.includes(id))
-                    return interaction.reply({ embeds: [embedStyle('Premium Error', `> User is already premium.`, config.colors.error)], ephemeral: true });
+                    return interaction.reply(embedStyle('Premium Error', `> User is already premium.`, config.colors.error).toPayload({ ephemeral: true }));
                 botConfig.premiumUsers.push(id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('User Added', `> User <@${id}> added to **Premium Users**.`, config.colors.success)], ephemeral: true });
+                return interaction.reply(embedStyle('User Added', `> User <@${id}> added to **Premium Users**.\n\n<:6581lockkey:1461100873479487559> **Premium activated.**`, config.colors.success).toPayload({ ephemeral: true }));
             }
             else {
                 if (botConfig.premiumGuilds.includes(id))
-                    return interaction.reply({ embeds: [embedStyle('Premium Error', `> Server is already premium.`, config.colors.error)], ephemeral: true });
+                    return interaction.reply(embedStyle('Premium Error', `> Server is already premium.`, config.colors.error).toPayload({ ephemeral: true }));
                 botConfig.premiumGuilds.push(id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('Server Added', `> Server \`${id}\` added to **Premium Servers**.`, config.colors.success)], ephemeral: true });
+                return interaction.reply(embedStyle('Server Added', `> Server \`${id}\` added to **Premium Servers**.\n\n<:6581lockkey:1461100873479487559> **Premium activated.**`, config.colors.success).toPayload({ ephemeral: true }));
             }
         }
         if (sub === 'remove') {
             if (type === 'user') {
                 botConfig.premiumUsers = botConfig.premiumUsers.filter(u => u !== id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('User Removed', `> User <@${id}> removed from Premium.`, config.colors.success)], ephemeral: true });
+                return interaction.reply(embedStyle('User Removed', `> User <@${id}> removed from Premium.`, config.colors.success).toPayload({ ephemeral: true }));
             }
             else {
                 botConfig.premiumGuilds = botConfig.premiumGuilds.filter(g => g !== id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('Server Removed', `> Server \`${id}\` removed from Premium.`, config.colors.success)], ephemeral: true });
+                return interaction.reply(embedStyle('Server Removed', `> Server \`${id}\` removed from Premium.`, config.colors.success).toPayload({ ephemeral: true }));
             }
         }
     });

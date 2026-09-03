@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const pagination_1 = require("../../utilities/pagination");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('list')
     .setDescription('List roles, bots, admins, or members in a role.')
@@ -90,12 +91,12 @@ function run(interaction, database) {
             }
         }
         if (!subcommand) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
                 .setTitle('<:4497kazuhawaiter:1461641597476274332> List Commands')
-                .setDescription('\`?list roles\`\n\`?list bots\`\n\`?list admins\`\n\`?list inrole <role>\`')
-                .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
-            yield interaction.reply({ embeds: [embed] });
+                .setDescription(`\`${config.prefix}list roles\`\n\`${config.prefix}list bots\`\n\`${config.prefix}list admins\`\n\`${config.prefix}list inrole <role>\``)
+                .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            yield interaction.reply(embed.toPayload());
             return;
         }
         yield interaction.deferReply();
@@ -128,7 +129,7 @@ function run(interaction, database) {
             }
             else if (subcommand === 'inrole') {
                 if (!targetRole) {
-                    yield interaction.editReply({ content: `${config.emojis.error} **Please specify a valid role.**` });
+                    yield interaction.editReply((0, componentV2_1.createErrorV2)("**Please specify a valid role.**").toPayload());
                     return;
                 }
                 title = `Members in ${targetRole.name}`;
@@ -140,7 +141,7 @@ function run(interaction, database) {
         }
         catch (err) {
             console.error(err);
-            yield interaction.editReply({ content: `${config.emojis.error} Failed to fetch list.` });
+            yield interaction.editReply((0, componentV2_1.createErrorV2)("Failed to fetch list.").toPayload());
         }
     });
 }

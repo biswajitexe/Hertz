@@ -55,59 +55,60 @@ exports.handleResume = handleResume;
 exports.handleList = handleList;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
-const GiveawayHandler_1 = require("../../structures/GiveawayHandler");
 const ms_1 = __importDefault(require("ms"));
+const GiveawayHandler_1 = require("../../structures/GiveawayHandler");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('giveaway')
-    .setDescription('Manage giveaways')
+    .setDescription('Manage server giveaways')
     .addSubcommand(subcommand => subcommand
     .setName('start')
     .setDescription('Start a new giveaway')
     .addStringOption(option => option.setName('time')
-    .setDescription('Duration (e.g. 1m, 1h, 1d)')
+    .setDescription('Duration of the giveaway (e.g., 10m, 1h, 1d)')
     .setRequired(true))
     .addIntegerOption(option => option.setName('winners')
     .setDescription('Number of winners')
-    .setMinValue(1)
-    .setMaxValue(20)
-    .setRequired(true))
+    .setRequired(true)
+    .setMinValue(1))
     .addStringOption(option => option.setName('prize')
-    .setDescription('Prize for the giveaway')
+    .setDescription('The prize for the giveaway')
     .setRequired(true)))
     .addSubcommand(subcommand => subcommand
     .setName('end')
-    .setDescription('End a giveaway early')
+    .setDescription('End an active giveaway immediately')
     .addStringOption(option => option.setName('message_id')
     .setDescription('The message ID of the giveaway')
     .setRequired(true)))
     .addSubcommand(subcommand => subcommand
     .setName('reroll')
-    .setDescription('Reroll a giveaway winner')
+    .setDescription('Reroll a winner for a giveaway')
     .addStringOption(option => option.setName('message_id')
     .setDescription('The message ID of the giveaway')
     .setRequired(true)))
     .addSubcommand(subcommand => subcommand
     .setName('pause')
-    .setDescription('Pause a giveaway')
+    .setDescription('Pause an active giveaway')
     .addStringOption(option => option.setName('message_id')
-    .setDescription('The message ID')
+    .setDescription('The message ID of the giveaway')
     .setRequired(true)))
     .addSubcommand(subcommand => subcommand
     .setName('resume')
     .setDescription('Resume a paused giveaway')
     .addStringOption(option => option.setName('message_id')
-    .setDescription('The message ID')
+    .setDescription('The message ID of the giveaway')
     .setRequired(true)))
     .addSubcommand(subcommand => subcommand
     .setName('list')
     .setDescription('List all active giveaways'));
 const embedStyle = (interaction, title, description, color = config.colors.primary) => {
     var _a;
-    return new discord_js_1.EmbedBuilder()
+    return new componentV2_1.V2Embed()
         .setColor(color)
-        .setDescription(`**${config.emojis.giveaways || "🎉"} ${title}**\n\n${description}`)
+        .setTitle(`${config.emojis.giveaways || "🎉"} ${title}`)
+        .setDescription(description)
         .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-        .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+        .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
 };
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -115,29 +116,28 @@ function run(interaction, database) {
         if (!interaction.guild)
             return;
         const subcommand = interaction.options.getSubcommand(false);
-        console.log(`[Giveaway] Run called by ${interaction.user.tag}. Subcommand: '${subcommand}'`);
         if (subcommand === 'list' || !subcommand) {
             if (subcommand === 'list') {
                 yield handleList(interaction);
             }
             else {
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.primary)
                     .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                    .setDescription(`**${config.emojis.giveaways || "🎉"} Giveaway Commands**\n\n` +
-                    "`gstart` , `gend` , `gpause`\n" +
+                    .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Commands`)
+                    .setDescription("`gstart` , `gend` , `gpause`\n" +
                     "`gresume` , `greroll` , `glist`")
-                    .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-                yield interaction.reply({ embeds: [embed] });
+                    .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                yield interaction.reply(embed.toPayload());
             }
             return;
         }
         if (!((_b = interaction.memberPermissions) === null || _b === void 0 ? void 0 : _b.has(discord_js_1.PermissionFlagsBits.ManageMessages)) && interaction.user.id !== process.env.OWNER_ID) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.error)
                 .setDescription(`${config.emojis.error} You do not have permission to manage giveaways. (Requires \`Manage Messages\`)`)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         if (subcommand === 'start') {
             yield handleStart(interaction);
@@ -163,11 +163,11 @@ function handleStart(interaction) {
         const prize = interaction.options.getString('prize', true);
         const duration = (0, ms_1.default)(timeArg);
         if (!duration || duration < 10000) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.error)
                 .setDescription(`${config.emojis.error} Please provide a valid duration (minimum 10s). Example: \`1h\`, \`1d\`.`)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         const endTime = Date.now() + duration;
         const giveawayData = {
@@ -179,11 +179,7 @@ function handleStart(interaction) {
         };
         const embed = GiveawayHandler_1.giveawayHandler.createGiveawayEmbed(Object.assign(Object.assign({}, giveawayData), { participants: [], paused: false }));
         const button = GiveawayHandler_1.giveawayHandler.createGiveawayButton();
-        const giveawayMessage = yield interaction.reply({
-            embeds: [embed],
-            components: [button],
-            fetchReply: true
-        });
+        const giveawayMessage = yield interaction.reply(Object.assign(Object.assign({}, embed.toPayload({ extraComponents: [button] })), { fetchReply: true }));
         if (giveawayMessage) {
             GiveawayHandler_1.giveawayHandler.createGiveaway(interaction.guildId, interaction.channelId, giveawayMessage.id, giveawayData);
         }
@@ -194,16 +190,14 @@ function handleEnd(interaction) {
         const messageId = interaction.options.getString('message_id', true);
         const giveaway = GiveawayHandler_1.giveawayHandler.getGiveawayByMessage(interaction.guildId, messageId);
         if (!giveaway) {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Giveaway not found. Check the Message ID.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Giveaway not found. Check the Message ID.').toPayload({ ephemeral: true }));
         }
         if (giveaway.ended) {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} This giveaway has already ended.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('This giveaway has already ended.').toPayload({ ephemeral: true }));
         }
         yield GiveawayHandler_1.giveawayHandler.endGiveaway(giveaway.id);
         const embed = embedStyle(interaction, 'Giveaway Ended', `${config.emojis.success} Successfully ended the giveaway for **${giveaway.prize}**.`);
-        return interaction.reply({ embeds: [embed], ephemeral: true });
+        return interaction.reply(embed.toPayload({ ephemeral: true }));
     });
 }
 function handleReroll(interaction) {
@@ -211,16 +205,14 @@ function handleReroll(interaction) {
         const messageId = interaction.options.getString('message_id', true);
         const giveaway = GiveawayHandler_1.giveawayHandler.getGiveawayByMessage(interaction.guildId, messageId);
         if (!giveaway) {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Giveaway not found.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Giveaway not found.').toPayload({ ephemeral: true }));
         }
         if (!giveaway.ended) {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} This giveaway has not ended yet.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('This giveaway has not ended yet.').toPayload({ ephemeral: true }));
         }
         yield GiveawayHandler_1.giveawayHandler.rerollGiveaway(giveaway.id, interaction.channel);
         const embed = embedStyle(interaction, 'Giveaway Rerolled', `${config.emojis.success} Successfully rerolled winners for **${giveaway.prize}**.`);
-        return interaction.reply({ embeds: [embed], ephemeral: true });
+        return interaction.reply(embed.toPayload({ ephemeral: true }));
     });
 }
 function handlePause(interaction) {
@@ -228,17 +220,15 @@ function handlePause(interaction) {
         const messageId = interaction.options.getString('message_id', true);
         const giveaway = GiveawayHandler_1.giveawayHandler.getGiveawayByMessage(interaction.guildId, messageId);
         if (!giveaway) {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Giveaway not found.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Giveaway not found.').toPayload({ ephemeral: true }));
         }
         const success = yield GiveawayHandler_1.giveawayHandler.pauseGiveaway(giveaway.id);
         if (success) {
             const embed = embedStyle(interaction, 'Giveaway Paused', `${config.emojis.success} Successfully paused the giveaway for **${giveaway.prize}**.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         else {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Could not pause (already paused or ended).`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Could not pause (already paused or ended).').toPayload({ ephemeral: true }));
         }
     });
 }
@@ -247,17 +237,15 @@ function handleResume(interaction) {
         const messageId = interaction.options.getString('message_id', true);
         const giveaway = GiveawayHandler_1.giveawayHandler.getGiveawayByMessage(interaction.guildId, messageId);
         if (!giveaway) {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Giveaway not found.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Giveaway not found.').toPayload({ ephemeral: true }));
         }
         const success = yield GiveawayHandler_1.giveawayHandler.resumeGiveaway(giveaway.id);
         if (success) {
             const embed = embedStyle(interaction, 'Giveaway Resumed', `${config.emojis.success} Successfully resumed the giveaway for **${giveaway.prize}**.`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         else {
-            const embed = new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Could not resume (not paused or ended).`);
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Could not resume (not paused or ended).').toPayload({ ephemeral: true }));
         }
     });
 }
@@ -265,16 +253,16 @@ function handleList(interaction) {
     return __awaiter(this, void 0, void 0, function* () {
         const giveaways = GiveawayHandler_1.giveawayHandler.getAllGiveaways(interaction.guildId);
         if (giveaways.length === 0) {
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.warning)
                 .setDescription(`${config.emojis.warning} No active giveaways found for this server.`)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
         const list = giveaways.slice(0, 10).map(g => {
             return `**${config.emojis.dot} Prize:** ${g.prize}\n**ID:** \`${g.messageId}\` • **Status:** ${g.ended ? 'Ended' : g.paused ? 'Paused' : 'Running'}\n**Ends:** <t:${Math.floor(g.endTime / 1000)}:R>`;
         }).join('\n\n');
         const embed = embedStyle(interaction, 'Active Giveaways', list);
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     });
 }

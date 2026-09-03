@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('blacklist')
     .setDescription('Manage global blacklists (Owner Only)')
@@ -68,57 +69,58 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.adminUsers)
             owners.push(...botConfig.adminUsers);
         if (!owners.includes(interaction.user.id))
-            return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         const sub = interaction.options.getSubcommand();
         const id = interaction.options.getString('id', true);
         const remove = interaction.options.getBoolean('remove') || false;
         const embedStyle = (title, description, color = config.colors.primary) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(color)
-                .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**\n\n${description}`)
+                .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (sub === 'user') {
             if (remove) {
                 if (!botConfig.blacklistedUsers.includes(id)) {
-                    return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> User is not blacklisted.`, config.colors.error)], ephemeral: true });
+                    return interaction.reply(embedStyle('Blacklist Error', `> User is not blacklisted.`, config.colors.error).toPayload({ ephemeral: true }));
                 }
                 botConfig.blacklistedUsers = botConfig.blacklistedUsers.filter(u => u !== id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('User Removed', `> User \`${id}\` removed from blacklist.`)], ephemeral: true });
+                return interaction.reply(embedStyle('User Removed', `> User \`${id}\` removed from blacklist.`).toPayload({ ephemeral: true }));
             }
             else {
                 if (botConfig.blacklistedUsers.includes(id)) {
-                    return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> User is already blacklisted.`, config.colors.error)], ephemeral: true });
+                    return interaction.reply(embedStyle('Blacklist Error', `> User is already blacklisted.`, config.colors.error).toPayload({ ephemeral: true }));
                 }
                 botConfig.blacklistedUsers.push(id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('User Blacklisted', `> User \`${id}\` added to global blacklist.`)], ephemeral: true });
+                return interaction.reply(embedStyle('User Blacklisted', `> User \`${id}\` added to global blacklist.`).toPayload({ ephemeral: true }));
             }
         }
         if (sub === 'server') {
             if (remove) {
                 if (!botConfig.blacklistedGuilds.includes(id)) {
-                    return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> Server is not blacklisted.`, config.colors.error)], ephemeral: true });
+                    return interaction.reply(embedStyle('Blacklist Error', `> Server is not blacklisted.`, config.colors.error).toPayload({ ephemeral: true }));
                 }
                 botConfig.blacklistedGuilds = botConfig.blacklistedGuilds.filter(g => g !== id);
                 yield database.insertBotConfig(botConfig);
-                return interaction.reply({ embeds: [embedStyle('Server Removed', `> Server \`${id}\` removed from blacklist.`)], ephemeral: true });
+                return interaction.reply(embedStyle('Server Removed', `> Server \`${id}\` removed from blacklist.`).toPayload({ ephemeral: true }));
             }
             else {
                 if (botConfig.blacklistedGuilds.includes(id)) {
-                    return interaction.reply({ embeds: [embedStyle('Blacklist Error', `> Server is already blacklisted.`, config.colors.error)], ephemeral: true });
+                    return interaction.reply(embedStyle('Blacklist Error', `> Server is already blacklisted.`, config.colors.error).toPayload({ ephemeral: true }));
                 }
                 botConfig.blacklistedGuilds.push(id);
                 yield database.insertBotConfig(botConfig);
                 const guild = interaction.client.guilds.cache.get(id);
                 if (guild) {
                     yield guild.leave().catch(() => { });
-                    return interaction.reply({ embeds: [embedStyle('Server Blacklisted', `> Server \`${id}\` blacklisted and forced left.`)], ephemeral: true });
+                    return interaction.reply(embedStyle('Server Blacklisted', `> Server \`${id}\` blacklisted and forced left.`).toPayload({ ephemeral: true }));
                 }
-                return interaction.reply({ embeds: [embedStyle('Server Blacklisted', `> Server \`${id}\` added to global blacklist.`)], ephemeral: true });
+                return interaction.reply(embedStyle('Server Blacklisted', `> Server \`${id}\` added to global blacklist.`).toPayload({ ephemeral: true }));
             }
         }
     });

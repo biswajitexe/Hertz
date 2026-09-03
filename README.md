@@ -1,4 +1,4 @@
-# Xeon
+# Hertz
 
 A moderation bot with the aim of being efficient and easy to setup.
 

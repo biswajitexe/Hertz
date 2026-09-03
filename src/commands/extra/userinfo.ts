@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildMember, PermissionFlagsBits } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('userinfo')
@@ -19,20 +19,13 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const user = await interaction.client.users.fetch(rawUser.id, { force: true });
 
     const member = interaction.guild?.members.cache.get(user.id);
-    // Fetch member if not in cache but in guild
     const targetMember = member || (interaction.guild ? await interaction.guild.members.fetch(user.id).catch(() => null) : null);
 
-    const embed = new EmbedBuilder()
+    const embed = new V2Embed()
         .setColor(config.colors.primary)
-        .setAuthor({
-            name: `${user.username}`,
-            iconURL: user.displayAvatarURL(),
-        })
+        .setAuthor(user.username, user.displayAvatarURL())
         .setThumbnail(user.displayAvatarURL({ size: 4096 }))
-        .setFooter({
-            text: `Requested by ${interaction.user.tag}`,
-            iconURL: interaction.user.displayAvatarURL(),
-        })
+        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
         .setTimestamp();
 
     // User Info Section
@@ -49,7 +42,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     });
 
     if (targetMember) {
-        // Roles
         const roles = targetMember.roles.cache
             .filter(r => r.id !== interaction.guildId)
             .sort((a, b) => b.position - a.position);
@@ -58,7 +50,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             ? roles.map(r => r.toString()).slice(0, 5).join(", ") + (roles.size > 5 ? ` +${roles.size - 5} more` : "")
             : "No roles";
 
-        // Key Acknowledgements / Permissions
         const acknowledgements = [];
         if (targetMember.permissions.has(PermissionFlagsBits.Administrator)) acknowledgements.push("Administrator");
         else if (targetMember.permissions.has(PermissionFlagsBits.ManageGuild)) acknowledgements.push("Server Manager");
@@ -66,7 +57,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (interaction.guild?.ownerId === user.id) acknowledgements.unshift("Server Owner 👑");
 
-        // Booster Status
         const boosterStatus = targetMember.premiumSince
             ? `${config.emojis.success} <t:${Math.floor(targetMember.premiumSinceTimestamp! / 1000)}:R>`
             : `${config.emojis.error}`;
@@ -114,5 +104,5 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         );
     }
 
-    await interaction.reply({ embeds: [embed], components: [row] });
+    await interaction.reply(embed.toPayload({ extraComponents: [row] }));
 }

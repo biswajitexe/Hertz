@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2, createWarningV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('owner')
@@ -19,52 +19,50 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     // Permission Check: Only Owners
     if (!owners.includes(interaction.user.id)) {
-        return interaction.reply({ 
-            embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Only the **Bot Owner** can use this command.`)], 
-            ephemeral: true 
-        });
+        return interaction.reply(createErrorV2('Only the **Bot Owner** can use this command.').toPayload({ ephemeral: true }));
     }
 
     const subcommand = interaction.options.getSubcommand(false);
     if (!botConfig.ownerUsers) botConfig.ownerUsers = [];
 
     const embedStyle = (title: string, description: string) => {
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(config.colors.primary)
-            .setDescription(`**${config.emojis.owner} ${title}**\n\n${description}`)
+            .setTitle(`${config.emojis.owner} ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
     if (subcommand === 'add') {
         const targetUser = interaction.options.getUser('user', true);
         if (botConfig.ownerUsers.includes(targetUser.id)) {
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is already an **Owner**.`)] });
+            return interaction.reply(createErrorV2(`**${targetUser.tag}** is already an **Owner**.`).toPayload());
         }
         botConfig.ownerUsers.push(targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply({ embeds: [embedStyle('Owner Added', `> Added **${targetUser.tag}** as a **Bot Owner**.`)] });
+        return interaction.reply(embedStyle('Owner Added', `> Added **${targetUser.tag}** as a **Bot Owner**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
     }
 
     if (subcommand === 'remove') {
         const targetUser = interaction.options.getUser('user', true);
         if (!botConfig.ownerUsers.includes(targetUser.id)) {
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is not an **Owner**.`)] });
+            return interaction.reply(createErrorV2(`**${targetUser.tag}** is not an **Owner**.`).toPayload());
         }
         botConfig.ownerUsers = botConfig.ownerUsers.filter(id => id !== targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply({ embeds: [embedStyle('Owner Removed', `> Removed **${targetUser.tag}** from **Bot Owners**.`)] });
+        return interaction.reply(embedStyle('Owner Removed', `> Removed **${targetUser.tag}** from **Bot Owners**.`).toPayload());
     }
 
     if (subcommand === 'list') {
         const users = botConfig.ownerUsers;
-        if (users.length === 0) return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} No Database Owners found.`)] });
+        if (users.length === 0) return interaction.reply(createWarningV2('No Database Owners found.').toPayload());
         
         const names = await Promise.all(users.map(async id => {
             try { return (await interaction.client.users.fetch(id)).username; } catch { return `Unknown (${id})`; }
         }));
         const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
-        return interaction.reply({ embeds: [embedStyle('Bot Owners', list)] });
+        return interaction.reply(embedStyle('Bot Owners', list).toPayload());
     }
 
     // Default: Help Menu
@@ -73,5 +71,5 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         `\`${config.prefix}owner remove <user>\`\n` +
         `\`${config.prefix}owner list\``
     );
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply(embed.toPayload());
 }

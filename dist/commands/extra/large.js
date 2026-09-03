@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const config_1 = require("../../config");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName("large")
     .setDescription("Enlarge a custom emoji")
@@ -20,7 +21,7 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setRequired(true));
 const run = (interaction, database) => __awaiter(void 0, void 0, void 0, function* () {
     let emojiArg = "";
-    if (interaction.isChatInputCommand()) {
+    if (interaction.isChatInputCommand && interaction.isChatInputCommand()) {
         emojiArg = interaction.options.getString("emoji") || "";
     }
     else if (interaction instanceof discord_js_1.Message) {
@@ -42,34 +43,29 @@ const run = (interaction, database) => __awaiter(void 0, void 0, void 0, functio
         }
     }
     if (!emojiArg) {
-        const msg = `${config_1.emojis.error} Please provide an emoji or reply to a message with an emoji! Usage: \`/large <emoji>\` or \`?large <emoji>\``;
+        const err = (0, componentV2_1.createErrorV2)(`Please provide an emoji or reply to a message with an emoji! Usage: \`/large <emoji>\` or \`?large <emoji>\``);
         if (interaction instanceof discord_js_1.Message)
-            return interaction.reply(msg);
-        return interaction.reply({ content: msg, ephemeral: true });
+            return interaction.reply(err.toPayload());
+        return interaction.reply(err.toPayload({ ephemeral: true }));
     }
     const customEmojiRegex = /<?(a)?:?(\w{2,32}):(\d{17,19})>?/;
     const match = emojiArg.match(customEmojiRegex);
     if (!match) {
-        const msg = `${config_1.emojis.error} I can only enlarge **Custom Server Emojis**. Unicode emojis (like 😂) are not supported yet.`;
+        const err = (0, componentV2_1.createErrorV2)(`I can only enlarge **Custom Server Emojis**. Unicode emojis (like 😂) are not supported yet.`);
         if (interaction instanceof discord_js_1.Message)
-            return interaction.reply(msg);
-        return interaction.reply({ content: msg, ephemeral: true });
+            return interaction.reply(err.toPayload());
+        return interaction.reply(err.toPayload({ ephemeral: true }));
     }
     const isAnimated = match[1] === "a";
     const name = match[2];
     const id = match[3];
     const extension = isAnimated ? "gif" : "png";
     const url = `https://cdn.discordapp.com/emojis/${id}.${extension}?size=4096`;
-    const embed = new discord_js_1.EmbedBuilder()
+    const embed = new componentV2_1.V2Embed()
         .setColor(config_1.colors.primary)
-        .setTitle(`Enlarged Emoji: ${name}`)
+        .setTitle(`Enlarged Emoji: :${name}:`)
         .setImage(url)
-        .setFooter({ text: `ID: ${id}` });
-    if (interaction instanceof discord_js_1.Message) {
-        return interaction.reply({ embeds: [embed] });
-    }
-    else {
-        return interaction.reply({ embeds: [embed] });
-    }
+        .setFooter(`ID: ${id}`);
+    return interaction.reply(embed.toPayload());
 });
 exports.run = run;

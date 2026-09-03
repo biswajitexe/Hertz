@@ -1,8 +1,8 @@
-
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import { exec } from "child_process";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('shell')
@@ -16,7 +16,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
 
     if (!owners.includes(interaction.user.id)) {
-        return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+        return interaction.reply(createErrorV2('Unknown command.').toPayload({ ephemeral: true }));
     }
 
     const cmd = interaction.options.getString('cmd', true);
@@ -24,16 +24,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     exec(cmd, (error, stdout, stderr) => {
         const output = stdout || stderr || "No output.";
-
-        // Truncate if too long
         const cleanOutput = output.length > 4000 ? output.substring(0, 4000) + '...' : output;
 
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(error ? config.colors.error : config.colors.success)
-            .setDescription(`**<:74658vipglow:1465051133704798435> ${error ? 'Shell Error' : 'Shell Success'}**\n\n> \`\`\`bash\n${cleanOutput}\n\`\`\``)
+            .setTitle(`<:74658vipglow:1465051133704798435> ${error ? 'Shell Error' : 'Shell Success'}`)
+            .setDescription(`> \`\`\`bash\n${cleanOutput}\n\`\`\``)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
 
-        interaction.editReply({ embeds: [embed] });
+        interaction.editReply(embed.toPayload());
     });
 }

@@ -46,6 +46,7 @@ exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('developer')
     .setDescription('Manage Bot Developers')
@@ -61,44 +62,42 @@ function run(interaction, database) {
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
             owners.push(...botConfig.ownerUsers);
         if (!owners.includes(interaction.user.id)) {
-            return interaction.reply({
-                embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} Only the **Bot Owner** can use this command.`)],
-                ephemeral: true
-            });
+            return interaction.reply((0, componentV2_1.createErrorV2)('Only the **Bot Owner** can use this command.').toPayload({ ephemeral: true }));
         }
         const subcommand = interaction.options.getSubcommand(false);
         if (!botConfig.developerUsers)
             botConfig.developerUsers = [];
         const embedStyle = (title, description) => {
             var _a;
-            return new discord_js_1.EmbedBuilder()
+            return new componentV2_1.V2Embed()
                 .setColor(config.colors.primary)
-                .setDescription(`**${config.emojis.developer} ${title}**\n\n${description}`)
+                .setTitle(`${config.emojis.developer} ${title}`)
+                .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         };
         if (subcommand === 'add') {
             const targetUser = interaction.options.getUser('user', true);
             if (botConfig.developerUsers.includes(targetUser.id)) {
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is already a **Developer**.`)] });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`**${targetUser.tag}** is already a **Developer**.`).toPayload());
             }
             botConfig.developerUsers.push(targetUser.id);
             yield database.updateBotConfig(botConfig);
-            return interaction.reply({ embeds: [embedStyle('Developer Added', `> Added **${targetUser.tag}** as a **Bot Developer**.`)] });
+            return interaction.reply(embedStyle('Developer Added', `> Added **${targetUser.tag}** as a **Bot Developer**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
         }
         if (subcommand === 'remove') {
             const targetUser = interaction.options.getUser('user', true);
             if (!botConfig.developerUsers.includes(targetUser.id)) {
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is not a **Developer**.`)] });
+                return interaction.reply((0, componentV2_1.createErrorV2)(`**${targetUser.tag}** is not a **Developer**.`).toPayload());
             }
             botConfig.developerUsers = botConfig.developerUsers.filter(id => id !== targetUser.id);
             yield database.updateBotConfig(botConfig);
-            return interaction.reply({ embeds: [embedStyle('Developer Removed', `> Removed **${targetUser.tag}** from **Bot Developers**.`)] });
+            return interaction.reply(embedStyle('Developer Removed', `> Removed **${targetUser.tag}** from **Bot Developers**.`).toPayload());
         }
         if (subcommand === 'list') {
             const users = botConfig.developerUsers;
             if (users.length === 0)
-                return interaction.reply({ embeds: [new discord_js_1.EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} No Developers found.`)] });
+                return interaction.reply((0, componentV2_1.createWarningV2)('No Developers found.').toPayload());
             const names = yield Promise.all(users.map((id) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     return (yield interaction.client.users.fetch(id)).username;
@@ -108,11 +107,11 @@ function run(interaction, database) {
                 }
             })));
             const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
-            return interaction.reply({ embeds: [embedStyle('Bot Developers', list)] });
+            return interaction.reply(embedStyle('Bot Developers', list).toPayload());
         }
         const embed = embedStyle('Developer Commands', `\`${config.prefix}developer add <user>\`\n` +
             `\`${config.prefix}developer remove <user>\`\n` +
             `\`${config.prefix}developer list\``);
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(embed.toPayload());
     });
 }

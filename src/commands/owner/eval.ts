@@ -1,8 +1,8 @@
-
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
 import { inspect } from "util";
+import { V2Embed, createErrorV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('eval')
@@ -10,26 +10,25 @@ export const command = new SlashCommandBuilder()
     .addStringOption(option => option.setName('code').setDescription('The code to evaluate').setRequired(true));
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
-    // Hidden execution check
     const botConfig = await database.getBotConfig();
     const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
     if (botConfig?.ownerUsers) owners.push(...botConfig.ownerUsers);
     if (botConfig?.developerUsers) owners.push(...botConfig.developerUsers);
 
-    // Hidden execution check
     if (!owners.includes(interaction.user.id)) {
-        return interaction.reply({ content: `🚫 Unknown command.`, ephemeral: true });
+        return interaction.reply(createErrorV2('Unknown command.').toPayload({ ephemeral: true }));
     }
 
     const code = interaction.options.getString('code', true);
 
     const embedStyle = (title: string, description: string | null, color: number, fields: any[]) => {
-        const embed = new EmbedBuilder()
+        const embed = new V2Embed()
             .setColor(color)
-            .setDescription(`**<:74658vipglow:1465051133704798435> ${title}**${description ? `\n\n${description}` : ''}`)
+            .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+            .setDescription(description || "")
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .addFields(fields)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .addFields(...fields)
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
         return embed;
     };
 
@@ -46,7 +45,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             { name: 'Output', value: `> \`\`\`js\n${output}\n\`\`\`` }
         ]);
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply(embed.toPayload({ ephemeral: true }));
 
     } catch (error: any) {
         const embed = embedStyle('Evaluation Failed', null, config.colors.error, [
@@ -54,6 +53,6 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             { name: 'Error', value: `> \`\`\`js\n${error.message}\n\`\`\`` }
         ]);
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply(embed.toPayload({ ephemeral: true }));
     }
 }

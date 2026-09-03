@@ -47,6 +47,7 @@ exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
 const embedUtils_1 = require("../../utilities/embedUtils");
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('steal')
     .setDescription('Steal emoji(s) from another server (args or reply).')
@@ -59,11 +60,11 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageEmojisAndStickers);
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
+        var _a, _b, _c;
         if (!interaction.inCachedGuild())
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageEmojisAndStickers)) && interaction.user.id !== process.env.OWNER_ID) {
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to manage emojis.**")], ephemeral: true });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**You do not have permission to manage emojis.**").toPayload({ ephemeral: true }));
         }
         let rawInput = interaction.options.getString('emoji', false);
         let name = interaction.options.getString('name', false);
@@ -86,13 +87,13 @@ function run(interaction, database) {
                 name = null;
             }
             else {
-                const embed = new discord_js_1.EmbedBuilder()
+                const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.primary)
-                    .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-                    .setThumbnail(interaction.client.user.displayAvatarURL())
-                    .setDescription(`\`?steal <emoji(s)>\`\n\`?steal <emoji> <name>\`\nor **Reply** with \`?steal\``)
-                    .setFooter({ text: `Xeon • Advanced Moderation`, iconURL: interaction.client.user.displayAvatarURL() });
-                return interaction.reply({ embeds: [embed] });
+                    .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
+                    .setThumbnail(((_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || null)
+                    .setDescription(`\`${config.prefix}steal <emoji(s)>\`\n\`${config.prefix}steal <emoji> <name>\`\nor **Reply** with \`${config.prefix}steal\``)
+                    .setFooter(`Hertz • Advanced Moderation`, (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
+                return interaction.reply(embed.toPayload());
             }
         }
         const matches = Array.from(rawInput.matchAll(emojiRegex));
@@ -134,10 +135,10 @@ function run(interaction, database) {
                 yield handleSingleInternal(interaction, rawInput, name || "stolen_emoji");
                 return;
             }
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**No emojis found.**")] });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**No emojis found.**").toPayload({ ephemeral: true }));
         }
         if (matches.length > 20) {
-            return interaction.reply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, "**Too many emojis! Maximum 20 at a time.**")] });
+            return interaction.reply((0, embedUtils_1.createErrorEmbed)(interaction.user, "**Too many emojis! Maximum 20 at a time.**").toPayload({ ephemeral: true }));
         }
         yield interaction.deferReply();
         const added = [];
@@ -164,7 +165,7 @@ function run(interaction, database) {
             }
         }
         if (added.length === 0 && failed.length > 0) {
-            return interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, `**Failed to add emojis.**\nLikely reasons: File size, Slots full, or invalid format.`)] });
+            return interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, `**Failed to add emojis.**\nLikely reasons: File size, Slots full, or invalid format.`).toPayload());
         }
         const joinLimit = (arr, limit = 5) => {
             if (arr.length <= limit)
@@ -180,10 +181,11 @@ function run(interaction, database) {
             description += `${config.emojis.error} **Failed:** ${joinLimit(failed)}`;
         if (!description)
             description = "No emojis added (Duplicates skipped).";
-        const embed = new discord_js_1.EmbedBuilder()
+        const embed = new componentV2_1.V2Embed()
             .setColor(config.colors.success)
+            .setTitle('Emoji Stealer')
             .setDescription(description);
-        yield interaction.editReply({ embeds: [embed] });
+        yield interaction.editReply(embed.toPayload());
     });
 }
 function handleSingleInternal(interaction, url, name) {
@@ -191,10 +193,11 @@ function handleSingleInternal(interaction, url, name) {
         try {
             yield interaction.deferReply();
             const emoji = yield interaction.guild.emojis.create({ attachment: url, name: name });
-            const embed = new discord_js_1.EmbedBuilder()
+            const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.success)
+                .setTitle('Emoji Added')
                 .setDescription(`${config.emojis.success} **Added:** ${emoji} \`${name}\``);
-            yield interaction.editReply({ embeds: [embed] });
+            yield interaction.editReply(embed.toPayload());
         }
         catch (err) {
             let errorMsg = "Failed to add emoji.";
@@ -202,7 +205,7 @@ function handleSingleInternal(interaction, url, name) {
                 errorMsg = "Maximum number of emojis reached.";
             if (err.code === 50035)
                 errorMsg = "Invalid form body.";
-            yield interaction.editReply({ embeds: [(0, embedUtils_1.createErrorEmbed)(interaction.user, `**${errorMsg}**`)] });
+            yield interaction.editReply((0, embedUtils_1.createErrorEmbed)(interaction.user, `**${errorMsg}**`).toPayload());
         }
     });
 }

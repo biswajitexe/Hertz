@@ -46,6 +46,7 @@ exports.aliases = exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../../config"));
+const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('profile')
     .setDescription('View user profile with premium aesthetics')
@@ -110,14 +111,14 @@ function getProfileData(interaction, targetUser, database) {
                 activityStatus = `\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
             }
         }
-        const embed = new discord_js_1.EmbedBuilder()
+        const card = new componentV2_1.V2Embed()
             .setColor(safeProfile.color || config.colors.primary)
-            .setAuthor({ name: `${targetUser.username}'s Profile`, iconURL: targetUser.displayAvatarURL() })
+            .setAuthor(`${targetUser.username}'s Profile`, targetUser.displayAvatarURL())
             .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
             .setDescription(`**Badges**\n> ${badgesString}\n\n` +
             `**Status**\n> ${statusText}\n` +
             `${activityStatus}`)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL())
             .setTimestamp();
         const row = new discord_js_1.ActionRowBuilder();
         const avatarBtn = new discord_js_1.ButtonBuilder().setLabel('Avatar').setStyle(discord_js_1.ButtonStyle.Link).setURL(targetUser.displayAvatarURL({ size: 1024 }));
@@ -131,7 +132,7 @@ function getProfileData(interaction, targetUser, database) {
             const activityBtn = new discord_js_1.ButtonBuilder().setLabel(activityUrl.includes('spotify') ? 'Play on Spotify' : 'View Activity').setStyle(discord_js_1.ButtonStyle.Link).setURL(activityUrl);
             row.addComponents(activityBtn);
         }
-        return { embed, row };
+        return { card, row };
     });
 }
 function run(interaction, database) {
@@ -140,12 +141,12 @@ function run(interaction, database) {
             return;
         yield interaction.deferReply();
         const targetUser = interaction.options.getUser('user') || interaction.user;
-        const { embed, row } = yield getProfileData(interaction, targetUser, database);
-        yield interaction.editReply({ embeds: [embed], components: [row] });
+        const { card, row } = yield getProfileData(interaction, targetUser, database);
+        yield interaction.editReply(card.toPayload({ extraComponents: [row] }));
         const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
             try {
                 const newData = yield getProfileData(interaction, targetUser, database);
-                yield interaction.editReply({ embeds: [newData.embed], components: [newData.row] });
+                yield interaction.editReply(newData.card.toPayload({ extraComponents: [newData.row] }));
             }
             catch (e) {
                 clearInterval(interval);

@@ -1,7 +1,7 @@
-
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Database } from "../../database";
 import * as config from "../../config";
+import { V2Embed, createErrorV2, createWarningV2 } from "../../utilities/componentV2";
 
 export const command = new SlashCommandBuilder()
     .setName('staff')
@@ -22,52 +22,50 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const isAdmin = botConfig?.adminUsers?.includes(interaction.user.id);
 
     if (!isOwner && !isAdmin) {
-        return interaction.reply({ 
-            embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} You do not have permission to use this command.`)], 
-            ephemeral: true 
-        });
+        return interaction.reply(createErrorV2('You do not have permission to use this command.').toPayload({ ephemeral: true }));
     }
 
     const subcommand = interaction.options.getSubcommand(false);
     if (!botConfig.staffUsers) botConfig.staffUsers = [];
 
     const embedStyle = (title: string, description: string) => {
-        return new EmbedBuilder()
+        return new V2Embed()
             .setColor(config.colors.primary)
-            .setDescription(`**${config.emojis.staff} ${title}**\n\n${description}`)
+            .setTitle(`${config.emojis.staff} ${title}`)
+            .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
     };
 
     if (subcommand === 'add') {
         const targetUser = interaction.options.getUser('user', true);
         if (botConfig.staffUsers.includes(targetUser.id)) {
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is already **Staff**.`)] });
+            return interaction.reply(createErrorV2(`**${targetUser.tag}** is already **Staff**.`).toPayload());
         }
         botConfig.staffUsers.push(targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply({ embeds: [embedStyle('Staff Added', `> Added **${targetUser.tag}** as **Bot Staff**.`)] });
+        return interaction.reply(embedStyle('Staff Added', `> Added **${targetUser.tag}** as **Bot Staff**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
     }
 
     if (subcommand === 'remove') {
         const targetUser = interaction.options.getUser('user', true);
         if (!botConfig.staffUsers.includes(targetUser.id)) {
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.error).setDescription(`${config.emojis.error} **${targetUser.tag}** is not **Staff**.`)] });
+            return interaction.reply(createErrorV2(`**${targetUser.tag}** is not **Staff**.`).toPayload());
         }
         botConfig.staffUsers = botConfig.staffUsers.filter(id => id !== targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply({ embeds: [embedStyle('Staff Removed', `> Removed **${targetUser.tag}** from **Bot Staff**.`)] });
+        return interaction.reply(embedStyle('Staff Removed', `> Removed **${targetUser.tag}** from **Bot Staff**.`).toPayload());
     }
 
     if (subcommand === 'list') {
         const users = botConfig.staffUsers;
-        if (users.length === 0) return interaction.reply({ embeds: [new EmbedBuilder().setColor(config.colors.warning).setDescription(`${config.emojis.warning} No Staff found.`)] });
+        if (users.length === 0) return interaction.reply(createWarningV2('No Staff found.').toPayload());
         
         const names = await Promise.all(users.map(async id => {
             try { return (await interaction.client.users.fetch(id)).username; } catch { return `Unknown (${id})`; }
         }));
         const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${users[i]}」\``).join('\n');
-        return interaction.reply({ embeds: [embedStyle('Bot Staff', list)] });
+        return interaction.reply(embedStyle('Bot Staff', list).toPayload());
     }
 
     // Default: Help Menu
@@ -76,5 +74,5 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         `\`${config.prefix}staff remove <user>\`\n` +
         `\`${config.prefix}staff list\``
     );
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply(embed.toPayload());
 }
