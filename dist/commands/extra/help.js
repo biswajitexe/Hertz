@@ -137,13 +137,12 @@ function sendModuleHelp(interaction, moduleKey) {
         if (!module)
             return;
         const moduleEmoji = config.emojis[moduleKey] || config.emojis.module;
-        const commandsList = module.commands.map(cmd => `• \`${config.prefix}${cmd.name}\` — ${cmd.description}`).join("\n");
+        const commandsList = module.commands.map(cmd => `\`${cmd.name}\``).join(" , ");
         const card = new componentV2_1.V2Embed()
             .setColor(config.colors.default)
             .setTitle(`${moduleEmoji} ${module.name}`)
             .setDescription(`> ${module.description}\n\n` +
-            `**Commands:**\n` +
-            commandsList)
+            `${commandsList}`)
             .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select Category"));
         const homeButton = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary));
@@ -159,7 +158,7 @@ function sendAllCommands(interaction) {
             .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const fields = Object.entries(config.modules).map(([key, mod]) => ({
             name: `${config.emojis[key] || "•"} ${mod.name}`,
-            value: `> ${mod.commands.map(c => `\`${c.name}\``).join(", ")}`,
+            value: `> ${mod.commands.map(c => `\`${c.name}\``).join(" , ")}`,
             inline: false
         }));
         card.addFields(...fields);

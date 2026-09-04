@@ -96,15 +96,14 @@ async function sendModuleHelp(interaction: any, moduleKey: string) {
     if (!module) return;
 
     const moduleEmoji = config.emojis[moduleKey] || config.emojis.module;
-    const commandsList = module.commands.map(cmd => `• \`${config.prefix}${cmd.name}\` — ${cmd.description}`).join("\n");
+    const commandsList = module.commands.map(cmd => `\`${cmd.name}\``).join(" , ");
 
     const card = new V2Embed()
         .setColor(config.colors.default)
         .setTitle(`${moduleEmoji} ${module.name}`)
         .setDescription(
             `> ${module.description}\n\n` +
-            `**Commands:**\n` +
-            commandsList
+            `${commandsList}`
         )
         .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
@@ -125,7 +124,7 @@ async function sendAllCommands(interaction: any) {
 
     const fields = Object.entries(config.modules).map(([key, mod]) => ({
         name: `${config.emojis[key] || "•"} ${mod.name}`,
-        value: `> ${mod.commands.map(c => `\`${c.name}\``).join(", ")}`,
+        value: `> ${mod.commands.map(c => `\`${c.name}\``).join(" , ")}`,
         inline: false
     }));
     card.addFields(...fields);
