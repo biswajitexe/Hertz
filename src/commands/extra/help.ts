@@ -67,12 +67,7 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
 }
 
 async function sendHelpMenu(context: any, isUpdate = false) {
-    const client = context.client;
     const user = context.user || context.author;
-
-    const moduleList = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
-        .map(key => `> ${config.emojis[key] || "•"} **${config.modules[key]?.name || key}** — ${config.modules[key]?.description || ""}`)
-        .join("\n");
 
     const card = new V2Embed()
         .setColor(config.colors.default)
@@ -80,25 +75,17 @@ async function sendHelpMenu(context: any, isUpdate = false) {
         .setDescription(
             `> Modular, high-performance Discord management system.\n\n` +
             `• **Prefix:** \`${config.prefix}\` | **Slash:** \`/\`\n` +
-            `• **Help:** \`${config.prefix}help\`\n\n` +
-            `**Modules:**\n` +
-            moduleList
+            `• **Help:** \`${config.prefix}help\``
         )
-        .setFooter(`Requested by ${user.username}! | Powered by Hertz`, user.displayAvatarURL());
+        .setFooter(`Requested by ${user.username}! | Powered by Hertz`);
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
-    );
-
-    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Select a Category"));
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Select Category"));
 
     let sentMessage;
     if (isUpdate) {
-        sentMessage = await context.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
+        sentMessage = await context.editReply(card.toPayload({ extraComponents: [selectMenu] }));
     } else {
-        sentMessage = await context.reply({ ...card.toPayload({ extraComponents: [selectMenu, buttons] }), fetchReply: true });
+        sentMessage = await context.reply({ ...card.toPayload({ extraComponents: [selectMenu] }), fetchReply: true });
     }
 
     if (sentMessage) setupTimeout(sentMessage, user.id);
@@ -113,23 +100,20 @@ async function sendModuleHelp(interaction: any, moduleKey: string) {
 
     const card = new V2Embed()
         .setColor(config.colors.default)
-        .setTitle(`${moduleEmoji} ${module.name} Module`)
+        .setTitle(`${moduleEmoji} ${module.name}`)
         .setDescription(
             `> ${module.description}\n\n` +
             `**Commands:**\n` +
             commandsList
         )
-        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Select Category"));
+    const homeButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary)
     );
 
-    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Choose another Category"));
-
-    await interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
+    await interaction.editReply(card.toPayload({ extraComponents: [selectMenu, homeButton] }));
 }
 
 async function sendAllCommands(interaction: any) {

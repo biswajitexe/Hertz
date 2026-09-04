@@ -111,28 +111,21 @@ function handleInteraction(interaction, database) {
 }
 function sendHelpMenu(context_1) {
     return __awaiter(this, arguments, void 0, function* (context, isUpdate = false) {
-        const client = context.client;
         const user = context.user || context.author;
-        const moduleList = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
-            .map(key => { var _a, _b; return `> ${config.emojis[key] || "•"} **${((_a = config.modules[key]) === null || _a === void 0 ? void 0 : _a.name) || key}** — ${((_b = config.modules[key]) === null || _b === void 0 ? void 0 : _b.description) || ""}`; })
-            .join("\n");
         const card = new componentV2_1.V2Embed()
             .setColor(config.colors.default)
             .setTitle(`Hey, I'm Hertz`)
             .setDescription(`> Modular, high-performance Discord management system.\n\n` +
             `• **Prefix:** \`${config.prefix}\` | **Slash:** \`/\`\n` +
-            `• **Help:** \`${config.prefix}help\`\n\n` +
-            `**Modules:**\n` +
-            moduleList)
-            .setFooter(`Requested by ${user.username}! | Powered by Hertz`, user.displayAvatarURL());
-        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
-        const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select a Category"));
+            `• **Help:** \`${config.prefix}help\``)
+            .setFooter(`Requested by ${user.username}! | Powered by Hertz`);
+        const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select Category"));
         let sentMessage;
         if (isUpdate) {
-            sentMessage = yield context.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
+            sentMessage = yield context.editReply(card.toPayload({ extraComponents: [selectMenu] }));
         }
         else {
-            sentMessage = yield context.reply(Object.assign(Object.assign({}, card.toPayload({ extraComponents: [selectMenu, buttons] })), { fetchReply: true }));
+            sentMessage = yield context.reply(Object.assign(Object.assign({}, card.toPayload({ extraComponents: [selectMenu] })), { fetchReply: true }));
         }
         if (sentMessage)
             setupTimeout(sentMessage, user.id);
@@ -147,14 +140,14 @@ function sendModuleHelp(interaction, moduleKey) {
         const commandsList = module.commands.map(cmd => `• \`${config.prefix}${cmd.name}\` — ${cmd.description}`).join("\n");
         const card = new componentV2_1.V2Embed()
             .setColor(config.colors.default)
-            .setTitle(`${moduleEmoji} ${module.name} Module`)
+            .setTitle(`${moduleEmoji} ${module.name}`)
             .setDescription(`> ${module.description}\n\n` +
             `**Commands:**\n` +
             commandsList)
-            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
-        const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
-        const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Choose another Category"));
-        yield interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
+        const selectMenu = new discord_js_1.ActionRowBuilder().addComponents(createModuleSelectMenu("Select Category"));
+        const homeButton = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary));
+        yield interaction.editReply(card.toPayload({ extraComponents: [selectMenu, homeButton] }));
     });
 }
 function sendAllCommands(interaction) {

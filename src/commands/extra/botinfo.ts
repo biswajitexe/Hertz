@@ -8,7 +8,7 @@ export const command = new SlashCommandBuilder()
     .setName('botinfo')
     .setDescription('Display detailed bot information and statistics');
 
-export const aliases = ["bi", "stats", "about"];
+export const aliases = ["bi", "stats"];
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
     const client = interaction.client;

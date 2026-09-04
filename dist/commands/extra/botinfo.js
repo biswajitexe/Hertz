@@ -54,7 +54,7 @@ const componentV2_1 = require("../../utilities/componentV2");
 exports.command = new discord_js_1.SlashCommandBuilder()
     .setName('botinfo')
     .setDescription('Display detailed bot information and statistics');
-exports.aliases = ["bi", "stats", "about"];
+exports.aliases = ["bi", "stats"];
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
         const client = interaction.client;

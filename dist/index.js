@@ -268,18 +268,13 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
         const guildData = yield database.retrieveGuild(message.guild.id);
         const currentPrefix = (guildData === null || guildData === void 0 ? void 0 : guildData.prefix) || config_1.prefix;
         const embed = new componentV2_1.V2Embed()
-            .setColor(0x5865F2)
-            .setAuthor("Hertz Security", client.user.displayAvatarURL())
-            .setTitle("Hey there! I'm Hertz.")
-            .setDescription(`**I am a powerful security and moderation bot designed to protect your server.**\n\nType \`${currentPrefix}help\` to see my commands!`)
-            .setFooter("Protected by Hertz Security System", message.guild.iconURL() || undefined)
-            .setTimestamp();
-        const inviteBtn = new discord_js_1.ButtonBuilder()
-            .setStyle(discord_js_1.ButtonStyle.Link)
-            .setLabel("Invite Me")
-            .setURL(`https://discord.com/api/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`);
-        const row = new discord_js_1.ActionRowBuilder().addComponents(inviteBtn);
-        yield message.reply(embed.toPayload({ extraComponents: [row] }));
+            .setColor(config_1.colors.default)
+            .setTitle("Hey, I'm Hertz")
+            .setDescription(`> Modular, high-performance Discord management system.\n\n` +
+            `• **Prefix:** \`${currentPrefix}\` | **Slash:** \`/\`\n` +
+            `• **Help:** \`${currentPrefix}help\``)
+            .setFooter(`Requested by ${message.author.username}! | Powered by Hertz`);
+        yield message.reply(embed.toPayload());
         return;
     }
     const guildData = yield database.retrieveGuild(message.guild.id);
