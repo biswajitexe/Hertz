@@ -66,33 +66,32 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const statusEmoji = guildData.messageFilters.links ? config.emojis.switch_on : config.emojis.switch_off;
             const statusText = guildData.messageFilters.links ? "Enabled" : "Disabled";
 
-            let description = `**Anti-Link System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Links`;
+            let description = `> Modular, high-performance automated moderation filter.\n\n` +
+                `• **Status:** ${statusText}\n` +
+                `• **Filter:** ${statusEmoji} Anti-Links`;
 
             if (!guildData.messageFilters.links) {
-                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antilink enable\` to activate security and protect your server! ${config.emojis.lock}`;
+                description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antilink enable\` to activate protection.`;
             }
 
             const embed = new V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.automod} Anti-Link Panel`)
                 .setDescription(description)
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             await interaction.editReply(embed.toPayload());
         } else {
             // Subcommand not found (likely prefix command empty call)
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setTitle('Anti-Link Commands')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.automod} Anti-Link Commands`)
                 .setDescription(
-                    '`?antilink enable`\n' +
-                    '`?antilink disable`\n' +
-                    '`?antilink status`'
+                    `> \`${config.prefix}antilink enable\`\n` +
+                    `> \`${config.prefix}antilink disable\`\n` +
+                    `> \`${config.prefix}antilink status\``
                 )
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter('Hertz • Automated Security', interaction.client.user?.displayAvatarURL() || undefined);
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             await interaction.editReply(embed.toPayload());
         }
     } catch (error) {

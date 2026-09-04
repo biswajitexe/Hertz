@@ -54,7 +54,7 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .addRoleOption(option => option.setName('role').setDescription('The role').setRequired(false));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a;
         if (!interaction.guild)
             return;
         let targetUser = interaction.options.getUser('user');
@@ -73,11 +73,10 @@ function run(interaction, database) {
         }
         if (!targetUser || !role) {
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setDescription(`\`${config.prefix}role <user> <role>\`\n\`${config.prefix}role <role> <user>\``)
-                .setFooter(`Hertz • Advanced Moderation`, (_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.roles} Role Management`)
+                .setDescription(`> Easily toggle or manage user roles.\n\n• **Usage:** \`${config.prefix}role <user> <role>\`\n• **Alternative:** \`${config.prefix}role <role> <user>\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
         const member = yield interaction.guild.members.fetch(targetUser.id).catch(() => null);
@@ -94,23 +93,25 @@ function run(interaction, database) {
             }
         }
         try {
-            if (!((_c = interaction.memberPermissions) === null || _c === void 0 ? void 0 : _c.has(discord_js_1.PermissionFlagsBits.ManageRoles)) && interaction.user.id !== process.env.OWNER_ID) {
+            if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageRoles)) && interaction.user.id !== process.env.OWNER_ID) {
                 return interaction.reply((0, componentV2_1.createErrorV2)("You do not have permission to manage roles.").toPayload({ ephemeral: true }));
             }
             if (member.roles.cache.has(role.id)) {
                 yield member.roles.remove(role.id);
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(0xED4245)
-                    .setTitle(`${config.emojis.success} Role Removed`)
-                    .setDescription(`${config.emojis.dot} **User:** ${targetUser.tag}\n${config.emojis.dot} **Role:** ${role.name}`);
+                    .setColor(config.colors.default)
+                    .setTitle(`${config.emojis.correct} Role Removed`)
+                    .setDescription(`> Successfully removed role from member.\n\n• **User:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Role:** ${role.name}`)
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 return interaction.reply(embed.toPayload());
             }
             else {
                 yield member.roles.add(role.id);
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(0x57F287)
-                    .setTitle(`${config.emojis.success} Role Added`)
-                    .setDescription(`${config.emojis.dot} **User:** ${targetUser.tag}\n${config.emojis.dot} **Role:** ${role.name}`);
+                    .setColor(config.colors.default)
+                    .setTitle(`${config.emojis.correct} Role Added`)
+                    .setDescription(`> Successfully added role to member.\n\n• **User:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Role:** ${role.name}`)
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 return interaction.reply(embed.toPayload());
             }
         }

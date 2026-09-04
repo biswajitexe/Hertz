@@ -73,9 +73,10 @@ function run(interaction, database) {
             }
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`${config.emojis.success || "🔓"} Channels Unlocked`)
-            .setDescription(`**Unlocked ${count} channels.**`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Channels Unlocked`)
+            .setDescription(`> Successfully restored send message permissions.\n\n• **Channels Unlocked:** \`${count}\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.editReply(embed.toPayload());
     });
 }

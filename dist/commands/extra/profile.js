@@ -113,13 +113,12 @@ function getProfileData(interaction, targetUser, database) {
         }
         const card = new componentV2_1.V2Embed()
             .setColor(safeProfile.color || config.colors.default)
-            .setAuthor(`${targetUser.username}'s Profile`, targetUser.displayAvatarURL())
+            .setTitle(`${targetUser.username}'s Profile`)
             .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
             .setDescription(`**Badges**\n> ${badgesString}\n\n` +
             `**Status**\n> ${statusText}\n` +
             `${activityStatus}`)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL())
-            .setTimestamp();
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const row = new discord_js_1.ActionRowBuilder();
         const avatarBtn = new discord_js_1.ButtonBuilder().setLabel('Avatar').setStyle(discord_js_1.ButtonStyle.Link).setURL(targetUser.displayAvatarURL({ size: 1024 }));
         row.addComponents(avatarBtn);

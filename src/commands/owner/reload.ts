@@ -21,8 +21,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         .setColor(config.colors.default)
         .setTitle(`${config.emojis.dev} Reloading Bot`)
         .setDescription(`> **Reloading bot logic...** (This may take a moment)`)
-        .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-        .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.reply(embed.toPayload({ ephemeral: true }));
 

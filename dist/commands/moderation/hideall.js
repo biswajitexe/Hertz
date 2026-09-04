@@ -74,9 +74,10 @@ function run(interaction, database) {
             }
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(0xED4245)
-            .setTitle(`${config.emojis.success || "🙈"} Channels Hidden`)
-            .setDescription(`**Hidden ${count} channels** from everyone.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Channels Hidden`)
+            .setDescription(`> Successfully hidden all channels from regular members.\n\n• **Channels Hidden:** \`${count}\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.editReply(embed.toPayload());
     });
 }

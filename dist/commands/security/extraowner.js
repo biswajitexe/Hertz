@@ -63,7 +63,6 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDescription('Show all Extra Owners.'));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
         if (!interaction.inCachedGuild())
             return;
         if (interaction.user.id !== interaction.guild.ownerId) {
@@ -117,21 +116,20 @@ function run(interaction, database) {
                 })))).join('\n')
                 : "**No Extra Owners set.**";
             const card = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor('Extra Owners', 'https://cdn.discordapp.com/emojis/1461335586412695645.png')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.owner} Extra Owners`)
                 .setDescription(description)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.reply(card.toPayload());
         }
         else {
             const card = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle('Extra Owner Commands')
-                .setDescription(`\`${config.prefix}extraowner add <user>\`\n` +
-                `\`${config.prefix}extraowner remove <user>\`\n` +
-                `\`${config.prefix}extraowner show\``)
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.owner} Extra Owner Commands`)
+                .setDescription(`> \`${config.prefix}extraowner add <user>\`\n` +
+                `> \`${config.prefix}extraowner remove <user>\`\n` +
+                `> \`${config.prefix}extraowner show\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.reply(card.toPayload());
         }
     });

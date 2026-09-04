@@ -60,7 +60,6 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageNicknames);
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
         if (!interaction.guild)
             return;
         let targetUser = interaction.options.getUser('target');
@@ -81,11 +80,10 @@ function run(interaction, database) {
         }
         if (!targetUser) {
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setDescription(`\`${config.prefix}setnick <user> <name>\`\n\`${config.prefix}resetnick <user>\``)
-                .setFooter(`Hertz • Advanced Moderation`, (_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setTitle(`Nickname Management`)
+                .setDescription(`> Change or reset member nicknames.\n\n• **Set Nickname:** \`${config.prefix}setnick <user> <name>\`\n• **Reset Nickname:** \`${config.prefix}resetnick <user>\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
         const member = yield interaction.guild.members.fetch(targetUser.id).catch(() => null);
@@ -98,9 +96,10 @@ function run(interaction, database) {
         try {
             yield member.setNickname(nickname || null);
             const embed = new componentV2_1.V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`${config.emojis.success} Nickname Changed`)
-                .setDescription(`Changed **${targetUser.tag}**'s nickname to **${nickname || "Default"}**.`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Nickname Updated`)
+                .setDescription(`> Successfully updated member nickname.\n\n• **User:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Nickname:** \`${nickname || "Default"}\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.reply(embed.toPayload());
         }
         catch (err) {

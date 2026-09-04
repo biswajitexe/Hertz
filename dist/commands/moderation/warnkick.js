@@ -132,13 +132,10 @@ function run(interaction, database) {
             yield user.kick(reason);
             yield (0, modLogger_1.logAction)(interaction.guild, user.user, interaction.user, 'KICK', `(WarnKick) ${reason}`, database);
             const successEmbed = new componentV2_1.V2Embed()
-                .setColor(config.colors.warning)
-                .setTitle(`${config.emojis.success} Warning Kicked ${user.user.tag}`)
-                .setDescription(`**User has been kicked with an invite sent to their DMs.**`)
-                .setFooter(inviteUrl ? "Invite link sent in DM" : "Could not create invite link (Permissions?)");
-            if (reason !== "No reason provided") {
-                successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
-            }
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Member Warn-Kicked`)
+                .setDescription(`> Successfully kicked member with a return invite sent to their DMs.\n\n• **User:** ${user.user.tag} (\`${user.id}\`)\n• **Reason:** ${reason}\n• **Status:** ${inviteUrl ? "Invite link sent in DM" : "No invite created (Missing Permissions)"}`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(successEmbed.toPayload());
         }
         catch (error) {

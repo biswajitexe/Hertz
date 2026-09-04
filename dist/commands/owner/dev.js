@@ -72,7 +72,7 @@ function run(interaction, database) {
 }
 function handleInteraction(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b;
         if (!interaction.customId.startsWith('dev_'))
             return;
         const botConfig = yield database.getBotConfig();
@@ -99,7 +99,7 @@ function handleInteraction(interaction, database) {
                             break;
                         }
                     }
-                    catch (_d) { }
+                    catch (_c) { }
                 }
                 if (!foundCmd) {
                     return interaction.reply((0, componentV2_1.createErrorV2)(`Command information not found for \`${commandName}\`.`).toPayload({ ephemeral: true }));
@@ -119,10 +119,10 @@ function handleInteraction(interaction, database) {
                     description = `> \`${foundCmd.command.name}\``;
                 }
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.primary)
+                    .setColor(config.colors.default)
                     .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`)
                     .setDescription(description)
-                    .setFooter("Hertz • Owner Command", (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("dev_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
                 const selectMenu = yield createOwnerSelectMenu();
                 yield interaction.update(embed.toPayload({ extraComponents: [selectMenu, buttons] }));
@@ -136,7 +136,6 @@ function handleInteraction(interaction, database) {
 }
 function sendOwnerPanel(interaction_1) {
     return __awaiter(this, arguments, void 0, function* (interaction, isUpdate = false) {
-        var _a;
         const ownerDir = node_path_1.default.join(__dirname);
         const files = node_fs_1.default.readdirSync(ownerDir).filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && file !== 'dev.ts' && file !== 'dev.js');
         const cleanCommands = files.map(file => {
@@ -154,10 +153,10 @@ function sendOwnerPanel(interaction_1) {
             }
         }).filter(c => c !== null).join(", ");
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.default)
             .setTitle('Owner Commands')
             .setDescription(`> ${cleanCommands}`)
-            .setFooter(`Hertz • Owner Commands`, ((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || undefined);
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const selectMenu = yield createOwnerSelectMenu();
         const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(discord_js_1.ButtonStyle.Secondary).setDisabled(true), new discord_js_1.ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(discord_js_1.ButtonStyle.Danger));
         if (isUpdate && (interaction.isButton() || interaction.isStringSelectMenu())) {

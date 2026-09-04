@@ -98,10 +98,8 @@ function run(interaction, database) {
             const successEmbed = new componentV2_1.V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.correct} Unmuted ${user.user.tag}`)
-                .setDescription(`> Successfully removed mute restriction from **${user.user.tag}**.`);
-            if (reason !== "No reason provided") {
-                successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
-            }
+                .setDescription(`> Successfully removed mute restriction from **${user.user.tag}**.\n\n• **User:** ${user.user.tag} (\`${user.id}\`)${reason !== "No reason provided" ? `\n• **Reason:** ${reason}` : ''}`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(successEmbed.toPayload());
         }
         catch (error) {

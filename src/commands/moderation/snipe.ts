@@ -19,10 +19,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const data = snipes[0];
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(data.authorTag, data.authorAvatar || undefined)
-        .setDescription(data.content || "*No content (Image only)*")
-        .setFooter(`Sniped by ${interaction.user.tag} | Deleted`);
+        .setColor(config.colors.default)
+        .setTitle(`Sniped Message: ${data.authorTag}`)
+        .setDescription(`> ${data.content || "*No content (Image only)*"}`)
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     if (data.image) {
         embed.setImage(data.image);

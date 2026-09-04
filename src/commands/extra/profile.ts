@@ -87,15 +87,14 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
 
     const card = new V2Embed()
         .setColor(safeProfile.color || config.colors.default)
-        .setAuthor(`${targetUser.username}'s Profile`, targetUser.displayAvatarURL())
+        .setTitle(`${targetUser.username}'s Profile`)
         .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(
             `**Badges**\n> ${badgesString}\n\n` +
             `**Status**\n> ${statusText}\n` +
             `${activityStatus}`
         )
-        .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL())
-        .setTimestamp();
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     const row = new ActionRowBuilder<ButtonBuilder>();
     const avatarBtn = new ButtonBuilder().setLabel('Avatar').setStyle(ButtonStyle.Link).setURL(targetUser.displayAvatarURL({ size: 1024 }));

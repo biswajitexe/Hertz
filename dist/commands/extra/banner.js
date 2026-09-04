@@ -61,10 +61,10 @@ function run(interaction, database) {
             return interaction.reply((0, componentV2_1.createErrorV2)(`${user.username} does not have a banner.`).toPayload({ ephemeral: true }));
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(`${user.username}'s Banner`, user.displayAvatarURL())
+            .setColor(config.colors.default)
+            .setTitle(`${user.username}'s Banner`)
             .setImage(user.bannerURL({ size: 4096 }))
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.reply(embed.toPayload());
     });
 }

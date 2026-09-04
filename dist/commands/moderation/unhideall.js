@@ -73,9 +73,10 @@ function run(interaction, database) {
             }
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`${config.emojis.success || "👁️"} Channels Unhidden`)
-            .setDescription(`**Unhidden ${count} channels** for everyone.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Channels Visible`)
+            .setDescription(`> Successfully restored view channel permissions.\n\n• **Channels Visible:** \`${count}\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.editReply(embed.toPayload());
     });
 }

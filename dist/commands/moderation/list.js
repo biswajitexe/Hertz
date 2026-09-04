@@ -93,9 +93,9 @@ function run(interaction, database) {
         if (!subcommand) {
             const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.default)
-                .setTitle(`${config.emojis.info} List Commands`)
-                .setDescription(`> \`${config.prefix}list roles\`\n> \`${config.prefix}list bots\`\n> \`${config.prefix}list admins\`\n> \`${config.prefix}list inrole <role>\``)
-                .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+                .setTitle(`${config.emojis.info} Server Lists`)
+                .setDescription(`> View categorized server members and entities.\n\n• **Roles:** \`${config.prefix}list roles\`\n• **Bots:** \`${config.prefix}list bots\`\n• **Admins:** \`${config.prefix}list admins\`\n• **In Role:** \`${config.prefix}list inrole <role>\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.reply(embed.toPayload());
             return;
         }

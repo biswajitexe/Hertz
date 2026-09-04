@@ -75,9 +75,10 @@ function run(interaction, database) {
         const prize = interaction.options.getString('prize');
         if (!time || !winners || !prize) {
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Start`)
-                .setDescription(`**Usage:** \`?gstart <time> <winners> <prize>\`\n**Example:** \`?gstart 10m 1 Nitro\``);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.giveaways || "🎉"} Start Giveaway`)
+                .setDescription(`> Quick setup for hosting a giveaway.\n\n• **Usage:** \`?gstart <time> <winners> <prize>\`\n• **Example:** \`?gstart 10m 1 Nitro\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
         yield (0, giveaway_1.handleStart)(interaction);

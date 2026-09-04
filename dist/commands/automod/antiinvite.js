@@ -61,7 +61,6 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDescription('Check the current status of the anti-invite filter.'));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
         if (!interaction.inCachedGuild())
             return;
         let guildData = yield database.retrieveGuild(interaction.guild.id);
@@ -107,28 +106,27 @@ function run(interaction, database) {
             else if (sub === 'status') {
                 const statusEmoji = guildData.messageFilters.discordInvites ? config.emojis.switch_on : config.emojis.switch_off;
                 const statusText = guildData.messageFilters.discordInvites ? "Enabled" : "Disabled";
-                let description = `**Anti-Invite System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Discord Invites`;
+                let description = `> Modular, high-performance automated moderation filter.\n\n` +
+                    `• **Status:** ${statusText}\n` +
+                    `• **Filter:** ${statusEmoji} Anti-Discord Invites`;
                 if (!guildData.messageFilters.discordInvites) {
-                    description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antiinvite enable\` to activate security and protect your server! ${config.emojis.lock}`;
+                    description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antiinvite enable\` to activate protection.`;
                 }
                 const embed = new componentV2_1.V2Embed()
                     .setColor(config.colors.default)
                     .setTitle(`${config.emojis.automod} Anti-Invite Panel`)
                     .setDescription(description)
-                    .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                    .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 yield interaction.editReply(embed.toPayload());
             }
             else {
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.primary)
-                    .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                    .setTitle('Anti-Invite Commands')
-                    .setDescription('`?antiinvite enable`\n' +
-                    '`?antiinvite disable`\n' +
-                    '`?antiinvite status`')
-                    .setThumbnail(((_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || null)
-                    .setFooter('Hertz • Automated Security', ((_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL()) || undefined);
+                    .setColor(config.colors.default)
+                    .setTitle(`${config.emojis.automod} Anti-Invite Commands`)
+                    .setDescription(`> \`${config.prefix}antiinvite enable\`\n` +
+                    `> \`${config.prefix}antiinvite disable\`\n` +
+                    `> \`${config.prefix}antiinvite status\``)
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 yield interaction.editReply(embed.toPayload());
             }
         }

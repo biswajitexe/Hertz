@@ -67,13 +67,11 @@ function run(interaction, database) {
         if (!guild)
             return;
         const embedStyle = (title, description, color = config.colors.default) => {
-            var _a;
             return new componentV2_1.V2Embed()
                 .setColor(color)
                 .setTitle(`${config.emojis.pin} ${title}`)
                 .setDescription(description)
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         };
         if (sub === 'set') {
             const newPrefix = interaction.options.getString('new_prefix', true);
@@ -82,14 +80,14 @@ function run(interaction, database) {
             }
             guild.prefix = newPrefix;
             yield database.insertGuild(interaction.guildId, guild);
-            return interaction.reply(embedStyle('Prefix Updated', `> ${config.emojis.correct} Successfully set custom prefix to **${newPrefix}**\n> Example: \`${newPrefix}help\``, config.colors.default).toPayload());
+            return interaction.reply(embedStyle('Prefix Updated', `> Successfully set custom server prefix.\n\n• **New Prefix:** \`${newPrefix}\`\n• **Example:** \`${newPrefix}help\``, config.colors.default).toPayload());
         }
         if (sub === 'reset') {
             guild.prefix = null;
             yield database.insertGuild(interaction.guildId, guild);
-            return interaction.reply(embedStyle('Prefix Reset', `> ${config.emojis.correct} Reset prefix to default: **${config.prefix}**`, config.colors.default).toPayload());
+            return interaction.reply(embedStyle('Prefix Reset', `> Reset prefix to default system prefix.\n\n• **Prefix:** \`${config.prefix}\``, config.colors.default).toPayload());
         }
         const current = guild.prefix || config.prefix;
-        return interaction.reply(embedStyle('Server Prefix', `> Current Prefix: **\`${current}\`**\n\n**Usage:**\n> \`${current}prefix set <new>\`\n> \`${current}prefix reset\``).toPayload());
+        return interaction.reply(embedStyle('Server Prefix', `> Current server prefix configuration.\n\n• **Prefix:** \`${current}\`\n• **Set:** \`${current}prefix set <new>\`\n• **Reset:** \`${current}prefix reset\``).toPayload());
     });
 }

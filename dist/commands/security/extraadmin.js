@@ -63,7 +63,6 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDescription('Show all Extra Admins.'));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
         if (!interaction.inCachedGuild())
             return;
         let guildData = yield database.retrieveGuild(interaction.guild.id);
@@ -121,21 +120,20 @@ function run(interaction, database) {
                 })))).join('\n')
                 : "**No Extra Admins set.**";
             const card = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor('Extra Admins', 'https://cdn.discordapp.com/emojis/1461692661562871962.png')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.roles} Extra Admins`)
                 .setDescription(description)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.reply(card.toPayload());
         }
         else {
             const card = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle('Extra Admin Commands')
-                .setDescription(`\`${config.prefix}extraadmin add <user>\`\n` +
-                `\`${config.prefix}extraadmin remove <user>\`\n` +
-                `\`${config.prefix}extraadmin show\``)
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.roles} Extra Admin Commands`)
+                .setDescription(`> \`${config.prefix}extraadmin add <user>\`\n` +
+                `> \`${config.prefix}extraadmin remove <user>\`\n` +
+                `> \`${config.prefix}extraadmin show\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.reply(card.toPayload());
         }
     });

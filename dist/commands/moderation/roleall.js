@@ -60,7 +60,7 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .addRoleOption(option => option.setName('role').setDescription('The role').setRequired(true)));
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a;
         if (!interaction.guild)
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.Administrator)) && interaction.user.id !== process.env.OWNER_ID) {
@@ -70,11 +70,10 @@ function run(interaction, database) {
         const role = interaction.options.getRole('role');
         if (!subcommand || !role) {
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setThumbnail(((_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || null)
-                .setDescription(`\`${config.prefix}roleall add <role>\`\n\`${config.prefix}roleall remove <role>\``)
-                .setFooter(`Hertz • Advanced Moderation`, (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.roles} Mass Role Management`)
+                .setDescription(`> Assign or strip roles across the server.\n\n• **Add:** \`${config.prefix}roleall add <role>\`\n• **Remove:** \`${config.prefix}roleall remove <role>\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
         const botMember = yield interaction.guild.members.fetchMe();
@@ -129,9 +128,10 @@ function run(interaction, database) {
                 yield processBatch(batch, 'add');
             }
             const embed = new componentV2_1.V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`${config.emojis.success} Role Added to Members`)
-                .setDescription(`**Added role ${role.name} to ${count} members.** (Failed: ${failed})`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Role Added`)
+                .setDescription(`> Successfully assigned role to all members.\n\n• **Role:** ${role.name}\n• **Success:** \`${count}\` members\n• **Failed:** \`${failed}\` members`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
         }
         else if (subcommand === 'remove') {
@@ -141,9 +141,10 @@ function run(interaction, database) {
                 yield processBatch(batch, 'remove');
             }
             const embed = new componentV2_1.V2Embed()
-                .setColor(0xED4245)
-                .setTitle(`${config.emojis.success} Role Removed from Members`)
-                .setDescription(`**Removed role ${role.name} from ${count} members.** (Failed: ${failed})`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Role Removed`)
+                .setDescription(`> Successfully removed role from all members.\n\n• **Role:** ${role.name}\n• **Success:** \`${count}\` members\n• **Failed:** \`${failed}\` members`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
         }
     });

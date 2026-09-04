@@ -19,7 +19,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             `• **Prefix:** \`${config.prefix}\` | **Slash:** \`/\`\n` +
             `• **Help:** \`${config.prefix}help\``
         )
-        .setFooter(`Requested by ${interaction.user.username}!`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.reply(embed.toPayload());
 }

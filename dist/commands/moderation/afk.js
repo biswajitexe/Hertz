@@ -69,11 +69,10 @@ function run(interaction, database) {
         };
         yield database.insertGuild(interaction.guild.id, guildData);
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(`${interaction.user.username} is now AFK`, interaction.user.displayAvatarURL());
-        if (reason) {
-            embed.setDescription(`${config.emojis.dot} **Reason:** ${reason}`);
-        }
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} AFK Set`)
+            .setDescription(`> Successfully set your AFK status.\n\n• **User:** ${interaction.user.username}\n• **Reason:** ${reason || "AFK"}`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.reply(embed.toPayload());
     });
 }

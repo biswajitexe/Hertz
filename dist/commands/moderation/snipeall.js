@@ -59,16 +59,15 @@ function run(interaction, database) {
             return interaction.reply((0, componentV2_1.createErrorV2)("There is nothing to snipe here!").toPayload({ ephemeral: true }));
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle(`Recently Deleted Messages in #${interaction.channel.name}`)
-            .setFooter(`Requested by ${interaction.user.tag}`)
-            .setTimestamp();
-        let description = "";
+            .setColor(config.colors.default)
+            .setTitle(`Recently Deleted Messages`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
+        let description = `> Deleted message history in <#${interaction.channelId}>.\n\n`;
         const displaySnipes = snipes.slice(0, 10);
         displaySnipes.forEach((data, index) => {
             const time = Math.floor(data.timestamp / 1000);
             const content = data.content ? (data.content.length > 50 ? data.content.substring(0, 50) + "..." : data.content) : "[Image/Attachment]";
-            description += `**${index + 1}.** <t:${time}:R> **${data.authorTag}**: ${content}\n`;
+            description += `• **${index + 1}.** <t:${time}:R> **${data.authorTag}**: ${content}\n`;
         });
         embed.setDescription(description);
         yield interaction.reply(embed.toPayload());

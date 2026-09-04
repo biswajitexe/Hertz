@@ -117,9 +117,10 @@ async function sendLanguageDropdown(interaction: any, text: string) {
     const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
     
     const embed = new V2Embed()
-        .setColor(colors.primary)
+        .setColor(colors.default)
         .setTitle("Language Selection")
-        .setDescription(`**Select a language to translate the text:**\n> ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+        .setDescription(`> Select a language below to translate the specified text.\n\n• **Text Preview:** \`${text.substring(0, 100)}${text.length > 100 ? '...' : ''}\``)
+        .setFooter(`Requested by ${interaction.member?.user?.username || interaction.author?.username || interaction.user?.username}! | Powered by Hertz`);
 
     if (interaction instanceof Message) {
          const msg = await interaction.reply(embed.toPayload({ extraComponents: [row] }));
@@ -139,8 +140,8 @@ async function sendLanguageDropdown(interaction: any, text: string) {
 async function performTranslation(interaction: any, text: string, targetLang: string) {
     let replyMsg: any;
     if (interaction instanceof Message) {
-        replyMsg = await interaction.reply({ content: `${emojis.loading || '⏳'} Translating...` });
-    } else if (interaction.isRepliable && interaction.isRepliable()) {
+        replyMsg = await interaction.reply({ content: "Translating..." });
+    } else {
         await interaction.deferReply();
     }
 
@@ -148,13 +149,10 @@ async function performTranslation(interaction: any, text: string, targetLang: st
         const res: any = await translate(text, { to: targetLang });
         
         const embed = new V2Embed()
-            .setColor(0x4285F4)
-            .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
-            .addFields(
-                { name: `Original (${res.from?.language?.iso || 'auto'})`, value: `> ${text.substring(0, 1000)}` },
-                { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` }
-            )
-            .setFooter(`Requested by ${interaction.member?.user?.username || interaction.author?.username}`);
+            .setColor(colors.default)
+            .setTitle("Translation Result")
+            .setDescription(`> Successfully translated text.\n\n• **Original (${res.from?.language?.iso || 'auto'}):**\n\`\`\`\n${text.substring(0, 1000)}\n\`\`\`\n• **Translated (${targetLang}):**\n\`\`\`\n${res.text.substring(0, 1000)}\n\`\`\``)
+            .setFooter(`Requested by ${interaction.member?.user?.username || interaction.author?.username || interaction.user?.username}! | Powered by Hertz`);
 
         if (interaction instanceof Message) {
             await replyMsg.edit({ content: null, ...embed.toPayload() });
@@ -201,13 +199,10 @@ export const handleInteraction = async (interaction: any, database: any) => {
         const res: any = await translate(text, { to: selectedLang });
         
         const embed = new V2Embed()
-            .setColor(0x4285F4)
-            .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
-            .addFields(
-                { name: `Original (${res.from?.language?.iso || 'auto'})`, value: `> ${text.substring(0, 1000)}` },
-                { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` }
-            )
-            .setFooter(`Requested by ${interaction.user.username}`);
+            .setColor(colors.default)
+            .setTitle("Translation Result")
+            .setDescription(`> Successfully translated text.\n\n• **Original (${res.from?.language?.iso || 'auto'}):**\n\`\`\`\n${text.substring(0, 1000)}\n\`\`\`\n• **Translated (${selectedLang}):**\n\`\`\`\n${res.text.substring(0, 1000)}\n\`\`\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             
         await interaction.editReply({ content: null, ...embed.toPayload() });
         

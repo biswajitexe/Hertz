@@ -22,11 +22,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const targetMember = member || (interaction.guild ? await interaction.guild.members.fetch(user.id).catch(() => null) : null);
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(user.username, user.displayAvatarURL())
+        .setColor(config.colors.default)
+        .setTitle(`User Info: ${user.username}`)
         .setThumbnail(user.displayAvatarURL({ size: 4096 }))
-        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
-        .setTimestamp();
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     // User Info Section
     const userInfoParts = [

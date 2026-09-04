@@ -74,9 +74,10 @@ function run(interaction, database) {
             }
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(0xED4245)
-            .setTitle(`${config.emojis.success || "🔒"} Channels Locked`)
-            .setDescription(`**Locked ${count} channels.**`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Channels Locked`)
+            .setDescription(`> Successfully locked all channels from standard messages.\n\n• **Channels Locked:** \`${count}\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.editReply(embed.toPayload());
     });
 }

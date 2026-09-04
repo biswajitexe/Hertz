@@ -61,10 +61,9 @@ function run(interaction, database) {
             var _a;
             const embed = new componentV2_1.V2Embed()
                 .setColor(config.colors.default)
-                .setAuthor(guild.name, guild.iconURL() || undefined)
+                .setTitle(guild.name)
                 .setThumbnail(guild.iconURL({ size: 4096 }))
-                .setFooter(`Requested by ${interaction.user.tag} • Page: ${page}`, interaction.user.displayAvatarURL())
-                .setTimestamp();
+                .setFooter(`Page: ${page} • Requested by ${interaction.user.username}! | Powered by Hertz`);
             if (guild.bannerURL())
                 embed.setImage(guild.bannerURL({ size: 4096 }));
             switch (page) {

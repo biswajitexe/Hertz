@@ -23,9 +23,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const messageId = interaction.options.getString('message_id');
     if (!messageId) {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Resume`)
-            .setDescription(`**Usage:** \`?gresume <message_id>\``);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.giveaways || "🎉"} Resume Giveaway`)
+            .setDescription(`> Resume a paused giveaway.\n\n• **Usage:** \`?gresume <message_id>\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         return interaction.reply(embed.toPayload());
     }

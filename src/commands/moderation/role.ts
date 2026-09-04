@@ -32,11 +32,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     if (!targetUser || !role) {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setDescription(`\`${config.prefix}role <user> <role>\`\n\`${config.prefix}role <role> <user>\``)
-            .setFooter(`Hertz • Advanced Moderation`, interaction.client.user?.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.roles} Role Management`)
+            .setDescription(`> Easily toggle or manage user roles.\n\n• **Usage:** \`${config.prefix}role <user> <role>\`\n• **Alternative:** \`${config.prefix}role <role> <user>\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return interaction.reply(embed.toPayload());
     }
 
@@ -64,16 +63,18 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         if (member.roles.cache.has(role.id)) {
             await member.roles.remove(role.id);
             const embed = new V2Embed()
-                .setColor(0xED4245)
-                .setTitle(`${config.emojis.success} Role Removed`)
-                .setDescription(`${config.emojis.dot} **User:** ${targetUser.tag}\n${config.emojis.dot} **Role:** ${role.name}`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Role Removed`)
+                .setDescription(`> Successfully removed role from member.\n\n• **User:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Role:** ${role.name}`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         } else {
             await member.roles.add(role.id);
             const embed = new V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`${config.emojis.success} Role Added`)
-                .setDescription(`${config.emojis.dot} **User:** ${targetUser.tag}\n${config.emojis.dot} **Role:** ${role.name}`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Role Added`)
+                .setDescription(`> Successfully added role to member.\n\n• **User:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Role:** ${role.name}`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
     } catch (err) {

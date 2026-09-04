@@ -121,7 +121,7 @@ async function sendAllCommands(interaction: any) {
         .setColor(config.colors.default)
         .setTitle(`${config.emojis.info} All Commands`)
         .setDescription(`> Use \`${config.prefix}help <command>\` for detailed usage information.`)
-        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     const fields = Object.entries(config.modules).map(([key, mod]) => ({
         name: `${config.emojis[key] || "•"} ${mod.name}`,
@@ -162,7 +162,7 @@ async function sendCommandHelp(interaction: any, commandName: string) {
             { name: "Usage", value: `\`${config.prefix}${foundCmd.usage || foundCmd.name}\``, inline: true },
             { name: "Module", value: foundModule?.name || "Unknown", inline: true }
         )
-        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.reply(card.toPayload({ ephemeral: true }));
 }

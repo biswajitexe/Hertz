@@ -344,8 +344,9 @@ export function createSuccessV2(description: string, title?: string, user?: User
     if (title) embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    } else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }
@@ -357,8 +358,9 @@ export function createErrorV2(description: string, title?: string, user?: User |
     if (title) embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    } else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }
@@ -370,8 +372,9 @@ export function createWarningV2(description: string, title?: string, user?: User
     if (title) embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    } else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }
@@ -383,8 +386,9 @@ export function createInfoV2(description: string, title?: string, user?: User | 
     if (title) embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    } else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }

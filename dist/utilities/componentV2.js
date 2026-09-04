@@ -280,8 +280,10 @@ function createSuccessV2(description, title, user) {
         embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    }
+    else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }
@@ -293,8 +295,10 @@ function createErrorV2(description, title, user) {
         embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    }
+    else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }
@@ -306,8 +310,10 @@ function createWarningV2(description, title, user) {
         embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    }
+    else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }
@@ -319,8 +325,10 @@ function createInfoV2(description, title, user) {
         embed.setTitle(title);
     if (user) {
         const name = 'user' in user ? user.user.username : user.username;
-        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
-        embed.setFooter(`Requested by ${name}`, icon);
+        embed.setFooter(`Requested by ${name}! | Powered by Hertz`);
+    }
+    else {
+        embed.setFooter(`Powered by Hertz`);
     }
     return embed;
 }

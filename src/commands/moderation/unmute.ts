@@ -68,11 +68,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const successEmbed = new V2Embed()
             .setColor(config.colors.default)
             .setTitle(`${config.emojis.correct} Unmuted ${user.user.tag}`)
-            .setDescription(`> Successfully removed mute restriction from **${user.user.tag}**.`);
-
-        if (reason !== "No reason provided") {
-            successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
-        }
+            .setDescription(`> Successfully removed mute restriction from **${user.user.tag}**.\n\n• **User:** ${user.user.tag} (\`${user.id}\`)${reason !== "No reason provided" ? `\n• **Reason:** ${reason}` : ''}`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.editReply(successEmbed.toPayload());
 

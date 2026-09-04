@@ -50,16 +50,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(config.colors.default)
             .setTitle(`${config.emojis.antinuke} ${title}`)
             .setDescription(description)
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
     };
 
     if (sub === 'enable') {
         if (guildData.antinuke.enabled) {
             const embed = new V2Embed()
                 .setColor(config.colors.default)
-                .setDescription(`${config.emojis.wrong} **Antinuke is already enabled!**`)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setDescription(`> ${config.emojis.wrong} **Antinuke is already enabled!**`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             await interaction.reply(embed.toPayload());
             return;
         }
@@ -99,7 +98,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         await database.insertGuild(interaction.guild.id, guildData);
 
-        const channelMsg = logChannel ? `\n${config.emojis.locked} **Log channel set to:** <#${logChannel.id}>.` : `\n${config.emojis.warning} Could not create 'hertz-log'. Please set logs manually.`;
+        const channelMsg = logChannel ? `\n> ${config.emojis.locked} **Log Channel:** <#${logChannel.id}>` : `\n> ${config.emojis.warning} Could not create 'hertz-log'. Please set logs manually.`;
 
         const protections = [
             'Anti Ban', 'Anti Kick', 'Anti Prune', 'Anti Unban', 'Anti Bot Add',
@@ -108,9 +107,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             'Anti Server Update', 'Anti Vanity URL', 'Anti Webhook Update',
             'Anti Emoji Update', 'Anti Sticker Update', 'Anti Integration',
             'Anti AutoMod Rule', 'Anti Thread Create', 'Anti Thread Delete'
-        ].map(p => `> ${config.emojis.switch_on} ${p}`).join('\n');
+        ].map(p => `• ${config.emojis.switch_on} **${p}**`).join('\n');
 
-        const embed = embedStyle('Antinuke Panel', `**Antinuke System Enabled.**\n\n**Active Protections:**\n${protections}\n${channelMsg}\n\n${config.emojis.info} **Note:** Keep my role on top with Admin perms.`);
+        const embed = embedStyle('Antinuke Panel',
+            `> Modular, high-performance security and raid protection system.\n\n` +
+            `• **Status:** Active\n` +
+            `${channelMsg}\n\n` +
+            `**Active Protections:**\n${protections}\n\n` +
+            `> ${config.emojis.info} **Note:** Keep my role on top with Administrator permissions.`
+        );
         await interaction.reply(embed.toPayload());
 
     } else if (sub === 'disable') {
@@ -124,14 +129,19 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             'Anti Server Update', 'Anti Vanity URL', 'Anti Webhook Update',
             'Anti Emoji Update', 'Anti Sticker Update', 'Anti Integration',
             'Anti AutoMod Rule', 'Anti Thread Create', 'Anti Thread Delete'
-        ].map(p => `> ${config.emojis.switch_off} ${p}`).join('\n');
+        ].map(p => `• ${config.emojis.switch_off} **${p}**`).join('\n');
 
-        const embed = embedStyle('Antinuke Panel', `**Antinuke System Disabled.**\n\n**Inactive Protections:**\n${protections}\n\n${config.emojis.warning} **Your server is now vulnerable.**\nUse \`/antinuke enable\` to restore security.`);
+        const embed = embedStyle('Antinuke Panel',
+            `> ${config.emojis.warning} **Antinuke System Disabled.**\n\n` +
+            `• **Status:** Inactive (Server Vulnerable)\n\n` +
+            `**Inactive Protections:**\n${protections}\n\n` +
+            `> Use \`/antinuke enable\` to restore security.`
+        );
         await interaction.reply(embed.toPayload());
 
     } else if (sub === 'show') {
         const logChannelId = guildData.antinuke.logChannelId;
-        const channelMsg = logChannelId ? `\n${config.emojis.locked} **Log Channel:** <#${logChannelId}>` : `\n${config.emojis.warning} Could not find 'hertz-log'. Please set logs manually.`;
+        const channelMsg = logChannelId ? `\n> ${config.emojis.locked} **Log Channel:** <#${logChannelId}>` : `\n> ${config.emojis.warning} Could not find 'hertz-log'. Please set logs manually.`;
 
         const statusEmoji = guildData.antinuke.enabled ? config.emojis.switch_on : config.emojis.switch_off;
         const protections = [
@@ -141,14 +151,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             'Anti Server Update', 'Anti Vanity URL', 'Anti Webhook Update',
             'Anti Emoji Update', 'Anti Sticker Update', 'Anti Integration',
             'Anti AutoMod Rule', 'Anti Thread Create', 'Anti Thread Delete'
-        ].map(p => `> ${statusEmoji} ${p}`).join('\n');
+        ].map(p => `• ${statusEmoji} **${p}**`).join('\n');
 
-        let description = `**Antinuke System ${guildData.antinuke.enabled ? "Enabled" : "Disabled"}.**\n\n**Active Protections:**\n${protections}`;
+        let description = `> Modular, high-performance security and raid protection system.\n\n` +
+            `• **Status:** ${guildData.antinuke.enabled ? "Active" : "Disabled"}\n` +
+            `${channelMsg}\n\n` +
+            `**Protections:**\n${protections}`;
 
-        if (guildData.antinuke.enabled) {
-            description += `\n${channelMsg}\n\n${config.emojis.info} **Note:** Keep my role on top with Admin perms.`;
-        } else {
-            description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antinuke enable\` to activate security and protect your server! ${config.emojis.lock}`;
+        if (!guildData.antinuke.enabled) {
+            description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antinuke enable\` to activate security.`;
         }
 
         const embed = embedStyle('Antinuke Panel', description);
@@ -157,9 +168,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     } else {
         // Help Menu
         const embed = embedStyle('Antinuke Commands',
-            `\`${config.prefix}antinuke enable\`\n` +
-            `\`${config.prefix}antinuke disable\`\n` +
-            `\`${config.prefix}antinuke show\``
+            `> \`${config.prefix}antinuke enable\`\n` +
+            `> \`${config.prefix}antinuke disable\`\n` +
+            `> \`${config.prefix}antinuke show\``
         );
 
         await interaction.reply(embed.toPayload());

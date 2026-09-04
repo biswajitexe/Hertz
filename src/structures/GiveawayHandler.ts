@@ -129,23 +129,20 @@ class GiveawayHandler {
     public createGiveawayEmbed(giveaway: GiveawayData): V2Embed {
         const endTime = Math.floor(giveaway.endTime / 1000);
         return new V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor("Giveaway Time!", this.client?.user?.displayAvatarURL())
-            .setTitle(`${config.emojis.giveaway || "🎉"} ${giveaway.prize}`)
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.giveaways || "🎉"} ${giveaway.prize}`)
             .setDescription(
                 [
-                    `${config.emojis.dot} **Ends:** <t:${endTime}:R>`,
-                    `${config.emojis.dot} **Winners:** ${giveaway.winners}`,
-                    `${config.emojis.dot} **Hosted By:** <@${giveaway.hostId}>`,
-                    `${config.emojis.dot} **Participants:** ${giveaway.participants.length}`,
+                    `> Click the button below to participate in this giveaway!`,
                     "",
-                    giveaway.paused
-                        ? `${config.emojis.pause || "⏸️"} **This giveaway is paused**`
-                        : "**React with the button below to enter!**"
+                    `• **Ends:** <t:${endTime}:R> (<t:${endTime}:f>)`,
+                    `• **Winners:** \`${giveaway.winners}\``,
+                    `• **Hosted By:** <@${giveaway.hostId}>`,
+                    `• **Entries:** \`${giveaway.participants.length}\``,
+                    ...(giveaway.paused ? ["", `${config.emojis.warning} **This giveaway is currently paused.**`] : [])
                 ].join("\n")
             )
-            .setThumbnail(this.client?.user?.displayAvatarURL() || null)
-            .setFooter("Giveaways", this.client?.user?.displayAvatarURL())
+            .setFooter("Powered by Hertz")
             .setTimestamp();
     }
 
@@ -230,34 +227,35 @@ class GiveawayHandler {
             const winners = this.selectWinners(giveaway.participants, giveaway.winners);
 
             const endEmbed = new V2Embed()
-                .setColor(0xFF0000)
-                .setTitle(`${config.emojis.giveaway || "🎉"} ${giveaway.prize}`)
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.giveaways || "🎉"} ${giveaway.prize}`)
                 .setDescription(
                     [
-                        `${config.emojis.dot} **Hosted by:** <@${giveaway.hostId}>`,
-                        `${config.emojis.dot} **Winners:** ${winners.length > 0 ? winners.map(w => `<@${w}>`).join(", ") : "No valid participants"}`,
-                        `${config.emojis.dot} **Participants:** ${giveaway.participants.length}`,
+                        `> This giveaway has concluded!`,
                         "",
-                        `${config.emojis.end || "🛑"} **This giveaway has ended!**`
+                        `• **Winners:** ${winners.length > 0 ? winners.map(w => `<@${w}>`).join(", ") : "No valid participants"}`,
+                        `• **Hosted By:** <@${giveaway.hostId}>`,
+                        `• **Total Entries:** \`${giveaway.participants.length}\``
                     ].join("\n")
                 )
-                .setFooter("Ended at")
+                .setFooter("Ended at | Powered by Hertz")
                 .setTimestamp();
 
             await message.edit(endEmbed.toPayload({ extraComponents: [this.createGiveawayButton(true)] }));
 
             if (winners.length > 0) {
                 const winnerEmbed = new V2Embed()
-                    .setColor(config.colors.primary)
-                    .setTitle(`${config.emojis.giveaway || "🎉"} Giveaway Winner(s)!`)
+                    .setColor(config.colors.default)
+                    .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Winner(s)!`)
                     .setDescription(
                         [
-                            `**Prize:** ${giveaway.prize}`,
-                            `**Winner(s):** ${winners.map(w => `<@${w}>`).join(", ")}`,
+                            `> Congratulations to the winners of **${giveaway.prize}**!`,
                             "",
-                            `Congratulations! You have won **${giveaway.prize}**!`
+                            `• **Winner(s):** ${winners.map(w => `<@${w}>`).join(", ")}`,
+                            `• **Prize:** **${giveaway.prize}**`
                         ].join("\n")
                     )
+                    .setFooter("Powered by Hertz")
                     .setTimestamp();
 
                 await channel.send(winnerEmbed.toPayload());

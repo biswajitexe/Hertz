@@ -5,11 +5,10 @@ import { V2Embed } from "./componentV2";
 export async function pagination(interaction: ChatInputCommandInteraction, title: string, items: string[], itemsPerPage: number = 10, iconURL: string | null = null) {
     if (items.length === 0) {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.default)
             .setTitle(title)
-            .setDescription(`**No items found.**`)
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
-        if (iconURL) embed.setAuthor(title, iconURL);
+            .setDescription(`> **No items found.**`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         return interaction.editReply(embed.toPayload());
     }
@@ -47,12 +46,11 @@ export async function pagination(interaction: ChatInputCommandInteraction, title
         const currentItems = items.slice(start, end);
 
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.default)
             .setTitle(title)
             .setDescription(currentItems.join('\n'))
-            .setFooter(`Page ${page + 1} / ${totalPages} • Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            .setFooter(`Page ${page + 1}/${totalPages} • Requested by ${interaction.user.username}! | Powered by Hertz`);
 
-        if (iconURL) embed.setAuthor(title, iconURL);
         if (withButtons && totalPages > 1) {
             embed.addActionRow(generateButtons(page));
         }

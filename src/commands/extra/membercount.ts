@@ -19,16 +19,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const bots = guild.members.cache.filter(member => member.user.bot).size;
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(guild.name, guild.iconURL() || undefined)
+        .setColor(config.colors.default)
         .setThumbnail(guild.iconURL({ size: 4096 }))
-        .setTitle("Member Statistics")
+        .setTitle(`Member Statistics`)
         .setDescription(
-            `${config.emojis.dot} **Total Members:** ${totalMembers.toLocaleString()}\n` +
-            `${config.emojis.dot} **Humans:** ${humans.toLocaleString()}\n` +
-            `${config.emojis.dot} **Bots:** ${bots.toLocaleString()}`
+            `> Real-time member count for **${guild.name}**.\n\n` +
+            `• **Total Members:** \`${totalMembers.toLocaleString()}\`\n` +
+            `• **Humans:** \`${humans.toLocaleString()}\`\n` +
+            `• **Bots:** \`${bots.toLocaleString()}\``
         )
-        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     if (guild.bannerURL()) {
         embed.setImage(guild.bannerURL({ size: 4096 }) as string);

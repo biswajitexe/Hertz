@@ -23,9 +23,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const messageId = interaction.options.getString('message_id');
     if (!messageId) {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway End`)
-            .setDescription(`**Usage:** \`?gend <message_id>\``);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.giveaways || "🎉"} End Giveaway`)
+            .setDescription(`> Immediately conclude an active giveaway.\n\n• **Usage:** \`?gend <message_id>\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         return interaction.reply(embed.toPayload());
     }

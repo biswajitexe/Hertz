@@ -31,9 +31,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     }
 
     const embed = new V2Embed()
-        .setColor(0x57F287)
-        .setTitle(`${config.emojis.success || "👁️"} Channels Unhidden`)
-        .setDescription(`**Unhidden ${count} channels** for everyone.`);
+        .setColor(config.colors.default)
+        .setTitle(`${config.emojis.correct} Channels Visible`)
+        .setDescription(`> Successfully restored view channel permissions.\n\n• **Channels Visible:** \`${count}\``)
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.editReply(embed.toPayload());
 }

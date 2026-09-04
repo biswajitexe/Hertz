@@ -127,11 +127,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     let currentType: 'users' | 'roles' | 'channels' = 'users';
                     const getEmbed = async (type: 'users' | 'roles' | 'channels') => {
                         const embed = new V2Embed()
-                            .setColor(config.colors.primary)
-                            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+                            .setColor(config.colors.default)
+                            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
                         if (type === 'users') {
-                            embed.setAuthor('whitelist users', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
+                            embed.setTitle(`${config.emojis.human} Whitelisted Users`);
                             const ids = Array.from(userIds);
                             const names = await Promise.all(ids.map(async id => {
                                 try {
@@ -144,11 +144,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                             const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${ids[i]}」\``).join('\n');
                             embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No users whitelisted.**");
                         } else if (type === 'roles') {
-                            embed.setAuthor('whitelist roles', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
+                            embed.setTitle(`${config.emojis.roles} Whitelisted Roles`);
                             const list = Array.from(roleIds).map((id, i) => `${i + 1}. <@&${id}>`).join('\n');
                             embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No roles whitelisted.**");
                         } else if (type === 'channels') {
-                            embed.setAuthor('whitelist channels', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
+                            embed.setTitle(`${config.emojis.channel} Whitelisted Channels`);
                             const list = Array.from(channelIds).map((id, i) => `${i + 1}. <#${id}>`).join('\n');
                             embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No channels whitelisted.**");
                         }
@@ -309,8 +309,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(config.colors.default)
             .setTitle(`${config.emojis.antinuke} Whitelist Commands`)
             .setDescription(`> \`${config.prefix}wl add <user>\`\n> \`${config.prefix}wl remove <user>\`\n> \`${config.prefix}wl show\`\n> \`${config.prefix}wl reset all\``)
-            .setThumbnail(interaction.client.user.displayAvatarURL())
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.reply(helpEmbed.toPayload());
         return;
@@ -441,11 +440,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             let currentType: 'users' | 'roles' | 'channels' = 'users';
             const getEmbed = async (type: 'users' | 'roles' | 'channels') => {
                 const embed = new V2Embed()
-                    .setColor(config.colors.primary)
-                    .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+                    .setColor(config.colors.default)
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
                 if (type === 'users') {
-                    embed.setAuthor('whitelist users', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
+                    embed.setTitle(`${config.emojis.human} Whitelisted Users`);
                     const ids = Array.from(userIds);
                     const names = await Promise.all(ids.map(async id => {
                         try {
@@ -458,11 +457,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     const list = names.map((name, i) => `\`「${i + 1}」\` | \`${name}「${ids[i]}」\``).join('\n');
                     embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No users whitelisted.**");
                 } else if (type === 'roles') {
-                    embed.setAuthor('whitelist roles', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
+                    embed.setTitle(`${config.emojis.roles} Whitelisted Roles`);
                     const list = Array.from(roleIds).map((id, i) => `${i + 1}. <@&${id}>`).join('\n');
                     embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No roles whitelisted.**");
                 } else if (type === 'channels') {
-                    embed.setAuthor('whitelist channels', 'https://cdn.discordapp.com/emojis/1461641597476274332.png');
+                    embed.setTitle(`${config.emojis.channel} Whitelisted Channels`);
                     const list = Array.from(channelIds).map((id, i) => `${i + 1}. <#${id}>`).join('\n');
                     embed.setDescription(list.length > 0 ? list.slice(0, 4000) : "**No channels whitelisted.**");
                 }

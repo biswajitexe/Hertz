@@ -36,9 +36,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         });
 
         const embed = new V2Embed()
-            .setColor(0xED4245)
-            .setTitle(`${config.emojis.success || "🙈"} Channel Hidden`)
-            .setDescription(`Successfully hidden **<#${channel.id}>** from everyone.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Channel Hidden`)
+            .setDescription(`> Successfully hidden channel from everyone.\n\n• **Channel:** <#${channel.id}>`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         return interaction.reply(embed.toPayload());
 

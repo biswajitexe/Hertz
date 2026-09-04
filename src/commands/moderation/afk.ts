@@ -29,12 +29,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     await database.insertGuild(interaction.guild.id, guildData);
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(`${interaction.user.username} is now AFK`, interaction.user.displayAvatarURL());
-
-    if (reason) {
-        embed.setDescription(`${config.emojis.dot} **Reason:** ${reason}`);
-    }
+        .setColor(config.colors.default)
+        .setTitle(`${config.emojis.correct} AFK Set`)
+        .setDescription(`> Successfully set your AFK status.\n\n• **User:** ${interaction.user.username}\n• **Reason:** ${reason || "AFK"}`)
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.reply(embed.toPayload());
 }

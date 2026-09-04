@@ -66,33 +66,32 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const statusEmoji = guildData.messageFilters.discordInvites ? config.emojis.switch_on : config.emojis.switch_off;
             const statusText = guildData.messageFilters.discordInvites ? "Enabled" : "Disabled";
 
-            let description = `**Anti-Invite System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Discord Invites`;
+            let description = `> Modular, high-performance automated moderation filter.\n\n` +
+                `• **Status:** ${statusText}\n` +
+                `• **Filter:** ${statusEmoji} Anti-Discord Invites`;
 
             if (!guildData.messageFilters.discordInvites) {
-                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antiinvite enable\` to activate security and protect your server! ${config.emojis.lock}`;
+                description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antiinvite enable\` to activate protection.`;
             }
 
             const embed = new V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.automod} Anti-Invite Panel`)
                 .setDescription(description)
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             await interaction.editReply(embed.toPayload());
         } else {
             // Subcommand not found (likely prefix command empty call)
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setTitle('Anti-Invite Commands')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.automod} Anti-Invite Commands`)
                 .setDescription(
-                    '`?antiinvite enable`\n' +
-                    '`?antiinvite disable`\n' +
-                    '`?antiinvite status`'
+                    `> \`${config.prefix}antiinvite enable\`\n` +
+                    `> \`${config.prefix}antiinvite disable\`\n` +
+                    `> \`${config.prefix}antiinvite status\``
                 )
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter('Hertz • Automated Security', interaction.client.user?.displayAvatarURL() || undefined);
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             await interaction.editReply(embed.toPayload());
         }
     } catch (error) {

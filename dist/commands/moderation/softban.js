@@ -103,13 +103,10 @@ function run(interaction, database) {
             yield interaction.guild.members.unban(user.id, `Soft Ban Completed (Unbanning)`);
             yield (0, modLogger_1.logAction)(interaction.guild, user.user, interaction.user, 'BAN', `(Soft Ban) ${reason}`, database);
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.warning)
-                .setTitle(`${config.emojis.success} Soft Banned ${user.user.tag}`)
-                .setDescription(`**User kicked and messages from the past 7 days have been removed.**`)
-                .addFields({ name: 'Action', value: 'Kicked + Messages Deleted (7 Days)', inline: false });
-            if (reason !== "No reason provided") {
-                embed.addFields({ name: 'Reason', value: reason, inline: false });
-            }
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Softbanned ${user.user.tag}`)
+                .setDescription(`> User kicked and messages from the past 7 days have been removed.\n\n• **User:** ${user.user.tag} (\`${user.id}\`)\n• **Reason:** ${reason}`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(embed.toPayload());
         }
         catch (error) {

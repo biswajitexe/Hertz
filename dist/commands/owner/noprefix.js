@@ -80,13 +80,11 @@ function run(interaction, database) {
         }
         const subcommand = interaction.options.getSubcommand();
         const embedStyle = (title, description) => {
-            var _a;
             return new componentV2_1.V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.star} ${title}`)
                 .setDescription(description)
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         };
         if (!botConfig.noPrefixUsers)
             botConfig.noPrefixUsers = [];

@@ -65,14 +65,12 @@ function run(interaction, database) {
         }
         const code = interaction.options.getString('code', true);
         const embedStyle = (title, description, color, fields) => {
-            var _a;
             const embed = new componentV2_1.V2Embed()
                 .setColor(color)
                 .setTitle(`${config.emojis.dev} ${title}`)
                 .setDescription(description || "")
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
                 .addFields(...fields)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return embed;
         };
         try {

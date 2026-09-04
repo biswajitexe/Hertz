@@ -59,10 +59,10 @@ function run(interaction, database) {
             ]
         });
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle('Invite Hertz Security!')
-            .setDescription(`Click below to add me to your server.\n\nI recommend **Administrator** permissions for full functionality (Antinuke, AutoMod, Moderation, etc.).`)
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setTitle('Invite Hertz')
+            .setDescription(`> Modular, high-performance Discord security and management system.\n\n• **Recommended:** Administrator permissions for full protection.\n• **Features:** Antinuke, AutoMod, Moderation & Welcomer.`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
             .setLabel("Invite Me")
             .setStyle(discord_js_1.ButtonStyle.Link)

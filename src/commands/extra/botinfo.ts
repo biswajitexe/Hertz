@@ -68,7 +68,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 inline: true
             }
         )
-        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL())
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`)
         .setTimestamp();
 
     // Buttons

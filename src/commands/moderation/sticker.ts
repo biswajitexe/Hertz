@@ -82,10 +82,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         });
 
         const embed = new V2Embed()
-            .setColor(config.colors.success)
-            .setTitle('Sticker Added')
-            .setDescription(`${config.emojis.success} **Added sticker:** \`${name}\``)
-            .setImage(sticker.url);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Sticker Added`)
+            .setDescription(`> Successfully added sticker to server.\n\n• **Name:** \`${name}\``)
+            .setImage(sticker.url)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.editReply(embed.toPayload());
 

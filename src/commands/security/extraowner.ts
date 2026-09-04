@@ -85,24 +85,23 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             : "**No Extra Owners set.**";
 
         const card = new V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor('Extra Owners', 'https://cdn.discordapp.com/emojis/1461335586412695645.png')
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.owner} Extra Owners`)
             .setDescription(description)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.reply(card.toPayload());
     } else {
         // Help Menu
         const card = new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle('Extra Owner Commands')
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.owner} Extra Owner Commands`)
             .setDescription(
-                `\`${config.prefix}extraowner add <user>\`\n` +
-                `\`${config.prefix}extraowner remove <user>\`\n` +
-                `\`${config.prefix}extraowner show\``
+                `> \`${config.prefix}extraowner add <user>\`\n` +
+                `> \`${config.prefix}extraowner remove <user>\`\n` +
+                `> \`${config.prefix}extraowner show\``
             )
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.reply(card.toPayload());
     }

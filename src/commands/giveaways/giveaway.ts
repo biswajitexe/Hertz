@@ -75,13 +75,12 @@ export const command = new SlashCommandBuilder()
             .setDescription('List all active giveaways')
     );
 
-const embedStyle = (interaction: ChatInputCommandInteraction, title: string, description: string, color: number = config.colors.primary) => {
+const embedStyle = (interaction: ChatInputCommandInteraction, title: string, description: string, color: number = config.colors.default) => {
     return new V2Embed()
         .setColor(color)
         .setTitle(`${config.emojis.giveaways || "🎉"} ${title}`)
         .setDescription(description)
-        .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-        .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 };
 
 export async function run(interaction: ChatInputCommandInteraction, database: Database) {
@@ -96,14 +95,13 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         } else {
             // Default / Help
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway Commands`)
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.giveaways || "🎉"} Giveaway System`)
                 .setDescription(
-                    "`gstart` , `gend` , `gpause`\n" +
-                    "`gresume` , `greroll` , `glist`"
+                    `> Host and manage interactive server giveaways.\n\n` +
+                    `• **Commands:** \`?gstart\`, \`?gend\`, \`?gpause\`, \`?gresume\`, \`?greroll\`, \`?glist\``
                 )
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             await interaction.reply(embed.toPayload());
         }
@@ -113,9 +111,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // Permission Check for Management Commands
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages) && interaction.user.id !== process.env.OWNER_ID) {
         const embed = new V2Embed()
-            .setColor(config.colors.error)
-            .setDescription(`${config.emojis.error} You do not have permission to manage giveaways. (Requires \`Manage Messages\`)`)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setDescription(`> ${config.emojis.wrong} You do not have permission to manage giveaways (Requires \`Manage Messages\`).`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return interaction.reply(embed.toPayload({ ephemeral: true }));
     }
 
@@ -140,9 +138,9 @@ export async function handleStart(interaction: ChatInputCommandInteraction) {
     const duration = ms(timeArg);
     if (!duration || duration < 10000) {
         const embed = new V2Embed()
-            .setColor(config.colors.error)
-            .setDescription(`${config.emojis.error} Please provide a valid duration (minimum 10s). Example: \`1h\`, \`1d\`.`)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setDescription(`> ${config.emojis.wrong} Please provide a valid duration (minimum 10s). Example: \`1h\`, \`1d\`.`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return interaction.reply(embed.toPayload({ ephemeral: true }));
     }
 
@@ -243,16 +241,16 @@ export async function handleList(interaction: ChatInputCommandInteraction) {
     const giveaways = giveawayHandler.getAllGiveaways(interaction.guildId!);
     if (giveaways.length === 0) {
         const embed = new V2Embed()
-            .setColor(config.colors.warning)
-            .setDescription(`${config.emojis.warning} No active giveaways found for this server.`)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setDescription(`> ${config.emojis.warning} No active giveaways found for this server.`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return interaction.reply(embed.toPayload({ ephemeral: true }));
     }
 
     const list = giveaways.slice(0, 10).map(g => {
-        return `**${config.emojis.dot} Prize:** ${g.prize}\n**ID:** \`${g.messageId}\` • **Status:** ${g.ended ? 'Ended' : g.paused ? 'Paused' : 'Running'}\n**Ends:** <t:${Math.floor(g.endTime / 1000)}:R>`;
+        return `• **${g.prize}**\n  ID: \`${g.messageId}\` • Status: \`${g.ended ? 'Ended' : g.paused ? 'Paused' : 'Running'}\` • Ends: <t:${Math.floor(g.endTime / 1000)}:R>`;
     }).join('\n\n');
 
-    const embed = embedStyle(interaction, 'Active Giveaways', list);
+    const embed = embedStyle(interaction, 'Active Giveaways', `> Active server giveaways list.\n\n${list}`);
     return interaction.reply(embed.toPayload());
 }

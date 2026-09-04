@@ -21,10 +21,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     }
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(`${user.username}'s Banner`, user.displayAvatarURL())
+        .setColor(config.colors.default)
+        .setTitle(`${user.username}'s Banner`)
         .setImage(user.bannerURL({ size: 4096 }) as string)
-        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.reply(embed.toPayload());
 }

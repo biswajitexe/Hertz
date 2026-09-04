@@ -73,13 +73,11 @@ function run(interaction, database) {
             return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         const sub = interaction.options.getSubcommand();
         const embedStyle = (title, description, color = config.colors.default) => {
-            var _a;
             return new componentV2_1.V2Embed()
                 .setColor(color)
                 .setTitle(`${config.emojis.settings} ${title}`)
                 .setDescription(description)
-                .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         };
         if (sub === 'set') {
             const typeStr = interaction.options.getString('type', true);

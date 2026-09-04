@@ -131,9 +131,8 @@ export class AntinukeManager {
                 const embed = new V2Embed()
                     .setColor(config.colors.default)
                     .setTitle(`${config.emojis.antinuke} Security Alert`)
-                    .setDescription(`> ${config.emojis.warning} **The previous log channel was deleted.**\n> I have automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
-                    .setThumbnail(channel.guild.iconURL() || this.client.user?.displayAvatarURL() || null)
-                    .setFooter('Antinuke Security System', this.client.user?.displayAvatarURL() || undefined);
+                    .setDescription(`> ${config.emojis.warning} **The previous log channel was deleted.**\n> Automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
+                    .setFooter('Antinuke Security System | Powered by Hertz');
 
                 await newChannel.send(embed.toPayload());
             } catch (e) {

@@ -67,15 +67,14 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (!subcommand || subcommand === 'help') {
         const embed = new V2Embed()
             .setColor(config.colors.default)
-            .setThumbnail(interaction.client.user.displayAvatarURL())
-            .setTitle(`${config.emojis.welcomer} Autorole Commands`)
-            .setDescription(`${config.emojis.role} **Configure Auto-Roles for new members**\n\n` +
-                `\`?autorole humans <add | remove> <role>\`\n` +
-                `\`?autorole bots <add | remove> <role>\`\n` +
-                `\`?autorole show\`\n` +
-                `\`?autorole reset\``
+            .setTitle(`${config.emojis.welcomer} Autorole Configuration`)
+            .setDescription(`> Automatically assign roles to new members on join.\n\n` +
+                `• **Humans:** \`?autorole humans <add | remove> <role>\`\n` +
+                `• **Bots:** \`?autorole bots <add | remove> <role>\`\n` +
+                `• **Show:** \`?autorole show\`\n` +
+                `• **Reset:** \`?autorole reset\``
             )
-            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         return interaction.reply(embed.toPayload());
     }
@@ -85,16 +84,15 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         const getEmbed = (type: 'humans' | 'bots') => {
             const embed = new V2Embed()
                 .setColor(config.colors.default)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setTitle(type === 'humans' ? `${config.emojis.human} Autorole Humans` : `${config.emojis.bot} Autorole Bots`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             if (type === 'humans') {
-                const list = guildData.autoroles.map((id, i) => `\`「${i + 1}」\` <@&${id}>`).join('\n') || "None";
-                embed.setAuthor('Autorole Humans', interaction.client.user.displayAvatarURL());
-                embed.setDescription(list);
+                const list = guildData.autoroles.map((id, i) => `• \`#${i + 1}\` <@&${id}>`).join('\n') || "• None configured.";
+                embed.setDescription(`> Roles automatically assigned to human members.\n\n${list}`);
             } else {
-                const list = guildData.autorolesBots.map((id, i) => `\`「${i + 1}」\` <@&${id}>`).join('\n') || "None";
-                embed.setAuthor('Autorole Bots', interaction.client.user.displayAvatarURL());
-                embed.setDescription(list);
+                const list = guildData.autorolesBots.map((id, i) => `• \`#${i + 1}\` <@&${id}>`).join('\n') || "• None configured.";
+                embed.setDescription(`> Roles automatically assigned to bot members.\n\n${list}`);
             }
             return embed;
         };

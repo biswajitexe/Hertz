@@ -49,11 +49,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             name = null;
         } else {
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setDescription(`\`${config.prefix}steal <emoji(s)>\`\n\`${config.prefix}steal <emoji> <name>\`\nor **Reply** with \`${config.prefix}steal\``)
-                .setFooter(`Hertz • Advanced Moderation`, interaction.client.user?.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setTitle(`Steal Emojis`)
+                .setDescription(`> Steal emojis from other servers or messages.\n\n• **Usage:** \`${config.prefix}steal <emoji(s)>\`\n• **Rename:** \`${config.prefix}steal <emoji> <name>\`\n• **Reply:** Reply to any message with \`${config.prefix}steal\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             return interaction.reply(embed.toPayload());
         }
@@ -155,9 +154,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     if (!description) description = "No emojis added (Duplicates skipped).";
 
     const embed = new V2Embed()
-        .setColor(config.colors.success)
+        .setColor(config.colors.default)
         .setTitle('Emoji Stealer')
-        .setDescription(description);
+        .setDescription(description)
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.editReply(embed.toPayload());
 }
@@ -168,9 +168,10 @@ async function handleSingleInternal(interaction: ChatInputCommandInteraction, ur
         const emoji = await interaction.guild!.emojis.create({ attachment: url, name: name });
 
         const embed = new V2Embed()
-            .setColor(config.colors.success)
-            .setTitle('Emoji Added')
-            .setDescription(`${config.emojis.success} **Added:** ${emoji} \`${name}\``);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Emoji Added`)
+            .setDescription(`> Successfully added emoji to server.\n\n• **Emoji:** ${emoji}\n• **Name:** \`${name}\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.editReply(embed.toPayload());
 

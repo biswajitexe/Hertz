@@ -100,19 +100,20 @@ const run = (interaction, database) => __awaiter(void 0, void 0, void 0, functio
 exports.run = run;
 function sendLanguageDropdown(interaction, text) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f, _g;
         const selectMenu = new discord_js_1.StringSelectMenuBuilder()
             .setCustomId(`translate_select_${((_a = interaction.author) === null || _a === void 0 ? void 0 : _a.id) || ((_b = interaction.user) === null || _b === void 0 ? void 0 : _b.id)}`)
             .setPlaceholder("Select a Language (Indian Languages prioritized)")
             .addOptions(...INDIAN_LANGUAGES.map(l => new discord_js_1.StringSelectMenuOptionBuilder().setLabel(l.label).setValue(l.value).setEmoji(l.emoji)), ...GLOBAL_LANGUAGES.map(l => new discord_js_1.StringSelectMenuOptionBuilder().setLabel(l.label).setValue(l.value).setEmoji(l.emoji)));
         const row = new discord_js_1.ActionRowBuilder().addComponents(selectMenu);
         const embed = new componentV2_1.V2Embed()
-            .setColor(config_1.colors.primary)
+            .setColor(config_1.colors.default)
             .setTitle("Language Selection")
-            .setDescription(`**Select a language to translate the text:**\n> ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+            .setDescription(`> Select a language below to translate the specified text.\n\n• **Text Preview:** \`${text.substring(0, 100)}${text.length > 100 ? '...' : ''}\``)
+            .setFooter(`Requested by ${((_d = (_c = interaction.member) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.username) || ((_e = interaction.author) === null || _e === void 0 ? void 0 : _e.username) || ((_f = interaction.user) === null || _f === void 0 ? void 0 : _f.username)}! | Powered by Hertz`);
         if (interaction instanceof discord_js_1.Message) {
             const msg = yield interaction.reply(embed.toPayload({ extraComponents: [row] }));
-            const targetId = (_c = interaction.reference) === null || _c === void 0 ? void 0 : _c.messageId;
+            const targetId = (_g = interaction.reference) === null || _g === void 0 ? void 0 : _g.messageId;
             if (targetId) {
                 const newMenu = new discord_js_1.StringSelectMenuBuilder(selectMenu.toJSON())
                     .setCustomId(`translate_sel_${interaction.author.id}_${targetId}`);
@@ -127,21 +128,21 @@ function sendLanguageDropdown(interaction, text) {
 }
 function performTranslation(interaction, text, targetLang) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f;
         let replyMsg;
         if (interaction instanceof discord_js_1.Message) {
-            replyMsg = yield interaction.reply({ content: `${config_1.emojis.loading || '⏳'} Translating...` });
+            replyMsg = yield interaction.reply({ content: "Translating..." });
         }
-        else if (interaction.isRepliable && interaction.isRepliable()) {
+        else {
             yield interaction.deferReply();
         }
         try {
             const res = yield (0, google_translate_api_x_1.translate)(text, { to: targetLang });
             const embed = new componentV2_1.V2Embed()
-                .setColor(0x4285F4)
-                .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
-                .addFields({ name: `Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${targetLang})`, value: `> ${res.text.substring(0, 1000)}` })
-                .setFooter(`Requested by ${((_d = (_c = interaction.member) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.username) || ((_e = interaction.author) === null || _e === void 0 ? void 0 : _e.username)}`);
+                .setColor(config_1.colors.default)
+                .setTitle("Translation Result")
+                .setDescription(`> Successfully translated text.\n\n• **Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'}):**\n\`\`\`\n${text.substring(0, 1000)}\n\`\`\`\n• **Translated (${targetLang}):**\n\`\`\`\n${res.text.substring(0, 1000)}\n\`\`\``)
+                .setFooter(`Requested by ${((_d = (_c = interaction.member) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.username) || ((_e = interaction.author) === null || _e === void 0 ? void 0 : _e.username) || ((_f = interaction.user) === null || _f === void 0 ? void 0 : _f.username)}! | Powered by Hertz`);
             if (interaction instanceof discord_js_1.Message) {
                 yield replyMsg.edit(Object.assign({ content: null }, embed.toPayload()));
             }
@@ -183,10 +184,10 @@ const handleInteraction = (interaction, database) => __awaiter(void 0, void 0, v
         const text = targetMsg.content;
         const res = yield (0, google_translate_api_x_1.translate)(text, { to: selectedLang });
         const embed = new componentV2_1.V2Embed()
-            .setColor(0x4285F4)
-            .setAuthor("Translation Result", "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png")
-            .addFields({ name: `Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'})`, value: `> ${text.substring(0, 1000)}` }, { name: `Translated (${selectedLang})`, value: `> ${res.text.substring(0, 1000)}` })
-            .setFooter(`Requested by ${interaction.user.username}`);
+            .setColor(config_1.colors.default)
+            .setTitle("Translation Result")
+            .setDescription(`> Successfully translated text.\n\n• **Original (${((_b = (_a = res.from) === null || _a === void 0 ? void 0 : _a.language) === null || _b === void 0 ? void 0 : _b.iso) || 'auto'}):**\n\`\`\`\n${text.substring(0, 1000)}\n\`\`\`\n• **Translated (${selectedLang}):**\n\`\`\`\n${res.text.substring(0, 1000)}\n\`\`\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
     }
     catch (e) {

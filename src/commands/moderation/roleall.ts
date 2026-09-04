@@ -32,11 +32,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     if (!subcommand || !role) {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setDescription(`\`${config.prefix}roleall add <role>\`\n\`${config.prefix}roleall remove <role>\``)
-            .setFooter(`Hertz • Advanced Moderation`, interaction.client.user?.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.roles} Mass Role Management`)
+            .setDescription(`> Assign or strip roles across the server.\n\n• **Add:** \`${config.prefix}roleall add <role>\`\n• **Remove:** \`${config.prefix}roleall remove <role>\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return interaction.reply(embed.toPayload());
     }
 
@@ -95,9 +94,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
 
         const embed = new V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`${config.emojis.success} Role Added to Members`)
-            .setDescription(`**Added role ${role.name} to ${count} members.** (Failed: ${failed})`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Role Added`)
+            .setDescription(`> Successfully assigned role to all members.\n\n• **Role:** ${role.name}\n• **Success:** \`${count}\` members\n• **Failed:** \`${failed}\` members`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         await interaction.editReply({ content: null, ...embed.toPayload() });
 
     } else if (subcommand === 'remove') {
@@ -109,9 +109,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
 
         const embed = new V2Embed()
-            .setColor(0xED4245)
-            .setTitle(`${config.emojis.success} Role Removed from Members`)
-            .setDescription(`**Removed role ${role.name} from ${count} members.** (Failed: ${failed})`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Role Removed`)
+            .setDescription(`> Successfully removed role from all members.\n\n• **Role:** ${role.name}\n• **Success:** \`${count}\` members\n• **Failed:** \`${failed}\` members`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         await interaction.editReply({ content: null, ...embed.toPayload() });
     }
 }

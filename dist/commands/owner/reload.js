@@ -52,7 +52,6 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDescription('Reloads the bot (Owner Only)');
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
         const botConfig = yield database.getBotConfig();
         const owners = (process.env.OWNER_ID || "").split(',').map(id => id.trim());
         if (botConfig === null || botConfig === void 0 ? void 0 : botConfig.ownerUsers)
@@ -66,8 +65,7 @@ function run(interaction, database) {
             .setColor(config.colors.default)
             .setTitle(`${config.emojis.dev} Reloading Bot`)
             .setDescription(`> **Reloading bot logic...** (This may take a moment)`)
-            .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.reply(embed.toPayload({ ephemeral: true }));
         console.log("[Reload] Triggered by owner. Exiting...");
         process.exit(0);

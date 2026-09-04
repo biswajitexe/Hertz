@@ -122,7 +122,6 @@ class AntinukeManager {
     }
     handleChannelDelete(channel) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
             if (!channel.guild)
                 return;
             const guildData = yield this.database.retrieveGuild(channel.guild.id);
@@ -148,9 +147,8 @@ class AntinukeManager {
                     const embed = new componentV2_1.V2Embed()
                         .setColor(config.colors.default)
                         .setTitle(`${config.emojis.antinuke} Security Alert`)
-                        .setDescription(`> ${config.emojis.warning} **The previous log channel was deleted.**\n> I have automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
-                        .setThumbnail(channel.guild.iconURL() || ((_a = this.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                        .setFooter('Antinuke Security System', ((_b = this.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || undefined);
+                        .setDescription(`> ${config.emojis.warning} **The previous log channel was deleted.**\n> Automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
+                        .setFooter('Antinuke Security System | Powered by Hertz');
                     yield newChannel.send(embed.toPayload());
                 }
                 catch (e) {

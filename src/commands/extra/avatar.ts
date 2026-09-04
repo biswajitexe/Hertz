@@ -16,10 +16,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const user = interaction.options.getUser('target') || interaction.user;
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(`${user.username}'s Avatar`, user.displayAvatarURL())
+        .setColor(config.colors.default)
+        .setTitle(`${user.username}'s Avatar`)
         .setImage(user.displayAvatarURL({ size: 4096 }))
-        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     await interaction.reply(embed.toPayload());
 }

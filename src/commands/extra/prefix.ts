@@ -32,8 +32,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(color)
             .setTitle(`${config.emojis.pin} ${title}`)
             .setDescription(description)
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
     };
 
     if (sub === 'set') {
@@ -46,16 +45,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         guild.prefix = newPrefix;
         await database.insertGuild(interaction.guildId, guild);
 
-        return interaction.reply(embedStyle('Prefix Updated', `> ${config.emojis.correct} Successfully set custom prefix to **${newPrefix}**\n> Example: \`${newPrefix}help\``, config.colors.default).toPayload());
+        return interaction.reply(embedStyle('Prefix Updated', `> Successfully set custom server prefix.\n\n• **New Prefix:** \`${newPrefix}\`\n• **Example:** \`${newPrefix}help\``, config.colors.default).toPayload());
     }
 
     if (sub === 'reset') {
         guild.prefix = null;
         await database.insertGuild(interaction.guildId, guild);
-        return interaction.reply(embedStyle('Prefix Reset', `> ${config.emojis.correct} Reset prefix to default: **${config.prefix}**`, config.colors.default).toPayload());
+        return interaction.reply(embedStyle('Prefix Reset', `> Reset prefix to default system prefix.\n\n• **Prefix:** \`${config.prefix}\``, config.colors.default).toPayload());
     }
 
     // Default: Show Current Prefix
     const current = guild.prefix || config.prefix;
-    return interaction.reply(embedStyle('Server Prefix', `> Current Prefix: **\`${current}\`**\n\n**Usage:**\n> \`${current}prefix set <new>\`\n> \`${current}prefix reset\``).toPayload());
+    return interaction.reply(embedStyle('Server Prefix', `> Current server prefix configuration.\n\n• **Prefix:** \`${current}\`\n• **Set:** \`${current}prefix set <new>\`\n• **Reset:** \`${current}prefix reset\``).toPayload());
 }

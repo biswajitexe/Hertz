@@ -47,8 +47,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(config.colors.default)
             .setTitle(`${config.emojis.star} ${title}`)
             .setDescription(description)
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
     };
 
     if (!botConfig.noPrefixUsers) botConfig.noPrefixUsers = [];

@@ -50,12 +50,10 @@ function pagination(interaction_1, title_1, items_1) {
     return __awaiter(this, arguments, void 0, function* (interaction, title, items, itemsPerPage = 10, iconURL = null) {
         if (items.length === 0) {
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
+                .setColor(config.colors.default)
                 .setTitle(title)
-                .setDescription(`**No items found.**`)
-                .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
-            if (iconURL)
-                embed.setAuthor(title, iconURL);
+                .setDescription(`> **No items found.**`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.editReply(embed.toPayload());
         }
         const totalPages = Math.ceil(items.length / itemsPerPage);
@@ -84,12 +82,10 @@ function pagination(interaction_1, title_1, items_1) {
             const end = start + itemsPerPage;
             const currentItems = items.slice(start, end);
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
+                .setColor(config.colors.default)
                 .setTitle(title)
                 .setDescription(currentItems.join('\n'))
-                .setFooter(`Page ${page + 1} / ${totalPages} • Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
-            if (iconURL)
-                embed.setAuthor(title, iconURL);
+                .setFooter(`Page ${page + 1}/${totalPages} • Requested by ${interaction.user.username}! | Powered by Hertz`);
             if (withButtons && totalPages > 1) {
                 embed.addActionRow(generateButtons(page));
             }

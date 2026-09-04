@@ -57,11 +57,10 @@ function run(interaction, database) {
         const now = Date.now();
         const latency = interaction.createdTimestamp ? Math.max(1, now - interaction.createdTimestamp) : 1;
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.default)
             .setTitle('Pong!')
-            .addFields({ name: 'Bot Latency', value: `${latency}ms`, inline: true }, { name: 'API Latency', value: `${wsPing}ms`, inline: true })
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
-            .setTimestamp();
+            .setDescription(`> Real-time system and websocket latency.\n\n• **Bot Latency:** \`${latency}ms\`\n• **API Latency:** \`${wsPing}ms\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.reply(embed.toPayload());
     });
 }

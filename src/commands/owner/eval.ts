@@ -26,9 +26,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(color)
             .setTitle(`${config.emojis.dev} ${title}`)
             .setDescription(description || "")
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
             .addFields(...fields)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return embed;
     };
 

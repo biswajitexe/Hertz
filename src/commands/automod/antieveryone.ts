@@ -66,33 +66,32 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const statusEmoji = guildData.messageFilters.antiEveryone ? config.emojis.switch_on : config.emojis.switch_off;
             const statusText = guildData.messageFilters.antiEveryone ? "Enabled" : "Disabled";
 
-            let description = `**Anti-Everyone System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Everyone/Here`;
+            let description = `> Modular, high-performance automated moderation filter.\n\n` +
+                `• **Status:** ${statusText}\n` +
+                `• **Filter:** ${statusEmoji} Anti-Everyone / Anti-Here`;
 
             if (!guildData.messageFilters.antiEveryone) {
-                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antieveryone enable\` to activate security and protect your server! ${config.emojis.lock}`;
+                description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antieveryone enable\` to activate protection.`;
             }
 
             const embed = new V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.automod} Anti-Everyone Panel`)
                 .setDescription(description)
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             await interaction.editReply(embed.toPayload());
         } else {
             // Fallback for prefix command help
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setTitle('Anti-Everyone Commands')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.automod} Anti-Everyone Commands`)
                 .setDescription(
-                    '`?antieveryone enable`\n' +
-                    '`?antieveryone disable`\n' +
-                    '`?antieveryone status`'
+                    `> \`${config.prefix}antieveryone enable\`\n` +
+                    `> \`${config.prefix}antieveryone disable\`\n` +
+                    `> \`${config.prefix}antieveryone status\``
                 )
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter('Hertz • Automated Security', interaction.client.user?.displayAvatarURL() || undefined);
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             await interaction.editReply(embed.toPayload());
         }
     } catch (error) {

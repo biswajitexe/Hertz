@@ -70,10 +70,10 @@ function run(interaction, database) {
                     .catch(() => errors++);
             }
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.success)
-                .setTitle('Unban All Complete')
-                .setDescription(`${config.emojis.success} Successfully unbanned **${count}** members.\n${errors > 0 ? `${config.emojis.warning} Failed to unban **${errors}** members.` : ''}`)
-                .setFooter(`Action by ${interaction.user.tag}`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Unban All Complete`)
+                .setDescription(`> Finished unbanning server members.\n\n• **Unbanned:** \`${count}\` members\n• **Failed:** \`${errors}\` members`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(Object.assign({ content: null }, embed.toPayload()));
         }
         catch (err) {

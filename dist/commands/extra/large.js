@@ -62,10 +62,10 @@ const run = (interaction, database) => __awaiter(void 0, void 0, void 0, functio
     const extension = isAnimated ? "gif" : "png";
     const url = `https://cdn.discordapp.com/emojis/${id}.${extension}?size=4096`;
     const embed = new componentV2_1.V2Embed()
-        .setColor(config_1.colors.primary)
+        .setColor(config_1.colors.default)
         .setTitle(`Enlarged Emoji: :${name}:`)
         .setImage(url)
-        .setFooter(`ID: ${id}`);
+        .setFooter(`ID: ${id} | Powered by Hertz`);
     return interaction.reply(embed.toPayload());
 });
 exports.run = run;

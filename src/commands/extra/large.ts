@@ -65,10 +65,10 @@ export const run = async (interaction: any, database: any) => {
 
     // 3. Send V2 Embed
     const embed = new V2Embed()
-        .setColor(colors.primary)
+        .setColor(colors.default)
         .setTitle(`Enlarged Emoji: :${name}:`)
         .setImage(url)
-        .setFooter(`ID: ${id}`);
+        .setFooter(`ID: ${id} | Powered by Hertz`);
 
     return interaction.reply(embed.toPayload());
 };

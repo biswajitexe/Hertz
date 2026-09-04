@@ -36,8 +36,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(color)
             .setTitle(`${config.emojis.owner} ${title}`)
             .setDescription(description)
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
     };
 
     if (sub === 'user') {

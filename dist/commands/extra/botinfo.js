@@ -103,7 +103,7 @@ function run(interaction, database) {
             ].join("\n"),
             inline: true
         })
-            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL())
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`)
             .setTimestamp();
         const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
             .setLabel("Invite Me")

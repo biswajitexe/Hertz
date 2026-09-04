@@ -30,8 +30,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             .setColor(config.colors.default)
             .setTitle(`${error ? config.emojis.wrong : config.emojis.correct} ${error ? 'Shell Error' : 'Shell Success'}`)
             .setDescription(`> \`\`\`bash\n${cleanOutput}\n\`\`\``)
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         interaction.editReply(embed.toPayload());
     });

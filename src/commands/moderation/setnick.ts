@@ -44,11 +44,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     if (!targetUser) {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setDescription(`\`${config.prefix}setnick <user> <name>\`\n\`${config.prefix}resetnick <user>\``)
-            .setFooter(`Hertz • Advanced Moderation`, interaction.client.user?.displayAvatarURL());
+            .setColor(config.colors.default)
+            .setTitle(`Nickname Management`)
+            .setDescription(`> Change or reset member nicknames.\n\n• **Set Nickname:** \`${config.prefix}setnick <user> <name>\`\n• **Reset Nickname:** \`${config.prefix}resetnick <user>\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         return interaction.reply(embed.toPayload());
     }
 
@@ -66,9 +65,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         await member.setNickname(nickname || null);
 
         const embed = new V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`${config.emojis.success} Nickname Changed`)
-            .setDescription(`Changed **${targetUser.tag}**'s nickname to **${nickname || "Default"}**.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Nickname Updated`)
+            .setDescription(`> Successfully updated member nickname.\n\n• **User:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Nickname:** \`${nickname || "Default"}\``)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.reply(embed.toPayload());
 

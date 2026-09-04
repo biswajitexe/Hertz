@@ -62,11 +62,10 @@ function run(interaction, database) {
         const member = (_a = interaction.guild) === null || _a === void 0 ? void 0 : _a.members.cache.get(user.id);
         const targetMember = member || (interaction.guild ? yield interaction.guild.members.fetch(user.id).catch(() => null) : null);
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(user.username, user.displayAvatarURL())
+            .setColor(config.colors.default)
+            .setTitle(`User Info: ${user.username}`)
             .setThumbnail(user.displayAvatarURL({ size: 4096 }))
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
-            .setTimestamp();
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const userInfoParts = [
             `${config.emojis.dot} **Display Name:** ${user.globalName || user.username}`,
             `${config.emojis.dot} **Created:** <t:${Math.floor(user.createdTimestamp / 1000)}:R>`,

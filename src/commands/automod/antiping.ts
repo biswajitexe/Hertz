@@ -66,32 +66,31 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const statusEmoji = guildData.messageFilters.massMention ? config.emojis.switch_on : config.emojis.switch_off;
             const statusText = guildData.messageFilters.massMention ? "Enabled" : "Disabled";
 
-            let description = `**Anti-Ping System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Mass Mention (Limit: > 7)`;
+            let description = `> Modular, high-performance automated moderation filter.\n\n` +
+                `• **Status:** ${statusText}\n` +
+                `• **Filter:** ${statusEmoji} Anti-Mass Mention (> 7 mentions)`;
 
             if (!guildData.messageFilters.massMention) {
-                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antiping enable\` to activate security and protect your server! ${config.emojis.lock}`;
+                description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antiping enable\` to activate protection.`;
             }
 
             const embed = new V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.automod} Anti-Ping Panel`)
                 .setDescription(description)
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             await interaction.editReply(embed.toPayload());
         } else {
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setTitle('Anti-Ping Commands')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.automod} Anti-Ping Commands`)
                 .setDescription(
-                    '`?antiping enable`\n' +
-                    '`?antiping disable`\n' +
-                    '`?antiping status`'
+                    `> \`${config.prefix}antiping enable\`\n` +
+                    `> \`${config.prefix}antiping disable\`\n` +
+                    `> \`${config.prefix}antiping status\``
                 )
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter('Hertz • Automated Security', interaction.client.user?.displayAvatarURL() || undefined);
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             await interaction.editReply(embed.toPayload());
         }
     } catch (error) {

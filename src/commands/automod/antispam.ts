@@ -66,33 +66,32 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             const statusEmoji = guildData.messageFilters.spam ? config.emojis.switch_on : config.emojis.switch_off;
             const statusText = guildData.messageFilters.spam ? "Enabled" : "Disabled";
 
-            let description = `**Anti-Spam System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Spam`;
+            let description = `> Modular, high-performance automated moderation filter.\n\n` +
+                `• **Status:** ${statusText}\n` +
+                `• **Filter:** ${statusEmoji} Anti-Spam`;
 
             if (!guildData.messageFilters.spam) {
-                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antispam enable\` to activate security and protect your server! ${config.emojis.lock}`;
+                description += `\n\n> ${config.emojis.lock} Use \`${config.prefix}antispam enable\` to activate protection.`;
             }
 
             const embed = new V2Embed()
                 .setColor(config.colors.default)
                 .setTitle(`${config.emojis.automod} Anti-Spam Panel`)
                 .setDescription(description)
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             await interaction.editReply(embed.toPayload());
         } else {
             // Subcommand not found (likely prefix command empty call)
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                .setTitle('Anti-Spam Commands')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.automod} Anti-Spam Commands`)
                 .setDescription(
-                    '`?antispam enable`\n' +
-                    '`?antispam disable`\n' +
-                    '`?antispam status`'
+                    `> \`${config.prefix}antispam enable\`\n` +
+                    `> \`${config.prefix}antispam disable\`\n` +
+                    `> \`${config.prefix}antispam status\``
                 )
-                .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter('Hertz • Automated Security', interaction.client.user?.displayAvatarURL() || undefined);
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             await interaction.editReply(embed.toPayload());
         }
     } catch (error) {

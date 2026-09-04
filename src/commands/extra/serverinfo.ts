@@ -19,10 +19,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const generateEmbed = (page: string) => {
         const embed = new V2Embed()
             .setColor(config.colors.default)
-            .setAuthor(guild.name, guild.iconURL() || undefined)
+            .setTitle(guild.name)
             .setThumbnail(guild.iconURL({ size: 4096 }))
-            .setFooter(`Requested by ${interaction.user.tag} • Page: ${page}`, interaction.user.displayAvatarURL())
-            .setTimestamp();
+            .setFooter(`Page: ${page} • Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         if (guild.bannerURL()) embed.setImage(guild.bannerURL({ size: 4096 })!);
 

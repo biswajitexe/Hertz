@@ -37,9 +37,10 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         });
 
         const embed = new V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`${config.emojis.success || "🔓"} Channel Unlocked`)
-            .setDescription(`Successfully unlocked **<#${channel.id}>** for regular messages.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Channel Unlocked`)
+            .setDescription(`> Successfully restored send message permissions.\n\n• **Channel:** <#${channel.id}>`)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         return interaction.reply(embed.toPayload());
 

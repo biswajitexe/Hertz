@@ -90,12 +90,12 @@ function run(interaction, database) {
                     return interaction.reply((0, componentV2_1.createSuccessV2)(`**${targetUser.username}** has no warnings.`).toPayload({ ephemeral: true }));
                 }
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.primary)
-                    .setAuthor(`Warnings list for ${targetUser.username}`, 'https://cdn.discordapp.com/emojis/1461641597476274332.png')
-                    .setDescription(userWarns.map((w, index) => {
-                    return `\`「${index + 1}」\` | \`${w.reason}\` - <t:${Math.floor(w.timestamp / 1000)}:R>`;
+                    .setColor(config.colors.default)
+                    .setTitle(`Warnings: ${targetUser.username}`)
+                    .setDescription(`> Active warning records for <@${targetUser.id}>.\n\n` + userWarns.map((w, index) => {
+                    return `• \`#${index + 1}\` \`${w.reason}\` • <t:${Math.floor(w.timestamp / 1000)}:R>`;
                 }).join('\n'))
-                    .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 return interaction.reply(embed.toPayload());
             }
             else {
@@ -114,22 +114,20 @@ function run(interaction, database) {
                     return interaction.reply((0, componentV2_1.createErrorV2)("**No active warnings found.**").toPayload({ ephemeral: true }));
                 }
                 yield interaction.deferReply();
-                const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.primary)
-                    .setAuthor(`Server Warn List (Top 10)`, interaction.guild.iconURL() || undefined)
-                    .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
                 const list = yield Promise.all(warnedUsers.map((_a, index_1) => __awaiter(this, [_a, index_1], void 0, function* ([userId, warns], index) {
                     let username = userId;
                     try {
                         const u = yield interaction.client.users.fetch(userId);
                         username = u.username;
                     }
-                    catch (_b) {
-                        username = 'Unknown User';
-                    }
-                    return `\`「${index + 1}」\` | **${username}** (\`${userId}\`) - **${warns.length} Warns**`;
+                    catch (e) { }
+                    return `• \`#${index + 1}\` **${username}** (\`${userId}\`) — \`${warns.length}\` warning(s)`;
                 })));
-                embed.setDescription(list.join('\n'));
+                const embed = new componentV2_1.V2Embed()
+                    .setColor(config.colors.default)
+                    .setTitle(`Server Warnings (Top 10)`)
+                    .setDescription(`> Highest warned members in this server.\n\n` + list.join('\n'))
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 return interaction.editReply(embed.toPayload());
             }
         }
@@ -196,9 +194,10 @@ function run(interaction, database) {
             }
             yield database.insertGuild(interaction.guild.id, guildData);
             const embed = new componentV2_1.V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`${config.emojis.success} Warning Deleted`)
-                .setDescription(`${config.emojis.dot} **Target:** ${targetUser.tag}\n${config.emojis.dot} **ID:** ${warnId}`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Warning Deleted`)
+                .setDescription(`> Successfully removed warning from member.\n\n• **Target:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Warn ID:** \`${warnId}\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
         if (subcommand === 'clear') {
@@ -212,9 +211,10 @@ function run(interaction, database) {
             delete guildData.warns[targetUser.id];
             yield database.insertGuild(interaction.guild.id, guildData);
             const embed = new componentV2_1.V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`${config.emojis.success} Warnings Cleared`)
-                .setDescription(`Cleared **${count}** warnings for **${targetUser.tag}**.`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Warnings Cleared`)
+                .setDescription(`> Successfully cleared all warnings.\n\n• **Target:** ${targetUser.tag} (\`${targetUser.id}\`)\n• **Count:** \`${count}\` warning(s) cleared`)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             return interaction.reply(embed.toPayload());
         }
     });

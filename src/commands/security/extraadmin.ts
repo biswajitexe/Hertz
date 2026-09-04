@@ -90,24 +90,23 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             : "**No Extra Admins set.**";
 
         const card = new V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor('Extra Admins', 'https://cdn.discordapp.com/emojis/1461692661562871962.png')
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.roles} Extra Admins`)
             .setDescription(description)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.reply(card.toPayload());
     } else {
         // Help Menu
         const card = new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle('Extra Admin Commands')
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.roles} Extra Admin Commands`)
             .setDescription(
-                `\`${config.prefix}extraadmin add <user>\`\n` +
-                `\`${config.prefix}extraadmin remove <user>\`\n` +
-                `\`${config.prefix}extraadmin show\``
+                `> \`${config.prefix}extraadmin add <user>\`\n` +
+                `> \`${config.prefix}extraadmin remove <user>\`\n` +
+                `> \`${config.prefix}extraadmin show\``
             )
-            .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
         await interaction.reply(card.toPayload());
     }

@@ -156,7 +156,7 @@ function sendAllCommands(interaction) {
             .setColor(config.colors.default)
             .setTitle(`${config.emojis.info} All Commands`)
             .setDescription(`> Use \`${config.prefix}help <command>\` for detailed usage information.`)
-            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         const fields = Object.entries(config.modules).map(([key, mod]) => ({
             name: `${config.emojis[key] || "•"} ${mod.name}`,
             value: `> ${mod.commands.map(c => `\`${c.name}\``).join(", ")}`,
@@ -186,7 +186,7 @@ function sendCommandHelp(interaction, commandName) {
             .setTitle(`${config.emojis.slash} Command: /${foundCmd.name}`)
             .setDescription(`> ${foundCmd.description}`)
             .addFields({ name: "Usage", value: `\`${config.prefix}${foundCmd.usage || foundCmd.name}\``, inline: true }, { name: "Module", value: (foundModule === null || foundModule === void 0 ? void 0 : foundModule.name) || "Unknown", inline: true })
-            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.reply(card.toPayload({ ephemeral: true }));
     });
 }

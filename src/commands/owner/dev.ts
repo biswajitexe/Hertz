@@ -75,10 +75,10 @@ export async function handleInteraction(interaction: ButtonInteraction | StringS
             }
 
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
+                .setColor(config.colors.default)
                 .setTitle(`${foundCmd.command.name.charAt(0).toUpperCase() + foundCmd.command.name.slice(1)}`)
                 .setDescription(description)
-                .setFooter("Hertz • Owner Command", interaction.client.user?.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
             const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setCustomId("dev_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
@@ -115,10 +115,10 @@ async function sendOwnerPanel(interaction: ChatInputCommandInteraction | ButtonI
     }).filter(c => c !== null).join(", ");
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
+        .setColor(config.colors.default)
         .setTitle('Owner Commands')
         .setDescription(`> ${cleanCommands}`)
-        .setFooter(`Hertz • Owner Commands`, interaction.client.user?.displayAvatarURL() || undefined);
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
 
     const selectMenu = await createOwnerSelectMenu();
 

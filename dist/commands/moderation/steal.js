@@ -60,7 +60,7 @@ exports.command = new discord_js_1.SlashCommandBuilder()
     .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageEmojisAndStickers);
 function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a;
         if (!interaction.inCachedGuild())
             return;
         if (!((_a = interaction.memberPermissions) === null || _a === void 0 ? void 0 : _a.has(discord_js_1.PermissionFlagsBits.ManageEmojisAndStickers)) && interaction.user.id !== process.env.OWNER_ID) {
@@ -88,11 +88,10 @@ function run(interaction, database) {
             }
             else {
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.primary)
-                    .setAuthor(interaction.user.tag, interaction.user.displayAvatarURL())
-                    .setThumbnail(((_b = interaction.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || null)
-                    .setDescription(`\`${config.prefix}steal <emoji(s)>\`\n\`${config.prefix}steal <emoji> <name>\`\nor **Reply** with \`${config.prefix}steal\``)
-                    .setFooter(`Hertz • Advanced Moderation`, (_c = interaction.client.user) === null || _c === void 0 ? void 0 : _c.displayAvatarURL());
+                    .setColor(config.colors.default)
+                    .setTitle(`Steal Emojis`)
+                    .setDescription(`> Steal emojis from other servers or messages.\n\n• **Usage:** \`${config.prefix}steal <emoji(s)>\`\n• **Rename:** \`${config.prefix}steal <emoji> <name>\`\n• **Reply:** Reply to any message with \`${config.prefix}steal\``)
+                    .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
                 return interaction.reply(embed.toPayload());
             }
         }
@@ -182,9 +181,10 @@ function run(interaction, database) {
         if (!description)
             description = "No emojis added (Duplicates skipped).";
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.success)
+            .setColor(config.colors.default)
             .setTitle('Emoji Stealer')
-            .setDescription(description);
+            .setDescription(description)
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.editReply(embed.toPayload());
     });
 }
@@ -194,9 +194,10 @@ function handleSingleInternal(interaction, url, name) {
             yield interaction.deferReply();
             const emoji = yield interaction.guild.emojis.create({ attachment: url, name: name });
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.success)
-                .setTitle('Emoji Added')
-                .setDescription(`${config.emojis.success} **Added:** ${emoji} \`${name}\``);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Emoji Added`)
+                .setDescription(`> Successfully added emoji to server.\n\n• **Emoji:** ${emoji}\n• **Name:** \`${name}\``)
+                .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
             yield interaction.editReply(embed.toPayload());
         }
         catch (err) {

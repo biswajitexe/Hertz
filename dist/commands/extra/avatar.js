@@ -57,10 +57,10 @@ function run(interaction, database) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = interaction.options.getUser('target') || interaction.user;
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setAuthor(`${user.username}'s Avatar`, user.displayAvatarURL())
+            .setColor(config.colors.default)
+            .setTitle(`${user.username}'s Avatar`)
             .setImage(user.displayAvatarURL({ size: 4096 }))
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`);
         yield interaction.reply(embed.toPayload());
     });
 }
