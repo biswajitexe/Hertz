@@ -71,11 +71,12 @@ function run(interaction, database) {
         const totalUsers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
         const totalChannels = client.channels.cache.size;
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle(`About ${client.user.username}`)
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.bot} Hey, I'm ${client.user.username}`)
+            .setDescription("> Modular, high-performance Discord management system.")
             .setThumbnail(client.user.displayAvatarURL())
             .addFields({
-            name: "Identity",
+            name: `${config.emojis.info} Identity`,
             value: [
                 `• **Developer:** Vasudev AI Team`,
                 `• **Name:** **${client.user.username}**`,
@@ -84,7 +85,7 @@ function run(interaction, database) {
             ].join("\n"),
             inline: false
         }, {
-            name: "Statistics",
+            name: `${config.emojis.stats} Statistics`,
             value: [
                 `• **Servers:** ${totalGuilds.toLocaleString()}`,
                 `• **Users:** ${totalUsers.toLocaleString()}`,
@@ -93,7 +94,7 @@ function run(interaction, database) {
             ].join("\n"),
             inline: true
         }, {
-            name: "System",
+            name: `${config.emojis.settings} System`,
             value: [
                 `• **Uptime:** ${days}d ${hours}h ${minutes}m ${seconds}s`,
                 `• **Memory:** ${memoryUsage} MB / ${totalMemory} GB`,
@@ -102,7 +103,7 @@ function run(interaction, database) {
             ].join("\n"),
             inline: true
         })
-            .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
+            .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL())
             .setTimestamp();
         const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
             .setLabel("Invite Me")

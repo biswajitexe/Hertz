@@ -18,7 +18,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     // --- Helper to Generate V2Embed for each Page ---
     const generateEmbed = (page: string) => {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.default)
             .setAuthor(guild.name, guild.iconURL() || undefined)
             .setThumbnail(guild.iconURL({ size: 4096 }))
             .setFooter(`Requested by ${interaction.user.tag} • Page: ${page}`, interaction.user.displayAvatarURL())
@@ -47,7 +47,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     [GuildExplicitContentFilter.AllMembers]: "All Members"
                 };
 
-                embed.setTitle("<:iconfolder:1458160174815514670> Server Profile")
+                embed.setTitle(`${config.emojis.module} Server Profile`)
                     .addFields(
                         {
                             name: "Identity",
@@ -99,7 +99,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 if (guild.premiumTier === GuildPremiumTier.Tier2) maxUpload = "50MB";
                 if (guild.premiumTier === GuildPremiumTier.Tier3) maxUpload = "100MB";
 
-                embed.setTitle("<:Member1:1459604921451020472> Members & Stats")
+                embed.setTitle(`${config.emojis.human} Members & Stats`)
                     .addFields(
                         {
                             name: "Member Counts",
@@ -119,12 +119,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                             inline: false
                         },
                         {
-                            name: "Server Limits (Premium)",
+                            name: "Design & Limits",
                             value: [
                                 `${config.emojis.dot} **Max Upload:** ${maxUpload}`,
-                                `${config.emojis.dot} **Max Emoji Slots:** ${getEmojiLimit(guild.premiumTier)}`,
-                                `${config.emojis.dot} **Max Sticker Slots:** ${getStickerLimit(guild.premiumTier)}`,
-                                `${config.emojis.dot} **Video Quality:** ${guild.premiumTier >= GuildPremiumTier.Tier1 ? "720p/60fps" : "Standard"}`
+                                `${config.emojis.dot} **Custom Splash:** ${guild.splash ? "Yes" : "No"}`,
+                                `${config.emojis.dot} **Custom Banner:** ${guild.banner ? "Yes" : "No"}`
                             ].join("\n"),
                             inline: false
                         }
@@ -140,12 +139,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 const stage = channels.filter(c => c.type === ChannelType.GuildStageVoice).size;
                 const forum = channels.filter(c => c.type === ChannelType.GuildForum).size;
 
-                const roleCount = guild.roles.cache.size;
-                const highestRole = guild.roles.highest;
-                const topRoles = guild.roles.cache
+                const roles = guild.roles.cache.sort((a, b) => b.position - a.position);
+                const roleCount = roles.size;
+                const highestRole = roles.first()?.toString() || "None";
+                const topRoles = roles.first(10)
                     .filter(r => r.id !== guild.id)
-                    .sort((a, b) => b.position - a.position)
-                    .first(10)
                     .map(r => r.toString())
                     .join(", ");
 
@@ -154,7 +152,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                     ? emojis.first(15).map(e => e.toString()).join(" ") + (emojis.size > 15 ? ` ...+${emojis.size - 15}` : "")
                     : "No Emojis";
 
-                embed.setTitle("<:channel48:1459829078881468570> Channels & Assets")
+                embed.setTitle(`${config.emojis.channel} Channels & Assets`)
                     .addFields(
                         {
                             name: "Channel Distribution",
@@ -183,7 +181,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 const featuresList = guild.features.map(f => `\`${f.replace(/_/g, ' ')}\``).join(", ") || "None";
                 const shortFeatures = featuresList.length > 1024 ? featuresList.substring(0, 1020) + "..." : featuresList;
 
-                embed.setTitle("<:carpeunlock:1458160337789518051> Features & Extras")
+                embed.setTitle(`${config.emojis.star} Features & Extras`)
                     .addFields(
                         {
                             name: "Vanity & Links",

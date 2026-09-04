@@ -53,8 +53,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const embedStyle = (title: string, description: string) => {
         return new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle(`<:7291mediaadd:1464533585477374107> ${title}`)
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.media} ${title}`)
             .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
             .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
@@ -65,8 +65,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (guildData.mediaChannels.includes(channel.id)) {
             const embed = new V2Embed()
-                .setColor(config.colors.error)
-                .setDescription(`${config.emojis.error} <#${channel.id}> is already configured as a media-only channel.`)
+                .setColor(config.colors.default)
+                .setDescription(`> ${config.emojis.wrong} <#${channel.id}> is already configured as a media-only channel.`)
                 .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
             return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
@@ -74,7 +74,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         guildData.mediaChannels.push(channel.id);
         await database.insertGuild(guildId, guildData);
 
-        const embed = embedStyle('Media Channels', `${config.emojis.success} Successfully configured <#${channel.id}> as a media-only channel.\n\n<:527192nikkiworking:1461069361115824168> **Note:** Only images and links can be sent here.`);
+        const embed = embedStyle('Media Channels', `> ${config.emojis.correct} Successfully configured <#${channel.id}> as a media-only channel.\n\n> ${config.emojis.info} **Note:** Only images and links can be sent here.`);
         return interaction.reply(embed.toPayload());
 
     } else if (sub === 'remove') {
@@ -82,8 +82,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
         if (!guildData.mediaChannels.includes(channel.id)) {
             const embed = new V2Embed()
-                .setColor(config.colors.error)
-                .setDescription(`${config.emojis.error} <#${channel.id}> is not configured as a media-only channel.`)
+                .setColor(config.colors.default)
+                .setDescription(`> ${config.emojis.wrong} <#${channel.id}> is not configured as a media-only channel.`)
                 .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
             return interaction.reply(embed.toPayload({ ephemeral: true }));
         }
@@ -91,30 +91,30 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         guildData.mediaChannels = guildData.mediaChannels.filter(id => id !== channel.id);
         await database.insertGuild(guildId, guildData);
 
-        const embed = embedStyle('Media Channels', `${config.emojis.success} Successfully removed the media-only restriction from <#${channel.id}>.`);
+        const embed = embedStyle('Media Channels', `> ${config.emojis.correct} Successfully removed the media-only restriction from <#${channel.id}>.`);
         return interaction.reply(embed.toPayload());
 
     } else if (sub === 'show') {
         if (guildData.mediaChannels.length === 0) {
             const embed = new V2Embed()
-                .setColor(config.colors.error)
-                .setDescription(`${config.emojis.warning} No media-only channels have been configured on this server.`)
+                .setColor(config.colors.default)
+                .setDescription(`> ${config.emojis.warning} No media-only channels have been configured on this server.`)
                 .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
             return interaction.reply(embed.toPayload());
         }
 
         const channelList = guildData.mediaChannels
-            .map(id => `${config.emojis.dot || "•"} <#${id}>`)
+            .map(id => `> • <#${id}>`)
             .join("\n");
 
-        const embed = embedStyle('Configured Media Channels', channelList + `\n\n<:527192nikkiworking:1461069361115824168> **Note:** Only users with \`Manage Messages\` can bypass restriction.`);
+        const embed = embedStyle('Configured Media Channels', channelList + `\n\n> ${config.emojis.info} **Note:** Only users with \`Manage Messages\` can bypass restriction.`);
         return interaction.reply(embed.toPayload());
 
     } else {
         const embed = embedStyle('Media Commands',
-            `\`${config.prefix}media setup <#channel>\`\n` +
-            `\`${config.prefix}media remove <#channel>\`\n` +
-            `\`${config.prefix}media show\``
+            `> \`${config.prefix}media setup <#channel>\`\n` +
+            `> \`${config.prefix}media remove <#channel>\`\n` +
+            `> \`${config.prefix}media show\``
         );
 
         return interaction.reply(embed.toPayload());

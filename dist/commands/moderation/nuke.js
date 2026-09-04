@@ -64,9 +64,9 @@ function run(interaction, database) {
         }
         try {
             const confirmEmbed = new componentV2_1.V2Embed()
-                .setColor(config.colors.warning || 0xFFA500)
-                .setTitle('⚠️ Confirm Channel Nuke')
-                .setDescription(`**Are you sure you want to nuke this channel?**\nThis will **permanently delete** all messages and clone the channel.`)
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.warning} Confirm Channel Nuke`)
+                .setDescription(`> **Are you sure you want to nuke this channel?**\n> This will **permanently delete** all messages and clone the channel.`)
                 .setFooter('This action cannot be undone.');
             const buttons = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
                 .setCustomId('nuke_confirm')
@@ -86,9 +86,9 @@ function run(interaction, database) {
                     const newChannel = yield channel.clone({ position: channel.position });
                     yield channel.delete();
                     const successEmbed = new componentV2_1.V2Embed()
-                        .setColor(0xED4245)
-                        .setTitle(`${config.emojis.success || "💥"} Channel Nuked!`)
-                        .setDescription(`All messages have been cleared.`)
+                        .setColor(config.colors.default)
+                        .setTitle(`${config.emojis.delete} Channel Nuked!`)
+                        .setDescription(`> All messages have been cleared.`)
                         .setImage('https://media.giphy.com/media/HhTXt43pk1I1W/giphy.gif');
                     yield newChannel.send(successEmbed.toPayload());
                     yield newChannel.send({ content: `Action performed by <@${interaction.user.id}>` });

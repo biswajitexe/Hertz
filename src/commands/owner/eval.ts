@@ -24,7 +24,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const embedStyle = (title: string, description: string | null, color: number, fields: any[]) => {
         const embed = new V2Embed()
             .setColor(color)
-            .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+            .setTitle(`${config.emojis.dev} ${title}`)
             .setDescription(description || "")
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
             .addFields(...fields)
@@ -40,7 +40,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         let output = inspect(evaled, { depth: 0 });
         if (output.length > 2000) output = output.slice(0, 1990) + "...";
 
-        const embed = embedStyle('Evaluation Successful', null, config.colors.success, [
+        const embed = embedStyle('Evaluation Successful', null, config.colors.default, [
             { name: 'Input', value: `> \`\`\`js\n${code}\n\`\`\`` },
             { name: 'Output', value: `> \`\`\`js\n${output}\n\`\`\`` }
         ]);

@@ -36,13 +36,13 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const sub = interaction.options.getSubcommand();
 
-    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+    const embedStyle = (title: string, description: string, color: number = config.colors.default) => {
         return new V2Embed()
             .setColor(color)
-            .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+            .setTitle(`${config.emojis.settings} ${title}`)
             .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
     };
 
     if (sub === 'set') {

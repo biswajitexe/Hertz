@@ -329,8 +329,8 @@ client.on("messageCreate", async message => {
             else duration = "a few seconds";
 
             const afkEmbed = new V2Embed()
-                .setColor(0x00AAFF)
-                .setDescription(`<:6858aventurinebye:1464310768366522616> **Welcome back, ${message.author.username}!**\nAFK removed. \`${duration}\``);
+                .setColor(colors.default)
+                .setDescription(`> ${emojis.human} **Welcome back, ${message.author.username}!**\n> AFK removed. \`${duration}\``);
 
             await message.reply(afkEmbed.toPayload())
                 .then(m => setTimeout(() => m.delete().catch(() => { }), 30000));
@@ -343,13 +343,13 @@ client.on("messageCreate", async message => {
                 if (guildData.afk[m.id]) {
                     const data = guildData.afk[m.id];
                     const time = Math.floor(data.timestamp / 1000);
-                    afkMembers.push(`${m.user.username} is AFK: **${data.reason}** (<t:${time}:R>)`);
+                    afkMembers.push(`> ${emojis.info} ${m.user.username} is AFK: **${data.reason}** (<t:${time}:R>)`);
                 }
             });
 
             if (afkMembers.length > 0) {
                 const embed = new V2Embed()
-                    .setColor(colors.primary)
+                    .setColor(colors.default)
                     .setDescription(afkMembers.join("\n"));
 
                 await message.reply(embed.toPayload());

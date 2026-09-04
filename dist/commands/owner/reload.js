@@ -63,8 +63,8 @@ function run(interaction, database) {
             return interaction.reply((0, componentV2_1.createErrorV2)('Unknown command.').toPayload({ ephemeral: true }));
         }
         const embed = new componentV2_1.V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle('<:74658vipglow:1465051133704798435> Reloading Bot')
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.dev} Reloading Bot`)
             .setDescription(`> **Reloading bot logic...** (This may take a moment)`)
             .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
             .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());

@@ -5,13 +5,13 @@ import { V2Embed, createSuccessV2, createErrorV2, createWarningV2, replyV2, edit
 export * from "./componentV2";
 
 export function createSuccessEmbed(user: User, description: string): V2Embed {
-    return createSuccessV2(description);
+    return createSuccessV2(description, undefined, user);
 }
 
 export function createErrorEmbed(user: User, description: string): V2Embed {
-    return createErrorV2(description);
+    return createErrorV2(description, undefined, user);
 }
 
 export function createWarningEmbed(user: User, description: string): V2Embed {
-    return createWarningV2(description);
+    return createWarningV2(description, undefined, user);
 }

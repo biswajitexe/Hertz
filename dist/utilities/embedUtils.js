@@ -20,11 +20,11 @@ exports.createWarningEmbed = createWarningEmbed;
 const componentV2_1 = require("./componentV2");
 __exportStar(require("./componentV2"), exports);
 function createSuccessEmbed(user, description) {
-    return (0, componentV2_1.createSuccessV2)(description);
+    return (0, componentV2_1.createSuccessV2)(description, undefined, user);
 }
 function createErrorEmbed(user, description) {
-    return (0, componentV2_1.createErrorV2)(description);
+    return (0, componentV2_1.createErrorV2)(description, undefined, user);
 }
 function createWarningEmbed(user, description) {
-    return (0, componentV2_1.createWarningV2)(description);
+    return (0, componentV2_1.createWarningV2)(description, undefined, user);
 }

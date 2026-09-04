@@ -82,11 +82,11 @@ function run(interaction, database) {
         const embedStyle = (title, description) => {
             var _a;
             return new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle(`<:3852diamond:1466392074189410421> ${title}`)
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.star} ${title}`)
                 .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
         };
         if (!botConfig.noPrefixUsers)
             botConfig.noPrefixUsers = [];
@@ -97,7 +97,7 @@ function run(interaction, database) {
             }
             botConfig.noPrefixUsers.push(user.id);
             yield database.updateBotConfig(botConfig);
-            const embed = embedStyle('No Prefix Added', `> Added **${user.tag}** to the No-Prefix list.\n> They can now use commands without a prefix globally.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`);
+            const embed = embedStyle('No Prefix Added', `> Added **${user.tag}** to the No-Prefix list.\n> They can now use commands without a prefix globally.\n\n${config.emojis.lock} **Authorization granted.**`);
             return interaction.reply(embed.toPayload());
         }
         if (subcommand === 'remove') {

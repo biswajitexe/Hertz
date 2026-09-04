@@ -27,11 +27,11 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     const embedStyle = (title: string, description: string) => {
         return new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle(`${config.emojis.developer} ${title}`)
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.dev} ${title}`)
             .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
     };
 
     if (subcommand === 'add') {
@@ -41,7 +41,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         }
         botConfig.developerUsers.push(targetUser.id);
         await database.updateBotConfig(botConfig);
-        return interaction.reply(embedStyle('Developer Added', `> Added **${targetUser.tag}** as a **Bot Developer**.\n\n<:6581lockkey:1461100873479487559> **Authorization granted.**`).toPayload());
+        return interaction.reply(embedStyle('Developer Added', `> Added **${targetUser.tag}** as a **Bot Developer**.\n\n${config.emojis.lock} **Authorization granted.**`).toPayload());
     }
 
     if (subcommand === 'remove') {

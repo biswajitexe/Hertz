@@ -92,9 +92,9 @@ function run(interaction, database) {
         }
         if (!subcommand) {
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle('<:4497kazuhawaiter:1461641597476274332> List Commands')
-                .setDescription(`\`${config.prefix}list roles\`\n\`${config.prefix}list bots\`\n\`${config.prefix}list admins\`\n\`${config.prefix}list inrole <role>\``)
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.info} List Commands`)
+                .setDescription(`> \`${config.prefix}list roles\`\n> \`${config.prefix}list bots\`\n> \`${config.prefix}list admins\`\n> \`${config.prefix}list inrole <role>\``)
                 .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
             yield interaction.reply(embed.toPayload());
             return;

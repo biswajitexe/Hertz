@@ -139,16 +139,16 @@ export class AntinukeCore {
                 // Cannot punish? Try to strip roles (Quarantine)
                 // This requires iterating roles and removing dangerous ones.
                 // For now, let's log failure.
-                this.log(guild, `**FAILED to punish** <@${executorId}> for ${actionType}. My permissions might be lower.`);
+                this.log(guild, `${config.emojis.wrong} **FAILED to punish** <@${executorId}> for ${actionType}. My permissions might be lower.`);
                 return;
             }
 
             if (action === 'ban') {
                 await member.ban({ reason: `[Antinuke] Rate limit exceeded for ${actionType}` });
-                this.log(guild, `**BANNED** <@${executorId}> for exceeding limit in **${actionType}**.`);
+                this.log(guild, `${config.emojis.ban} **BANNED** <@${executorId}> for exceeding limit in **${actionType}**.`);
             } else if (action === 'kick') {
                 await member.kick(`[Antinuke] Rate limit exceeded for ${actionType}`);
-                this.log(guild, `**KICKED** <@${executorId}> for exceeding limit in **${actionType}**.`);
+                this.log(guild, `${config.emojis.kick} **KICKED** <@${executorId}> for exceeding limit in **${actionType}**.`);
             } else {
                 // Warn (Do nothing or DM)
             }
@@ -164,9 +164,9 @@ export class AntinukeCore {
             const channel = guild.channels.cache.get(guildData.antinuke.logChannelId) as TextChannel;
             if (channel && channel.isTextBased()) {
                 const embed = new V2Embed()
-                    .setColor(config.colors.error)
-                    .setTitle(`${config.emojis.error} Antinuke Triggered`)
-                    .setDescription(message)
+                    .setColor(config.colors.default)
+                    .setTitle(`${config.emojis.antinuke} Antinuke Triggered`)
+                    .setDescription(`> ${message}`)
                     .setTimestamp();
                 await channel.send(embed.toPayload()).catch(() => { });
             }

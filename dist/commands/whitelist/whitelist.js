@@ -166,7 +166,7 @@ function run(interaction, database) {
                             }
                             return embed;
                         });
-                        const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled));
+                        const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.roles).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled));
                         const reply = yield interaction.reply((yield getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
                         const collector = reply.createMessageComponentCollector({ componentType: discord_js_1.ComponentType.Button, time: 60000 });
                         collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {
@@ -316,9 +316,9 @@ function run(interaction, database) {
                 }
             }
             const helpEmbed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle('<:4497kazuhawaiter:1461641597476274332> whitelist command')
-                .setDescription('\`?wl add <user>\`\n\`?wl remove <user>\`\n\`?wl show\`\n\`?wl reset all\`')
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.antinuke} Whitelist Commands`)
+                .setDescription(`> \`${config.prefix}wl add <user>\`\n> \`${config.prefix}wl remove <user>\`\n> \`${config.prefix}wl show\`\n> \`${config.prefix}wl reset all\``)
                 .setThumbnail(interaction.client.user.displayAvatarURL())
                 .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
             yield interaction.reply(helpEmbed.toPayload());
@@ -460,7 +460,7 @@ function run(interaction, database) {
                     }
                     return embed;
                 });
-                const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled));
+                const getRow = (disabled = false) => new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.roles).setDisabled(disabled), new discord_js_1.ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(discord_js_1.ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled));
                 const reply = yield interaction.editReply((yield getEmbed('users')).toPayload({ extraComponents: [getRow()] }));
                 const collector = reply.createMessageComponentCollector({ componentType: discord_js_1.ComponentType.Button, time: 60000 });
                 collector.on('collect', (i) => __awaiter(this, void 0, void 0, function* () {

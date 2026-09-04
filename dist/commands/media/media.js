@@ -87,8 +87,8 @@ function run(interaction, database) {
         const embedStyle = (title, description) => {
             var _a;
             return new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
-                .setTitle(`<:7291mediaadd:1464533585477374107> ${title}`)
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.media} ${title}`)
                 .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
                 .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
@@ -97,48 +97,48 @@ function run(interaction, database) {
             const channel = interaction.options.getChannel('channel', true);
             if (guildData.mediaChannels.includes(channel.id)) {
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.error)
-                    .setDescription(`${config.emojis.error} <#${channel.id}> is already configured as a media-only channel.`)
+                    .setColor(config.colors.default)
+                    .setDescription(`> ${config.emojis.wrong} <#${channel.id}> is already configured as a media-only channel.`)
                     .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
                 return interaction.reply(embed.toPayload({ ephemeral: true }));
             }
             guildData.mediaChannels.push(channel.id);
             yield database.insertGuild(guildId, guildData);
-            const embed = embedStyle('Media Channels', `${config.emojis.success} Successfully configured <#${channel.id}> as a media-only channel.\n\n<:527192nikkiworking:1461069361115824168> **Note:** Only images and links can be sent here.`);
+            const embed = embedStyle('Media Channels', `> ${config.emojis.correct} Successfully configured <#${channel.id}> as a media-only channel.\n\n> ${config.emojis.info} **Note:** Only images and links can be sent here.`);
             return interaction.reply(embed.toPayload());
         }
         else if (sub === 'remove') {
             const channel = interaction.options.getChannel('channel', true);
             if (!guildData.mediaChannels.includes(channel.id)) {
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.error)
-                    .setDescription(`${config.emojis.error} <#${channel.id}> is not configured as a media-only channel.`)
+                    .setColor(config.colors.default)
+                    .setDescription(`> ${config.emojis.wrong} <#${channel.id}> is not configured as a media-only channel.`)
                     .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
                 return interaction.reply(embed.toPayload({ ephemeral: true }));
             }
             guildData.mediaChannels = guildData.mediaChannels.filter(id => id !== channel.id);
             yield database.insertGuild(guildId, guildData);
-            const embed = embedStyle('Media Channels', `${config.emojis.success} Successfully removed the media-only restriction from <#${channel.id}>.`);
+            const embed = embedStyle('Media Channels', `> ${config.emojis.correct} Successfully removed the media-only restriction from <#${channel.id}>.`);
             return interaction.reply(embed.toPayload());
         }
         else if (sub === 'show') {
             if (guildData.mediaChannels.length === 0) {
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.error)
-                    .setDescription(`${config.emojis.warning} No media-only channels have been configured on this server.`)
+                    .setColor(config.colors.default)
+                    .setDescription(`> ${config.emojis.warning} No media-only channels have been configured on this server.`)
                     .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
                 return interaction.reply(embed.toPayload());
             }
             const channelList = guildData.mediaChannels
-                .map(id => `${config.emojis.dot || "•"} <#${id}>`)
+                .map(id => `> • <#${id}>`)
                 .join("\n");
-            const embed = embedStyle('Configured Media Channels', channelList + `\n\n<:527192nikkiworking:1461069361115824168> **Note:** Only users with \`Manage Messages\` can bypass restriction.`);
+            const embed = embedStyle('Configured Media Channels', channelList + `\n\n> ${config.emojis.info} **Note:** Only users with \`Manage Messages\` can bypass restriction.`);
             return interaction.reply(embed.toPayload());
         }
         else {
-            const embed = embedStyle('Media Commands', `\`${config.prefix}media setup <#channel>\`\n` +
-                `\`${config.prefix}media remove <#channel>\`\n` +
-                `\`${config.prefix}media show\``);
+            const embed = embedStyle('Media Commands', `> \`${config.prefix}media setup <#channel>\`\n` +
+                `> \`${config.prefix}media remove <#channel>\`\n` +
+                `> \`${config.prefix}media show\``);
             return interaction.reply(embed.toPayload());
         }
     });

@@ -66,9 +66,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         await logAction(interaction.guild, user.user, interaction.user, 'UNMUTE', reason, database);
 
         const successEmbed = new V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`<:icocorrect46:1458159679988432948> Unmuted ${user.user.tag}`)
-            .setDescription(`Successfully removed mute restriction from **${user.user.tag}**.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.correct} Unmuted ${user.user.tag}`)
+            .setDescription(`> Successfully removed mute restriction from **${user.user.tag}**.`);
 
         if (reason !== "No reason provided") {
             successEmbed.addFields({ name: 'Reason', value: reason, inline: false });

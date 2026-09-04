@@ -58,8 +58,9 @@ function run(interaction, database) {
         const guild = interaction.guild;
         const owner = yield guild.fetchOwner().catch(() => null);
         const generateEmbed = (page) => {
+            var _a;
             const embed = new componentV2_1.V2Embed()
-                .setColor(config.colors.primary)
+                .setColor(config.colors.default)
                 .setAuthor(guild.name, guild.iconURL() || undefined)
                 .setThumbnail(guild.iconURL({ size: 4096 }))
                 .setFooter(`Requested by ${interaction.user.tag} • Page: ${page}`, interaction.user.displayAvatarURL())
@@ -84,7 +85,7 @@ function run(interaction, database) {
                         [discord_js_1.GuildExplicitContentFilter.MembersWithoutRoles]: "Members without Roles",
                         [discord_js_1.GuildExplicitContentFilter.AllMembers]: "All Members"
                     };
-                    embed.setTitle("<:iconfolder:1458160174815514670> Server Profile")
+                    embed.setTitle(`${config.emojis.module} Server Profile`)
                         .addFields({
                         name: "Identity",
                         value: [
@@ -130,7 +131,7 @@ function run(interaction, database) {
                         maxUpload = "50MB";
                     if (guild.premiumTier === discord_js_1.GuildPremiumTier.Tier3)
                         maxUpload = "100MB";
-                    embed.setTitle("<:Member1:1459604921451020472> Members & Stats")
+                    embed.setTitle(`${config.emojis.human} Members & Stats`)
                         .addFields({
                         name: "Member Counts",
                         value: [
@@ -147,12 +148,11 @@ function run(interaction, database) {
                         ].join("\n"),
                         inline: false
                     }, {
-                        name: "Server Limits (Premium)",
+                        name: "Design & Limits",
                         value: [
                             `${config.emojis.dot} **Max Upload:** ${maxUpload}`,
-                            `${config.emojis.dot} **Max Emoji Slots:** ${getEmojiLimit(guild.premiumTier)}`,
-                            `${config.emojis.dot} **Max Sticker Slots:** ${getStickerLimit(guild.premiumTier)}`,
-                            `${config.emojis.dot} **Video Quality:** ${guild.premiumTier >= discord_js_1.GuildPremiumTier.Tier1 ? "720p/60fps" : "Standard"}`
+                            `${config.emojis.dot} **Custom Splash:** ${guild.splash ? "Yes" : "No"}`,
+                            `${config.emojis.dot} **Custom Banner:** ${guild.banner ? "Yes" : "No"}`
                         ].join("\n"),
                         inline: false
                     });
@@ -165,19 +165,18 @@ function run(interaction, database) {
                     const news = channels.filter(c => c.type === discord_js_1.ChannelType.GuildAnnouncement).size;
                     const stage = channels.filter(c => c.type === discord_js_1.ChannelType.GuildStageVoice).size;
                     const forum = channels.filter(c => c.type === discord_js_1.ChannelType.GuildForum).size;
-                    const roleCount = guild.roles.cache.size;
-                    const highestRole = guild.roles.highest;
-                    const topRoles = guild.roles.cache
+                    const roles = guild.roles.cache.sort((a, b) => b.position - a.position);
+                    const roleCount = roles.size;
+                    const highestRole = ((_a = roles.first()) === null || _a === void 0 ? void 0 : _a.toString()) || "None";
+                    const topRoles = roles.first(10)
                         .filter(r => r.id !== guild.id)
-                        .sort((a, b) => b.position - a.position)
-                        .first(10)
                         .map(r => r.toString())
                         .join(", ");
                     const emojis = guild.emojis.cache;
                     const emojiPreview = emojis.size > 0
                         ? emojis.first(15).map(e => e.toString()).join(" ") + (emojis.size > 15 ? ` ...+${emojis.size - 15}` : "")
                         : "No Emojis";
-                    embed.setTitle("<:channel48:1459829078881468570> Channels & Assets")
+                    embed.setTitle(`${config.emojis.channel} Channels & Assets`)
                         .addFields({
                         name: "Channel Distribution",
                         value: [
@@ -200,7 +199,7 @@ function run(interaction, database) {
                 case 'Features':
                     const featuresList = guild.features.map(f => `\`${f.replace(/_/g, ' ')}\``).join(", ") || "None";
                     const shortFeatures = featuresList.length > 1024 ? featuresList.substring(0, 1020) + "..." : featuresList;
-                    embed.setTitle("<:carpeunlock:1458160337789518051> Features & Extras")
+                    embed.setTitle(`${config.emojis.star} Features & Extras`)
                         .addFields({
                         name: "Vanity & Links",
                         value: [

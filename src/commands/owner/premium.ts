@@ -31,26 +31,26 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const id = interaction.options.getString('id', true);
     const type = interaction.options.getString('type', true);
 
-    const embedStyle = (title: string, description: string, color: number = config.colors.primary) => {
+    const embedStyle = (title: string, description: string, color: number = config.colors.default) => {
         return new V2Embed()
             .setColor(color)
-            .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+            .setTitle(`${config.emojis.premium} ${title}`)
             .setDescription(description)
             .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
     };
 
     if (sub === 'add') {
         if (type === 'user') {
-            if (botConfig.premiumUsers.includes(id)) return interaction.reply(embedStyle('Premium Error', `> User is already premium.`, config.colors.error).toPayload({ ephemeral: true }));
+            if (botConfig.premiumUsers.includes(id)) return interaction.reply(embedStyle('Premium Error', `> User is already premium.`, config.colors.default).toPayload({ ephemeral: true }));
             botConfig.premiumUsers.push(id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply(embedStyle('User Added', `> User <@${id}> added to **Premium Users**.\n\n<:6581lockkey:1461100873479487559> **Premium activated.**`, config.colors.success).toPayload({ ephemeral: true }));
+            return interaction.reply(embedStyle('User Added', `> User <@${id}> added to **Premium Users**.\n\n${config.emojis.lock} **Premium activated.**`, config.colors.default).toPayload({ ephemeral: true }));
         } else {
-            if (botConfig.premiumGuilds.includes(id)) return interaction.reply(embedStyle('Premium Error', `> Server is already premium.`, config.colors.error).toPayload({ ephemeral: true }));
+            if (botConfig.premiumGuilds.includes(id)) return interaction.reply(embedStyle('Premium Error', `> Server is already premium.`, config.colors.default).toPayload({ ephemeral: true }));
             botConfig.premiumGuilds.push(id);
             await database.insertBotConfig(botConfig);
-            return interaction.reply(embedStyle('Server Added', `> Server \`${id}\` added to **Premium Servers**.\n\n<:6581lockkey:1461100873479487559> **Premium activated.**`, config.colors.success).toPayload({ ephemeral: true }));
+            return interaction.reply(embedStyle('Server Added', `> Server \`${id}\` added to **Premium Servers**.\n\n${config.emojis.lock} **Premium activated.**`, config.colors.default).toPayload({ ephemeral: true }));
         }
     }
 

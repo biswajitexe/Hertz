@@ -157,7 +157,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
                     const getRow = (disabled = false) => new ActionRowBuilder<ButtonBuilder>().addComponents(
                         new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled),
-                        new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled),
+                        new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.roles).setDisabled(disabled),
                         new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled)
                     );
 
@@ -306,9 +306,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         // Usage Help
         // Usage Help
         const helpEmbed = new V2Embed()
-            .setColor(config.colors.primary)
-            .setTitle('<:4497kazuhawaiter:1461641597476274332> whitelist command')
-            .setDescription('\`?wl add <user>\`\n\`?wl remove <user>\`\n\`?wl show\`\n\`?wl reset all\`')
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.antinuke} Whitelist Commands`)
+            .setDescription(`> \`${config.prefix}wl add <user>\`\n> \`${config.prefix}wl remove <user>\`\n> \`${config.prefix}wl show\`\n> \`${config.prefix}wl reset all\``)
             .setThumbnail(interaction.client.user.displayAvatarURL())
             .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL());
 
@@ -471,7 +471,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
             const getRow = (disabled = false) => new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setCustomId('wl_show_users').setLabel('Users').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.user).setDisabled(disabled),
-                new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji('<:64851purpleshield:1461677014367998153>').setDisabled(disabled),
+                new ButtonBuilder().setCustomId('wl_show_roles').setLabel('Roles').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.roles).setDisabled(disabled),
                 new ButtonBuilder().setCustomId('wl_show_channels').setLabel('Channels').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.general).setDisabled(disabled)
             );
 

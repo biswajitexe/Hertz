@@ -103,13 +103,13 @@ function run(interaction, database) {
             }
             yield channel.bulkDelete(finalDeleteList, true);
             const embed = new componentV2_1.V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`${config.emojis.success || "✅"} Messages Purged`)
-                .setDescription(`Successfully deleted **${deleteCount}** messages.`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.clear} Messages Purged`)
+                .setDescription(`> Successfully deleted **${deleteCount}** messages.`);
             if (targetUser)
-                embed.setDescription(`Deleted **${deleteCount}** messages from **${targetUser.tag}**.`);
+                embed.setDescription(`> Deleted **${deleteCount}** messages from **${targetUser.tag}**.`);
             if (botsOnly)
-                embed.setDescription(`Deleted **${deleteCount}** bot messages.`);
+                embed.setDescription(`> Deleted **${deleteCount}** bot messages.`);
             yield interaction.editReply(embed.toPayload());
             setTimeout(() => interaction.deleteReply().catch(() => { }), 30000);
         }

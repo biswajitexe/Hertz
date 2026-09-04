@@ -55,28 +55,22 @@ exports.sendV2 = sendV2;
 const discord_js_1 = require("discord.js");
 const config = __importStar(require("../config"));
 function stripEmojis(str) {
-    if (!str)
-        return str;
-    return str
-        .replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '')
-        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{FE0F}]/gu, '')
-        .replace(/[ \t]{2,}/g, ' ')
-        .trim();
+    return str || '';
 }
 class V2Embed {
     constructor() {
-        this.accentColor = config.colors.primary;
+        this.accentColor = config.colors.default;
         this.fields = [];
         this.actionRows = [];
         this.useDividers = true;
-        this.accentColor = config.colors.primary;
+        this.accentColor = config.colors.default;
     }
     setColor(color) {
         try {
             this.accentColor = (0, discord_js_1.resolveColor)(color);
         }
         catch (_a) {
-            this.accentColor = config.colors.primary;
+            this.accentColor = config.colors.default;
         }
         return this;
     }
@@ -84,7 +78,7 @@ class V2Embed {
         return this.setColor(color);
     }
     setTitle(title) {
-        this.titleText = stripEmojis(title);
+        this.titleText = title;
         return this;
     }
     setURL(url) {
@@ -92,15 +86,15 @@ class V2Embed {
         return this;
     }
     setDescription(description) {
-        this.descriptionText = description ? description.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : undefined;
+        this.descriptionText = description;
         return this;
     }
     setAuthor(author, iconURL, url) {
         if (typeof author === 'string') {
-            this.authorData = { name: stripEmojis(author), iconURL, url };
+            this.authorData = { name: author, iconURL, url };
         }
         else {
-            this.authorData = Object.assign(Object.assign({}, author), { name: stripEmojis(author.name) });
+            this.authorData = author;
         }
         return this;
     }
@@ -115,8 +109,8 @@ class V2Embed {
     addFields(...fields) {
         for (const f of fields) {
             this.fields.push({
-                name: stripEmojis(f.name),
-                value: f.value ? f.value.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : '',
+                name: f.name,
+                value: f.value || '',
                 inline: f.inline
             });
         }
@@ -135,8 +129,8 @@ class V2Embed {
         }
         return this;
     }
-    setTimestamp(timestamp = Date.now()) {
-        this.timestampDate = timestamp;
+    setTimestamp(timestamp) {
+        this.timestampDate = timestamp || new Date();
         return this;
     }
     addActionRow(row) {
@@ -151,10 +145,55 @@ class V2Embed {
         this.useDividers = enabled;
         return this;
     }
+    buildEmbed() {
+        var _a, _b;
+        const embed = new discord_js_1.EmbedBuilder();
+        embed.setColor(this.accentColor || config.colors.default);
+        if (this.authorData) {
+            embed.setAuthor({
+                name: this.authorData.name,
+                iconURL: this.authorData.iconURL,
+                url: this.authorData.url
+            });
+        }
+        if (this.titleText) {
+            embed.setTitle(this.titleText);
+        }
+        if (this.titleURL) {
+            embed.setURL(this.titleURL);
+        }
+        if (this.descriptionText) {
+            embed.setDescription(this.descriptionText);
+        }
+        if (this.thumbnailURL) {
+            embed.setThumbnail(this.thumbnailURL);
+        }
+        if (this.imageURL) {
+            embed.setImage(this.imageURL);
+        }
+        if (this.fields.length > 0) {
+            embed.addFields(this.fields);
+        }
+        let footerText = (_a = this.footerData) === null || _a === void 0 ? void 0 : _a.text;
+        if (!footerText || footerText.trim() === '') {
+            footerText = "Powered by Hertz";
+        }
+        else if (!footerText.toLowerCase().includes("powered by hertz")) {
+            footerText = `${footerText} | Powered by Hertz`;
+        }
+        embed.setFooter({
+            text: footerText,
+            iconURL: (_b = this.footerData) === null || _b === void 0 ? void 0 : _b.iconURL
+        });
+        if (this.timestampDate) {
+            embed.setTimestamp(this.timestampDate);
+        }
+        return embed;
+    }
     build() {
         var _a, _b;
         const container = new discord_js_1.ContainerBuilder();
-        container.setAccentColor(this.accentColor);
+        container.setAccentColor(this.accentColor || config.colors.default);
         const headerParts = [];
         if ((_a = this.authorData) === null || _a === void 0 ? void 0 : _a.name) {
             headerParts.push(`-# **${this.authorData.name}**`);
@@ -197,20 +236,17 @@ class V2Embed {
             const gallery = new discord_js_1.MediaGalleryBuilder().addItems(new discord_js_1.MediaGalleryItemBuilder().setURL(this.imageURL));
             container.addMediaGalleryComponents(gallery);
         }
-        const footerParts = [];
-        if ((_b = this.footerData) === null || _b === void 0 ? void 0 : _b.text) {
-            footerParts.push(this.footerData.text);
+        let footerText = (_b = this.footerData) === null || _b === void 0 ? void 0 : _b.text;
+        if (!footerText || footerText.trim() === '') {
+            footerText = "Powered by Hertz";
         }
-        if (this.timestampDate) {
-            const unix = Math.floor((this.timestampDate instanceof Date ? this.timestampDate.getTime() : this.timestampDate) / 1000);
-            footerParts.push(`<t:${unix}:R>`);
+        else if (!footerText.toLowerCase().includes("powered by hertz")) {
+            footerText = `${footerText} | Powered by Hertz`;
         }
-        if (footerParts.length > 0) {
-            if (this.useDividers) {
-                container.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
-            }
-            container.addTextDisplayComponents(new discord_js_1.TextDisplayBuilder().setContent(`-# ${footerParts.join(" • ")}`));
+        if (this.useDividers) {
+            container.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
         }
+        container.addTextDisplayComponents(new discord_js_1.TextDisplayBuilder().setContent(`-# ${footerText}`));
         for (const row of this.actionRows) {
             container.addActionRowComponents(row);
         }
@@ -218,73 +254,90 @@ class V2Embed {
     }
     toPayload(options) {
         var _a;
-        let flagBitfield = discord_js_1.MessageFlags.IsComponentsV2;
-        if (options === null || options === void 0 ? void 0 : options.ephemeral) {
-            flagBitfield |= discord_js_1.MessageFlags.Ephemeral;
-        }
-        const container = this.build();
+        const embed = this.buildEmbed();
+        const rows = [...this.actionRows];
         if ((options === null || options === void 0 ? void 0 : options.extraComponents) && options.extraComponents.length > 0) {
-            container.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
             for (const item of options.extraComponents) {
                 if (item instanceof discord_js_1.ActionRowBuilder || (item && (((_a = item.data) === null || _a === void 0 ? void 0 : _a.type) === 1 || item.type === 1))) {
-                    container.addActionRowComponents(item);
+                    rows.push(item);
                 }
             }
         }
         return {
-            components: [container],
-            flags: flagBitfield,
+            embeds: [embed],
+            components: rows,
+            flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? discord_js_1.MessageFlags.Ephemeral : undefined,
             allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
         };
     }
 }
 exports.V2Embed = V2Embed;
-function createSuccessV2(description, title) {
+function createSuccessV2(description, title, user) {
     const embed = new V2Embed()
-        .setColor(config.colors.success)
-        .setDescription(`**Success:** ${description}`);
+        .setColor(config.colors.default)
+        .setDescription(`${config.emojis.correct} ${description}`);
     if (title)
         embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
-function createErrorV2(description, title) {
+function createErrorV2(description, title, user) {
     const embed = new V2Embed()
-        .setColor(config.colors.error)
-        .setDescription(`**Error:** ${description}`);
+        .setColor(config.colors.default)
+        .setDescription(`${config.emojis.wrong} ${description}`);
     if (title)
         embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
-function createWarningV2(description, title) {
+function createWarningV2(description, title, user) {
     const embed = new V2Embed()
-        .setColor(config.colors.warning)
-        .setDescription(`**Warning:** ${description}`);
+        .setColor(config.colors.default)
+        .setDescription(`${config.emojis.warning} ${description}`);
     if (title)
         embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
-function createInfoV2(description, title) {
+function createInfoV2(description, title, user) {
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
+        .setColor(config.colors.default)
         .setDescription(description);
     if (title)
         embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
 function preparePayload(v2, options) {
-    var _a;
     if (v2 instanceof V2Embed) {
         return v2.toPayload(options);
     }
+    else if (v2 instanceof discord_js_1.EmbedBuilder) {
+        const rows = (options === null || options === void 0 ? void 0 : options.extraComponents) || [];
+        return {
+            embeds: [v2],
+            components: rows,
+            flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? discord_js_1.MessageFlags.Ephemeral : undefined,
+            allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
+        };
+    }
     else if (v2 instanceof discord_js_1.ContainerBuilder) {
-        if ((options === null || options === void 0 ? void 0 : options.extraComponents) && options.extraComponents.length > 0) {
-            v2.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
-            for (const item of options.extraComponents) {
-                if (item instanceof discord_js_1.ActionRowBuilder || (item && (((_a = item.data) === null || _a === void 0 ? void 0 : _a.type) === 1 || item.type === 1))) {
-                    v2.addActionRowComponents(item);
-                }
-            }
-        }
         return {
             components: [v2],
             flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? (discord_js_1.MessageFlags.IsComponentsV2 | discord_js_1.MessageFlags.Ephemeral) : discord_js_1.MessageFlags.IsComponentsV2,

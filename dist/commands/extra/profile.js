@@ -84,7 +84,7 @@ function getProfileData(interaction, targetUser, database) {
             badgesList.push(`${config.emojis.noprefix} **Premium User**`);
         }
         if ((_j = botConfig.noPrefixUsers) === null || _j === void 0 ? void 0 : _j.includes(targetUser.id)) {
-            badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
+            badgesList.push(`${config.emojis.noprefix} **No Prefix**`);
         }
         if ((_k = botConfig.supporterUsers) === null || _k === void 0 ? void 0 : _k.includes(targetUser.id)) {
             badgesList.push(`${config.emojis.supporter} **Supporter**`);
@@ -108,11 +108,11 @@ function getProfileData(interaction, targetUser, database) {
                 const album = (_l = spotify.assets) === null || _l === void 0 ? void 0 : _l.largeText;
                 activityImage = (_m = spotify.assets) === null || _m === void 0 ? void 0 : _m.largeImageURL();
                 activityUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
-                activityStatus = `\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+                activityStatus = `\n**${config.emojis.link} Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
             }
         }
         const card = new componentV2_1.V2Embed()
-            .setColor(safeProfile.color || config.colors.primary)
+            .setColor(safeProfile.color || config.colors.default)
             .setAuthor(`${targetUser.username}'s Profile`, targetUser.displayAvatarURL())
             .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
             .setDescription(`**Badges**\n> ${badgesString}\n\n` +

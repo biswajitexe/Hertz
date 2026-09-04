@@ -1,4 +1,5 @@
 import {
+    EmbedBuilder,
     ContainerBuilder,
     TextDisplayBuilder,
     SectionBuilder,
@@ -40,20 +41,15 @@ export interface V2PayloadOptions {
 }
 
 export function stripEmojis(str: string): string {
-    if (!str) return str;
-    return str
-        .replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '')
-        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{FE0F}]/gu, '')
-        .replace(/[ \t]{2,}/g, ' ')
-        .trim();
+    return str || '';
 }
 
 /**
- * Modern Discord Components V2 Container Builder
- * Fully supersedes legacy EmbedBuilder with rich structured cards.
+ * Modern Discord Embed and Container Builder
+ * Defaults to sleek dark 0x2B2D31 styling with Hertz footer and custom asset emojis.
  */
 export class V2Embed {
-    private accentColor: number = config.colors.primary;
+    private accentColor: number = config.colors.default;
     private authorData?: V2AuthorOptions;
     private titleText?: string;
     private titleURL?: string;
@@ -67,14 +63,14 @@ export class V2Embed {
     private useDividers: boolean = true;
 
     constructor() {
-        this.accentColor = config.colors.primary;
+        this.accentColor = config.colors.default;
     }
 
     public setColor(color: ColorResolvable): this {
         try {
             this.accentColor = resolveColor(color);
         } catch {
-            this.accentColor = config.colors.primary;
+            this.accentColor = config.colors.default;
         }
         return this;
     }
@@ -84,7 +80,7 @@ export class V2Embed {
     }
 
     public setTitle(title: string): this {
-        this.titleText = stripEmojis(title);
+        this.titleText = title;
         return this;
     }
 
@@ -94,15 +90,15 @@ export class V2Embed {
     }
 
     public setDescription(description: string): this {
-        this.descriptionText = description ? description.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : undefined;
+        this.descriptionText = description;
         return this;
     }
 
     public setAuthor(author: V2AuthorOptions | string, iconURL?: string, url?: string): this {
         if (typeof author === 'string') {
-            this.authorData = { name: stripEmojis(author), iconURL, url };
+            this.authorData = { name: author, iconURL, url };
         } else {
-            this.authorData = { ...author, name: stripEmojis(author.name) };
+            this.authorData = author;
         }
         return this;
     }
@@ -120,8 +116,8 @@ export class V2Embed {
     public addFields(...fields: V2FieldOptions[]): this {
         for (const f of fields) {
             this.fields.push({
-                name: stripEmojis(f.name),
-                value: f.value ? f.value.replace(/<a?:[a-zA-Z0-9_]+:[0-9]+>\s*/g, '') : '',
+                name: f.name,
+                value: f.value || '',
                 inline: f.inline
             });
         }
@@ -142,8 +138,8 @@ export class V2Embed {
         return this;
     }
 
-    public setTimestamp(timestamp: Date | number = Date.now()): this {
-        this.timestampDate = timestamp;
+    public setTimestamp(timestamp?: Date | number): this {
+        this.timestampDate = timestamp || new Date();
         return this;
     }
 
@@ -163,19 +159,74 @@ export class V2Embed {
     }
 
     /**
-     * Compiles all properties into a native Discord.js ContainerBuilder
+     * Builds a native Discord EmbedBuilder
+     */
+    public buildEmbed(): EmbedBuilder {
+        const embed = new EmbedBuilder();
+        embed.setColor(this.accentColor || config.colors.default);
+
+        if (this.authorData) {
+            embed.setAuthor({
+                name: this.authorData.name,
+                iconURL: this.authorData.iconURL,
+                url: this.authorData.url
+            });
+        }
+
+        if (this.titleText) {
+            embed.setTitle(this.titleText);
+        }
+
+        if (this.titleURL) {
+            embed.setURL(this.titleURL);
+        }
+
+        if (this.descriptionText) {
+            embed.setDescription(this.descriptionText);
+        }
+
+        if (this.thumbnailURL) {
+            embed.setThumbnail(this.thumbnailURL);
+        }
+
+        if (this.imageURL) {
+            embed.setImage(this.imageURL);
+        }
+
+        if (this.fields.length > 0) {
+            embed.addFields(this.fields);
+        }
+
+        let footerText = this.footerData?.text;
+        if (!footerText || footerText.trim() === '') {
+            footerText = "Powered by Hertz";
+        } else if (!footerText.toLowerCase().includes("powered by hertz")) {
+            footerText = `${footerText} | Powered by Hertz`;
+        }
+
+        embed.setFooter({
+            text: footerText,
+            iconURL: this.footerData?.iconURL
+        });
+
+        if (this.timestampDate) {
+            embed.setTimestamp(this.timestampDate);
+        }
+
+        return embed;
+    }
+
+    /**
+     * Compiles properties into ContainerBuilder for v2 compatibility
      */
     public build(): ContainerBuilder {
         const container = new ContainerBuilder();
-        container.setAccentColor(this.accentColor);
+        container.setAccentColor(this.accentColor || config.colors.default);
 
-        // Header construction (Author + Title + Description)
         const headerParts: string[] = [];
-
         if (this.authorData?.name) {
             headerParts.push(`-# **${this.authorData.name}**`);
         }
-
         if (this.titleText) {
             if (this.titleURL) {
                 headerParts.push(`### [${this.titleText}](${this.titleURL})`);
@@ -183,15 +234,12 @@ export class V2Embed {
                 headerParts.push(`### ${this.titleText}`);
             }
         }
-
         if (this.descriptionText) {
             headerParts.push(this.descriptionText);
         }
 
         const headerContent = headerParts.join("\n");
-
         if (this.thumbnailURL && headerContent.trim().length > 0) {
-            // Place inside a SectionBuilder with Thumbnail accessory
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(headerContent)
@@ -206,61 +254,49 @@ export class V2Embed {
             );
         }
 
-        // Fields construction
         if (this.fields.length > 0) {
             if (this.useDividers && headerContent.trim().length > 0) {
                 container.addSeparatorComponents(
                     new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
                 );
             }
-
             const fieldTexts: string[] = [];
             for (const field of this.fields) {
                 fieldTexts.push(`**${field.name}**\n${field.value}`);
             }
-
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(fieldTexts.join("\n\n"))
             );
         }
 
-        // Media Gallery / Large Image
         if (this.imageURL) {
             if (this.useDividers) {
                 container.addSeparatorComponents(
                     new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
                 );
             }
-
             const gallery = new MediaGalleryBuilder().addItems(
                 new MediaGalleryItemBuilder().setURL(this.imageURL)
             );
             container.addMediaGalleryComponents(gallery);
         }
 
-        // Footer / Timestamp
-        const footerParts: string[] = [];
-        if (this.footerData?.text) {
-            footerParts.push(this.footerData.text);
-        }
-        if (this.timestampDate) {
-            const unix = Math.floor((this.timestampDate instanceof Date ? this.timestampDate.getTime() : this.timestampDate) / 1000);
-            footerParts.push(`<t:${unix}:R>`);
+        let footerText = this.footerData?.text;
+        if (!footerText || footerText.trim() === '') {
+            footerText = "Powered by Hertz";
+        } else if (!footerText.toLowerCase().includes("powered by hertz")) {
+            footerText = `${footerText} | Powered by Hertz`;
         }
 
-        if (footerParts.length > 0) {
-            if (this.useDividers) {
-                container.addSeparatorComponents(
-                    new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
-                );
-            }
-
-            container.addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(`-# ${footerParts.join(" • ")}`)
+        if (this.useDividers) {
+            container.addSeparatorComponents(
+                new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
             );
         }
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`-# ${footerText}`)
+        );
 
-        // Embedded Action Rows
         for (const row of this.actionRows) {
             container.addActionRowComponents(row);
         }
@@ -269,35 +305,29 @@ export class V2Embed {
     }
 
     /**
-     * Converts container into a Discord API response payload
+     * Converts embed into a Discord API response payload
      */
     public toPayload(options?: V2PayloadOptions): {
+        embeds: EmbedBuilder[];
         components: any[];
-        flags: number;
+        flags?: number;
         allowedMentions: { repliedUser: boolean };
     } {
-        let flagBitfield: number = MessageFlags.IsComponentsV2;
-        if (options?.ephemeral) {
-            flagBitfield |= MessageFlags.Ephemeral;
-        }
+        const embed = this.buildEmbed();
+        const rows = [...this.actionRows];
 
-        const container = this.build();
-
-        // Place extra action rows (buttons, select menus) INSIDE the container card
         if (options?.extraComponents && options.extraComponents.length > 0) {
-            container.addSeparatorComponents(
-                new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
-            );
             for (const item of options.extraComponents) {
                 if (item instanceof ActionRowBuilder || (item && (item.data?.type === 1 || item.type === 1))) {
-                    container.addActionRowComponents(item);
+                    rows.push(item);
                 }
             }
         }
 
         return {
-            components: [container],
-            flags: flagBitfield,
+            embeds: [embed],
+            components: rows,
+            flags: options?.ephemeral ? MessageFlags.Ephemeral : undefined,
             allowedMentions: options?.allowedMentions || { repliedUser: false }
         };
     }
@@ -307,35 +337,55 @@ export class V2Embed {
 // Pre-styled Factory Helpers
 // -------------------------------------------------------------
 
-export function createSuccessV2(description: string, title?: string): V2Embed {
+export function createSuccessV2(description: string, title?: string, user?: User | GuildMember): V2Embed {
     const embed = new V2Embed()
-        .setColor(config.colors.success)
-        .setDescription(`**Success:** ${description}`);
+        .setColor(config.colors.default)
+        .setDescription(`${config.emojis.correct} ${description}`);
     if (title) embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
 
-export function createErrorV2(description: string, title?: string): V2Embed {
+export function createErrorV2(description: string, title?: string, user?: User | GuildMember): V2Embed {
     const embed = new V2Embed()
-        .setColor(config.colors.error)
-        .setDescription(`**Error:** ${description}`);
+        .setColor(config.colors.default)
+        .setDescription(`${config.emojis.wrong} ${description}`);
     if (title) embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
 
-export function createWarningV2(description: string, title?: string): V2Embed {
+export function createWarningV2(description: string, title?: string, user?: User | GuildMember): V2Embed {
     const embed = new V2Embed()
-        .setColor(config.colors.warning)
-        .setDescription(`**Warning:** ${description}`);
+        .setColor(config.colors.default)
+        .setDescription(`${config.emojis.warning} ${description}`);
     if (title) embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
 
-export function createInfoV2(description: string, title?: string): V2Embed {
+export function createInfoV2(description: string, title?: string, user?: User | GuildMember): V2Embed {
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
+        .setColor(config.colors.default)
         .setDescription(description);
     if (title) embed.setTitle(title);
+    if (user) {
+        const name = 'user' in user ? user.user.username : user.username;
+        const icon = typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined;
+        embed.setFooter(`Requested by ${name}`, icon);
+    }
     return embed;
 }
 
@@ -346,17 +396,15 @@ export function createInfoV2(description: string, title?: string): V2Embed {
 function preparePayload(v2: V2Embed | ContainerBuilder | any, options?: V2PayloadOptions): any {
     if (v2 instanceof V2Embed) {
         return v2.toPayload(options);
+    } else if (v2 instanceof EmbedBuilder) {
+        const rows = options?.extraComponents || [];
+        return {
+            embeds: [v2],
+            components: rows,
+            flags: options?.ephemeral ? MessageFlags.Ephemeral : undefined,
+            allowedMentions: options?.allowedMentions || { repliedUser: false }
+        };
     } else if (v2 instanceof ContainerBuilder) {
-        if (options?.extraComponents && options.extraComponents.length > 0) {
-            v2.addSeparatorComponents(
-                new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
-            );
-            for (const item of options.extraComponents) {
-                if (item instanceof ActionRowBuilder || (item && (item.data?.type === 1 || item.type === 1))) {
-                    v2.addActionRowComponents(item);
-                }
-            }
-        }
         return {
             components: [v2],
             flags: options?.ephemeral ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2,

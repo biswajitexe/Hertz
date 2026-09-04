@@ -32,12 +32,13 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     const totalChannels = client.channels.cache.size;
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setTitle(`About ${client.user.username}`)
+        .setColor(config.colors.default)
+        .setTitle(`${config.emojis.bot} Hey, I'm ${client.user.username}`)
+        .setDescription("> Modular, high-performance Discord management system.")
         .setThumbnail(client.user.displayAvatarURL())
         .addFields(
             {
-                name: "Identity",
+                name: `${config.emojis.info} Identity`,
                 value: [
                     `• **Developer:** Vasudev AI Team`,
                     `• **Name:** **${client.user.username}**`,
@@ -47,7 +48,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 inline: false
             },
             {
-                name: "Statistics",
+                name: `${config.emojis.stats} Statistics`,
                 value: [
                     `• **Servers:** ${totalGuilds.toLocaleString()}`,
                     `• **Users:** ${totalUsers.toLocaleString()}`,
@@ -57,7 +58,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 inline: true
             },
             {
-                name: "System",
+                name: `${config.emojis.settings} System`,
                 value: [
                     `• **Uptime:** ${days}d ${hours}h ${minutes}m ${seconds}s`,
                     `• **Memory:** ${memoryUsage} MB / ${totalMemory} GB`,
@@ -67,7 +68,7 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 inline: true
             }
         )
-        .setFooter(`Requested by ${interaction.user.tag}`, interaction.user.displayAvatarURL())
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL())
         .setTimestamp();
 
     // Buttons

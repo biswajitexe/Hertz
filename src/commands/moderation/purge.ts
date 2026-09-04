@@ -73,12 +73,12 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         await channel.bulkDelete(finalDeleteList, true);
 
         const embed = new V2Embed()
-            .setColor(0x57F287)
-            .setTitle(`${config.emojis.success || "✅"} Messages Purged`)
-            .setDescription(`Successfully deleted **${deleteCount}** messages.`);
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.clear} Messages Purged`)
+            .setDescription(`> Successfully deleted **${deleteCount}** messages.`);
 
-        if (targetUser) embed.setDescription(`Deleted **${deleteCount}** messages from **${targetUser.tag}**.`);
-        if (botsOnly) embed.setDescription(`Deleted **${deleteCount}** bot messages.`);
+        if (targetUser) embed.setDescription(`> Deleted **${deleteCount}** messages from **${targetUser.tag}**.`);
+        if (botsOnly) embed.setDescription(`> Deleted **${deleteCount}** bot messages.`);
 
         await interaction.editReply(embed.toPayload());
         setTimeout(() => interaction.deleteReply().catch(() => { }), 30000);

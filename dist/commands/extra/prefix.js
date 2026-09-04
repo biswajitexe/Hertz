@@ -66,11 +66,11 @@ function run(interaction, database) {
         const guild = yield database.retrieveGuild(interaction.guildId);
         if (!guild)
             return;
-        const embedStyle = (title, description, color = config.colors.primary) => {
+        const embedStyle = (title, description, color = config.colors.default) => {
             var _a;
             return new componentV2_1.V2Embed()
                 .setColor(color)
-                .setTitle(`<:32725firehonkaistarrail:1465068073143894106> ${title}`)
+                .setTitle(`${config.emojis.pin} ${title}`)
                 .setDescription(description)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
                 .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
@@ -78,16 +78,16 @@ function run(interaction, database) {
         if (sub === 'set') {
             const newPrefix = interaction.options.getString('new_prefix', true);
             if (newPrefix.length > 5) {
-                return interaction.reply(embedStyle('Prefix Error', '> Prefix cannot be longer than 5 characters.', config.colors.error).toPayload({ ephemeral: true }));
+                return interaction.reply(embedStyle('Prefix Error', `> ${config.emojis.wrong} Prefix cannot be longer than 5 characters.`, config.colors.default).toPayload({ ephemeral: true }));
             }
             guild.prefix = newPrefix;
             yield database.insertGuild(interaction.guildId, guild);
-            return interaction.reply(embedStyle('Prefix Updated', `> Successfully set custom prefix to **${newPrefix}**\n> Example: \`${newPrefix}help\``, config.colors.success).toPayload());
+            return interaction.reply(embedStyle('Prefix Updated', `> ${config.emojis.correct} Successfully set custom prefix to **${newPrefix}**\n> Example: \`${newPrefix}help\``, config.colors.default).toPayload());
         }
         if (sub === 'reset') {
             guild.prefix = null;
             yield database.insertGuild(interaction.guildId, guild);
-            return interaction.reply(embedStyle('Prefix Reset', `> Reset prefix to default: **${config.prefix}**`, config.colors.success).toPayload());
+            return interaction.reply(embedStyle('Prefix Reset', `> ${config.emojis.correct} Reset prefix to default: **${config.prefix}**`, config.colors.default).toPayload());
         }
         const current = guild.prefix || config.prefix;
         return interaction.reply(embedStyle('Server Prefix', `> Current Prefix: **\`${current}\`**\n\n**Usage:**\n> \`${current}prefix set <new>\`\n> \`${current}prefix reset\``).toPayload());

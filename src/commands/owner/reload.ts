@@ -18,8 +18,8 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
     }
 
     const embed = new V2Embed()
-        .setColor(config.colors.primary)
-        .setTitle('<:74658vipglow:1465051133704798435> Reloading Bot')
+        .setColor(config.colors.default)
+        .setTitle(`${config.emojis.dev} Reloading Bot`)
         .setDescription(`> **Reloading bot logic...** (This may take a moment)`)
         .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
         .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());

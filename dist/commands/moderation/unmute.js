@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,6 +46,7 @@ exports.aliases = exports.command = void 0;
 exports.run = run;
 const discord_js_1 = require("discord.js");
 const permission_1 = require("../../utilities/permission");
+const config = __importStar(require("../../config"));
 const embedUtils_1 = require("../../utilities/embedUtils");
 const modLogger_1 = require("../../utilities/modLogger");
 const componentV2_1 = require("../../utilities/componentV2");
@@ -62,9 +96,9 @@ function run(interaction, database) {
             yield user.timeout(null, reason);
             yield (0, modLogger_1.logAction)(interaction.guild, user.user, interaction.user, 'UNMUTE', reason, database);
             const successEmbed = new componentV2_1.V2Embed()
-                .setColor(0x57F287)
-                .setTitle(`<:icocorrect46:1458159679988432948> Unmuted ${user.user.tag}`)
-                .setDescription(`Successfully removed mute restriction from **${user.user.tag}**.`);
+                .setColor(config.colors.default)
+                .setTitle(`${config.emojis.correct} Unmuted ${user.user.tag}`)
+                .setDescription(`> Successfully removed mute restriction from **${user.user.tag}**.`);
             if (reason !== "No reason provided") {
                 successEmbed.addFields({ name: 'Reason', value: reason, inline: false });
             }

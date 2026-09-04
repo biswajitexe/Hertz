@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ButtonInteraction, StringSelectMenuInteraction, ButtonStyle } from "discord.js";
+import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ButtonInteraction, StringSelectMenuInteraction, ButtonStyle, parseEmoji } from "discord.js";
 import { Database } from "../../database";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import * as config from "../../config";
@@ -70,31 +70,22 @@ async function sendHelpMenu(context: any, isUpdate = false) {
     const client = context.client;
     const user = context.user || context.author;
 
-    // Personalized Title
-    const card = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(`Command Center • ${user.username}`, user.displayAvatarURL())
-        .setThumbnail(client.user?.displayAvatarURL())
-        .setTitle(`Hertz Command Center`)
-        .setDescription(`> **Advanced Server Automation & Security System**\n> **Prefix:** \`${config.prefix}\` • **Slash Commands:** Enabled`)
-        .addFields(
-            {
-                name: "Modules",
-                value: ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
-                    .map(key => `> **${config.modules[key]?.name || key}** — ${config.modules[key]?.description || ""}`)
-                    .join("\n"),
-                inline: false
-            },
-            {
-                name: "Quick Links",
-                value: `> [Support Server](https://discord.gg/suttabar) • [Invite Me](https://discord.com/api/oauth2/authorize?client_id=${client.user?.id}&permissions=8&scope=bot%20applications.commands) • [Vote](https://top.gg/bot/${client.user?.id})`,
-                inline: false
-            }
-        )
-        .setFooter(`Developed by Vasudev AI Team`, client.user?.displayAvatarURL())
-        .setTimestamp();
+    const moduleList = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"]
+        .map(key => `> ${config.emojis[key] || "•"} **${config.modules[key]?.name || key}** — ${config.modules[key]?.description || ""}`)
+        .join("\n");
 
-    // Redesigned Buttons
+    const card = new V2Embed()
+        .setColor(config.colors.default)
+        .setTitle(`Hey, I'm Hertz`)
+        .setDescription(
+            `> Modular, high-performance Discord management system.\n\n` +
+            `• **Prefix:** \`${config.prefix}\` | **Slash:** \`/\`\n` +
+            `• **Help:** \`${config.prefix}help\`\n\n` +
+            `**Modules:**\n` +
+            moduleList
+        )
+        .setFooter(`Requested by ${user.username}! | Powered by Hertz`, user.displayAvatarURL());
+
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId("help_all_commands").setLabel("All Commands").setStyle(ButtonStyle.Primary),
@@ -110,21 +101,25 @@ async function sendHelpMenu(context: any, isUpdate = false) {
         sentMessage = await context.reply({ ...card.toPayload({ extraComponents: [selectMenu, buttons] }), fetchReply: true });
     }
 
-    if (sentMessage) setupTimeout(sentMessage, context.user.id);
+    if (sentMessage) setupTimeout(sentMessage, user.id);
 }
 
 async function sendModuleHelp(interaction: any, moduleKey: string) {
     const module = config.modules[moduleKey];
     if (!module) return;
 
-    const commandsText = module.commands.map(cmd => `\`${cmd.name}\``).join(", ");
+    const moduleEmoji = config.emojis[moduleKey] || config.emojis.module;
+    const commandsList = module.commands.map(cmd => `• \`${config.prefix}${cmd.name}\` — ${cmd.description}`).join("\n");
 
     const card = new V2Embed()
-        .setColor(config.colors.primary)
-        .setAuthor(`Module Help`, interaction.client.user?.displayAvatarURL())
-        .setTitle(`${module.name} Module`)
-        .setDescription(`> ${commandsText.substring(0, 4096)}`)
-        .setFooter(`Hertz • ${module.name}`, interaction.client.user?.displayAvatarURL());
+        .setColor(config.colors.default)
+        .setTitle(`${moduleEmoji} ${module.name} Module`)
+        .setDescription(
+            `> ${module.description}\n\n` +
+            `**Commands:**\n` +
+            commandsList
+        )
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
@@ -138,33 +133,25 @@ async function sendModuleHelp(interaction: any, moduleKey: string) {
 }
 
 async function sendAllCommands(interaction: any) {
-    const totalCount = Object.values(config.modules).reduce((acc: any, mod: any) => acc + (mod.commands.length || 0), 0);
     const card = new V2Embed()
-        .setColor(config.colors.primary)
-        .setTitle(`All Commands (${totalCount})`)
-        .setDescription(`Full list of available commands across all categories:`)
-        .setFooter(`Hertz • Total Commands: ${totalCount}`, interaction.client.user?.displayAvatarURL())
-        .setTimestamp();
+        .setColor(config.colors.default)
+        .setTitle(`${config.emojis.info} All Commands`)
+        .setDescription(`> Use \`${config.prefix}help <command>\` for detailed usage information.`)
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
 
-    const moduleOrder = ["antinuke", "automod", "moderation", "media", "giveaways", "welcomer", "extra"];
-    moduleOrder.forEach(key => {
-        const mod = config.modules[key];
-        if (mod && mod.commands.length > 0) {
-            const list = mod.commands.map(c => `\`${c.name}\``).join(", ");
-            card.addFields({
-                name: `${mod.name} (${mod.commands.length})`,
-                value: `> ${list.substring(0, 1024)}`,
-                inline: false
-            });
-        }
-    });
+    const fields = Object.entries(config.modules).map(([key, mod]) => ({
+        name: `${config.emojis[key] || "•"} ${mod.name}`,
+        value: `> ${mod.commands.map(c => `\`${c.name}\``).join(", ")}`,
+        inline: false
+    }));
+    card.addFields(...fields);
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId("help_home").setLabel("Home").setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId("help_delete").setLabel("Close").setStyle(ButtonStyle.Danger)
     );
 
-    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Select a Category"));
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(createModuleSelectMenu("Choose a Category"));
 
     await interaction.editReply(card.toPayload({ extraComponents: [selectMenu, buttons] }));
 }
@@ -180,16 +167,18 @@ async function sendCommandHelp(interaction: any, commandName: string) {
     }
 
     if (!foundCmd) {
-        return interaction.reply(createErrorV2(`Command \`${commandName}\` not found.`).toPayload({ ephemeral: true }));
+        return interaction.reply(createErrorV2(`Command \`${commandName}\` not found.`, undefined, interaction.user).toPayload({ ephemeral: true }));
     }
 
     const card = new V2Embed()
-        .setColor(config.colors.primary)
-        .setTitle(`Command: /${foundCmd.name}`)
+        .setColor(config.colors.default)
+        .setTitle(`${config.emojis.slash} Command: /${foundCmd.name}`)
+        .setDescription(`> ${foundCmd.description}`)
         .addFields(
-            { name: "Description", value: foundCmd.description },
-            { name: "Module", value: foundModule?.name || "Unknown" }
-        );
+            { name: "Usage", value: `\`${config.prefix}${foundCmd.usage || foundCmd.name}\``, inline: true },
+            { name: "Module", value: foundModule?.name || "Unknown", inline: true }
+        )
+        .setFooter(`Requested by ${interaction.user.username}! | Powered by Hertz`, interaction.user.displayAvatarURL());
 
     await interaction.reply(card.toPayload({ ephemeral: true }));
 }
@@ -199,11 +188,19 @@ function createModuleSelectMenu(placeholder: string) {
     return new StringSelectMenuBuilder()
         .setCustomId("help_category")
         .setPlaceholder(placeholder)
-        .addOptions(moduleOrder.map(key => ({
-            label: config.modules[key].name,
-            value: `help_${key}`,
-            description: config.modules[key].description.substring(0, 100)
-        })));
+        .addOptions(moduleOrder.map(key => {
+            const rawEmoji = config.emojis[key];
+            const parsed = rawEmoji ? parseEmoji(rawEmoji) : null;
+            const option: any = {
+                label: config.modules[key].name,
+                value: `help_${key}`,
+                description: config.modules[key].description.substring(0, 100)
+            };
+            if (parsed && parsed.id) {
+                option.emoji = { id: parsed.id, name: parsed.name };
+            }
+            return option;
+        }));
 }
 
 function setupTimeout(message: any, userId: string) {

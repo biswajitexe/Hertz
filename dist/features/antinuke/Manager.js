@@ -146,9 +146,9 @@ class AntinukeManager {
                     guildData.antinuke.logChannelId = newChannel.id;
                     yield this.database.insertGuild(channel.guild.id, guildData);
                     const embed = new componentV2_1.V2Embed()
-                        .setColor(config.colors.primary)
+                        .setColor(config.colors.default)
                         .setTitle(`${config.emojis.antinuke} Security Alert`)
-                        .setDescription(`${config.emojis.warning} **The previous log channel was deleted.**\n\nI have automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
+                        .setDescription(`> ${config.emojis.warning} **The previous log channel was deleted.**\n> I have automatically recreated this channel to ensure **Security Logs** continue without interruption.`)
                         .setThumbnail(channel.guild.iconURL() || ((_a = this.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
                         .setFooter('Antinuke Security System', ((_b = this.client.user) === null || _b === void 0 ? void 0 : _b.displayAvatarURL()) || undefined);
                     yield newChannel.send(embed.toPayload());

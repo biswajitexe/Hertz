@@ -134,16 +134,16 @@ class AntinukeCore {
                     return;
                 }
                 if (!member.bannable && !member.kickable) {
-                    this.log(guild, `**FAILED to punish** <@${executorId}> for ${actionType}. My permissions might be lower.`);
+                    this.log(guild, `${config.emojis.wrong} **FAILED to punish** <@${executorId}> for ${actionType}. My permissions might be lower.`);
                     return;
                 }
                 if (action === 'ban') {
                     yield member.ban({ reason: `[Antinuke] Rate limit exceeded for ${actionType}` });
-                    this.log(guild, `**BANNED** <@${executorId}> for exceeding limit in **${actionType}**.`);
+                    this.log(guild, `${config.emojis.ban} **BANNED** <@${executorId}> for exceeding limit in **${actionType}**.`);
                 }
                 else if (action === 'kick') {
                     yield member.kick(`[Antinuke] Rate limit exceeded for ${actionType}`);
-                    this.log(guild, `**KICKED** <@${executorId}> for exceeding limit in **${actionType}**.`);
+                    this.log(guild, `${config.emojis.kick} **KICKED** <@${executorId}> for exceeding limit in **${actionType}**.`);
                 }
                 else {
                 }
@@ -160,9 +160,9 @@ class AntinukeCore {
                 const channel = guild.channels.cache.get(guildData.antinuke.logChannelId);
                 if (channel && channel.isTextBased()) {
                     const embed = new componentV2_1.V2Embed()
-                        .setColor(config.colors.error)
-                        .setTitle(`${config.emojis.error} Antinuke Triggered`)
-                        .setDescription(message)
+                        .setColor(config.colors.default)
+                        .setTitle(`${config.emojis.antinuke} Antinuke Triggered`)
+                        .setDescription(`> ${message}`)
                         .setTimestamp();
                     yield channel.send(embed.toPayload()).catch(() => { });
                 }

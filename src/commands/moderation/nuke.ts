@@ -23,9 +23,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     try {
         const confirmEmbed = new V2Embed()
-            .setColor(config.colors.warning || 0xFFA500)
-            .setTitle('⚠️ Confirm Channel Nuke')
-            .setDescription(`**Are you sure you want to nuke this channel?**\nThis will **permanently delete** all messages and clone the channel.`)
+            .setColor(config.colors.default)
+            .setTitle(`${config.emojis.warning} Confirm Channel Nuke`)
+            .setDescription(`> **Are you sure you want to nuke this channel?**\n> This will **permanently delete** all messages and clone the channel.`)
             .setFooter('This action cannot be undone.');
 
         const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -58,9 +58,9 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
                 await channel.delete();
 
                 const successEmbed = new V2Embed()
-                    .setColor(0xED4245)
-                    .setTitle(`${config.emojis.success || "💥"} Channel Nuked!`)
-                    .setDescription(`All messages have been cleared.`)
+                    .setColor(config.colors.default)
+                    .setTitle(`${config.emojis.delete} Channel Nuked!`)
+                    .setDescription(`> All messages have been cleared.`)
                     .setImage('https://media.giphy.com/media/HhTXt43pk1I1W/giphy.gif');
 
                 await newChannel.send(successEmbed.toPayload());

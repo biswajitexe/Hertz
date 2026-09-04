@@ -66,16 +66,16 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
 
     if (!subcommand || subcommand === 'help') {
         const embed = new V2Embed()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.default)
             .setThumbnail(interaction.client.user.displayAvatarURL())
-            .setTitle('Autorole Commands')
-            .setDescription(`<:rolemanager58:1464579329974603861> **Configure Auto-Roles for new members**\n\n` +
+            .setTitle(`${config.emojis.welcomer} Autorole Commands`)
+            .setDescription(`${config.emojis.role} **Configure Auto-Roles for new members**\n\n` +
                 `\`?autorole humans <add | remove> <role>\`\n` +
                 `\`?autorole bots <add | remove> <role>\`\n` +
                 `\`?autorole show\`\n` +
                 `\`?autorole reset\``
             )
-            .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+            .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
 
         return interaction.reply(embed.toPayload());
     }
@@ -84,24 +84,24 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
         let activeType: 'humans' | 'bots' = 'humans';
         const getEmbed = (type: 'humans' | 'bots') => {
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setColor(config.colors.default)
+                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
 
             if (type === 'humans') {
                 const list = guildData.autoroles.map((id, i) => `\`「${i + 1}」\` <@&${id}>`).join('\n') || "None";
-                embed.setAuthor('Autorole Humans', 'https://cdn.discordapp.com/emojis/1459604921451020472.png');
+                embed.setAuthor('Autorole Humans', interaction.client.user.displayAvatarURL());
                 embed.setDescription(list);
             } else {
                 const list = guildData.autorolesBots.map((id, i) => `\`「${i + 1}」\` <@&${id}>`).join('\n') || "None";
-                embed.setAuthor('Autorole Bots', 'https://cdn.discordapp.com/emojis/1464605545293025395.png');
+                embed.setAuthor('Autorole Bots', interaction.client.user.displayAvatarURL());
                 embed.setDescription(list);
             }
             return embed;
         };
 
         const getRow = (disabled = false) => new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(ButtonStyle.Secondary).setEmoji('<:online:1458160864032194591>').setDisabled(disabled),
-            new ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(ButtonStyle.Secondary).setEmoji('<:iconbot:1458160287290102008>').setDisabled(disabled)
+            new ButtonBuilder().setCustomId('ar_show_humans').setLabel('Humans').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.human).setDisabled(disabled),
+            new ButtonBuilder().setCustomId('ar_show_bots').setLabel('Bots').setStyle(ButtonStyle.Secondary).setEmoji(config.emojis.bot).setDisabled(disabled)
         );
 
         const reply = await interaction.reply(getEmbed('humans').toPayload({ extraComponents: [getRow()] }));

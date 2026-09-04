@@ -52,7 +52,7 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
     }
 
     if (botConfig.noPrefixUsers?.includes(targetUser.id)) {
-        badgesList.push(`<:3852diamond:1466392074189410421> **No Prefix**`);
+        badgesList.push(`${config.emojis.noprefix} **No Prefix**`);
     }
 
     if (botConfig.supporterUsers?.includes(targetUser.id)) {
@@ -81,12 +81,12 @@ async function getProfileData(interaction: ChatInputCommandInteraction, targetUs
             const album = spotify.assets?.largeText;
             activityImage = spotify.assets?.largeImageURL();
             activityUrl = `https://open.spotify.com/search/${encodeURIComponent(trackName + " " + artist)}`;
-            activityStatus = `\n**<:35248spotify:1466417623842689100> Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
+            activityStatus = `\n**${config.emojis.link} Spotify**\n> **Song:** ${trackName}\n> **Artist:** ${artist}\n> **Album:** ${album || "Unknown"}`;
         }
     }
 
     const card = new V2Embed()
-        .setColor(safeProfile.color || config.colors.primary)
+        .setColor(safeProfile.color || config.colors.default)
         .setAuthor(`${targetUser.username}'s Profile`, targetUser.displayAvatarURL())
         .setThumbnail(activityImage || targetUser.displayAvatarURL({ size: 1024 }))
         .setDescription(

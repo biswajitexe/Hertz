@@ -105,18 +105,18 @@ function run(interaction, database) {
                 yield interaction.editReply((0, componentV2_1.createSuccessV2)('Anti-Ping (Mass Mention) filter has been DISABLED.').toPayload());
             }
             else if (sub === 'status') {
-                const statusEmoji = guildData.messageFilters.massMention ? config.emojis.success : config.emojis.error;
+                const statusEmoji = guildData.messageFilters.massMention ? config.emojis.switch_on : config.emojis.switch_off;
                 const statusText = guildData.messageFilters.massMention ? "Enabled" : "Disabled";
                 let description = `**Anti-Ping System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Mass Mention (Limit: > 7)`;
                 if (!guildData.messageFilters.massMention) {
-                    description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antiping enable\` to activate security and protect your server! <:6581lockkey:1461100873479487559>`;
+                    description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antiping enable\` to activate security and protect your server! ${config.emojis.lock}`;
                 }
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config.colors.primary)
+                    .setColor(config.colors.default)
                     .setTitle(`${config.emojis.automod} Anti-Ping Panel`)
                     .setDescription(description)
                     .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                    .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                    .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
                 yield interaction.editReply(embed.toPayload());
             }
             else {

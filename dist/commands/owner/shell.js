@@ -70,11 +70,11 @@ function run(interaction, database) {
             const output = stdout || stderr || "No output.";
             const cleanOutput = output.length > 4000 ? output.substring(0, 4000) + '...' : output;
             const embed = new componentV2_1.V2Embed()
-                .setColor(error ? config.colors.error : config.colors.success)
-                .setTitle(`<:74658vipglow:1465051133704798435> ${error ? 'Shell Error' : 'Shell Success'}`)
+                .setColor(config.colors.default)
+                .setTitle(`${error ? config.emojis.wrong : config.emojis.correct} ${error ? 'Shell Error' : 'Shell Success'}`)
                 .setDescription(`> \`\`\`bash\n${cleanOutput}\n\`\`\``)
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
             interaction.editReply(embed.toPayload());
         });
     });

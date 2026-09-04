@@ -63,21 +63,21 @@ export async function run(interaction: ChatInputCommandInteraction, database: Da
             await database.insertGuild(interaction.guild.id, guildData);
             await interaction.editReply(createSuccessV2('Anti-Everyone filter has been DISABLED.').toPayload());
         } else if (sub === 'status') {
-            const statusEmoji = guildData.messageFilters.antiEveryone ? config.emojis.success : config.emojis.error;
+            const statusEmoji = guildData.messageFilters.antiEveryone ? config.emojis.switch_on : config.emojis.switch_off;
             const statusText = guildData.messageFilters.antiEveryone ? "Enabled" : "Disabled";
 
             let description = `**Anti-Everyone System ${statusText}.**\n\n**Active Protections:**\n> ${statusEmoji} Anti-Everyone/Here`;
 
             if (!guildData.messageFilters.antiEveryone) {
-                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antieveryone enable\` to activate security and protect your server! <:6581lockkey:1461100873479487559>`;
+                description += `\n\n**System is currently disabled.**\nUse \`${config.prefix}antieveryone enable\` to activate security and protect your server! ${config.emojis.lock}`;
             }
 
             const embed = new V2Embed()
-                .setColor(config.colors.primary)
+                .setColor(config.colors.default)
                 .setTitle(`${config.emojis.automod} Anti-Everyone Panel`)
                 .setDescription(description)
                 .setThumbnail(interaction.client.user?.displayAvatarURL() || null)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL());
+                .setFooter(`Requested by ${interaction.user.username} | Powered by Hertz`, interaction.user.displayAvatarURL());
 
             await interaction.editReply(embed.toPayload());
         } else {

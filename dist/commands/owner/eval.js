@@ -68,7 +68,7 @@ function run(interaction, database) {
             var _a;
             const embed = new componentV2_1.V2Embed()
                 .setColor(color)
-                .setTitle(`<:74658vipglow:1465051133704798435> ${title}`)
+                .setTitle(`${config.emojis.dev} ${title}`)
                 .setDescription(description || "")
                 .setThumbnail(((_a = interaction.client.user) === null || _a === void 0 ? void 0 : _a.displayAvatarURL()) || null)
                 .addFields(...fields)
@@ -82,7 +82,7 @@ function run(interaction, database) {
             let output = (0, util_1.inspect)(evaled, { depth: 0 });
             if (output.length > 2000)
                 output = output.slice(0, 1990) + "...";
-            const embed = embedStyle('Evaluation Successful', null, config.colors.success, [
+            const embed = embedStyle('Evaluation Successful', null, config.colors.default, [
                 { name: 'Input', value: `> \`\`\`js\n${code}\n\`\`\`` },
                 { name: 'Output', value: `> \`\`\`js\n${output}\n\`\`\`` }
             ]);

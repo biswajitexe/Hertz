@@ -302,8 +302,8 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             else
                 duration = "a few seconds";
             const afkEmbed = new componentV2_1.V2Embed()
-                .setColor(0x00AAFF)
-                .setDescription(`<:6858aventurinebye:1464310768366522616> **Welcome back, ${message.author.username}!**\nAFK removed. \`${duration}\``);
+                .setColor(config_1.colors.default)
+                .setDescription(`> ${config_1.emojis.human} **Welcome back, ${message.author.username}!**\n> AFK removed. \`${duration}\``);
             yield message.reply(afkEmbed.toPayload())
                 .then(m => setTimeout(() => m.delete().catch(() => { }), 30000));
         }
@@ -313,12 +313,12 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                 if (guildData.afk[m.id]) {
                     const data = guildData.afk[m.id];
                     const time = Math.floor(data.timestamp / 1000);
-                    afkMembers.push(`${m.user.username} is AFK: **${data.reason}** (<t:${time}:R>)`);
+                    afkMembers.push(`> ${config_1.emojis.info} ${m.user.username} is AFK: **${data.reason}** (<t:${time}:R>)`);
                 }
             });
             if (afkMembers.length > 0) {
                 const embed = new componentV2_1.V2Embed()
-                    .setColor(config_1.colors.primary)
+                    .setColor(config_1.colors.default)
                     .setDescription(afkMembers.join("\n"));
                 yield message.reply(embed.toPayload());
             }
