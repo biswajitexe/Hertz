@@ -145,51 +145,6 @@ class V2Embed {
         this.useDividers = enabled;
         return this;
     }
-    buildEmbed() {
-        var _a, _b;
-        const embed = new discord_js_1.EmbedBuilder();
-        embed.setColor(this.accentColor || config.colors.default);
-        if (this.authorData) {
-            embed.setAuthor({
-                name: this.authorData.name,
-                iconURL: this.authorData.iconURL,
-                url: this.authorData.url
-            });
-        }
-        if (this.titleText) {
-            embed.setTitle(this.titleText);
-        }
-        if (this.titleURL) {
-            embed.setURL(this.titleURL);
-        }
-        if (this.descriptionText) {
-            embed.setDescription(this.descriptionText);
-        }
-        if (this.thumbnailURL) {
-            embed.setThumbnail(this.thumbnailURL);
-        }
-        if (this.imageURL) {
-            embed.setImage(this.imageURL);
-        }
-        if (this.fields.length > 0) {
-            embed.addFields(this.fields);
-        }
-        let footerText = (_a = this.footerData) === null || _a === void 0 ? void 0 : _a.text;
-        if (!footerText || footerText.trim() === '') {
-            footerText = "Powered by Hertz";
-        }
-        else if (!footerText.toLowerCase().includes("powered by hertz")) {
-            footerText = `${footerText} | Powered by Hertz`;
-        }
-        embed.setFooter({
-            text: footerText,
-            iconURL: (_b = this.footerData) === null || _b === void 0 ? void 0 : _b.iconURL
-        });
-        if (this.timestampDate) {
-            embed.setTimestamp(this.timestampDate);
-        }
-        return embed;
-    }
     build() {
         var _a, _b;
         const container = new discord_js_1.ContainerBuilder();
@@ -224,8 +179,21 @@ class V2Embed {
                 container.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
             }
             const fieldTexts = [];
+            let currentInlineGroup = [];
             for (const field of this.fields) {
-                fieldTexts.push(`**${field.name}**\n${field.value}`);
+                if (field.inline) {
+                    currentInlineGroup.push(`**${field.name}:** ${field.value}`);
+                }
+                else {
+                    if (currentInlineGroup.length > 0) {
+                        fieldTexts.push(currentInlineGroup.join(" • "));
+                        currentInlineGroup = [];
+                    }
+                    fieldTexts.push(`**${field.name}**\n${field.value}`);
+                }
+            }
+            if (currentInlineGroup.length > 0) {
+                fieldTexts.push(currentInlineGroup.join(" • "));
             }
             container.addTextDisplayComponents(new discord_js_1.TextDisplayBuilder().setContent(fieldTexts.join("\n\n")));
         }
@@ -243,6 +211,10 @@ class V2Embed {
         else if (!footerText.toLowerCase().includes("powered by hertz")) {
             footerText = `${footerText} | Powered by Hertz`;
         }
+        if (this.timestampDate) {
+            const unix = Math.floor((this.timestampDate instanceof Date ? this.timestampDate.getTime() : this.timestampDate) / 1000);
+            footerText = `${footerText} • <t:${unix}:R>`;
+        }
         if (this.useDividers) {
             container.addSeparatorComponents(new discord_js_1.SeparatorBuilder().setDivider(true).setSpacing(discord_js_1.SeparatorSpacingSize.Small));
         }
@@ -253,20 +225,22 @@ class V2Embed {
         return container;
     }
     toPayload(options) {
-        var _a;
-        const embed = this.buildEmbed();
-        const rows = [...this.actionRows];
+        let flagBitfield = discord_js_1.MessageFlags.IsComponentsV2;
+        if (options === null || options === void 0 ? void 0 : options.ephemeral) {
+            flagBitfield |= discord_js_1.MessageFlags.Ephemeral;
+        }
+        const container = this.build();
+        const components = [container];
         if ((options === null || options === void 0 ? void 0 : options.extraComponents) && options.extraComponents.length > 0) {
             for (const item of options.extraComponents) {
-                if (item instanceof discord_js_1.ActionRowBuilder || (item && (((_a = item.data) === null || _a === void 0 ? void 0 : _a.type) === 1 || item.type === 1))) {
-                    rows.push(item);
+                if (item) {
+                    components.push(item);
                 }
             }
         }
         return {
-            embeds: [embed],
-            components: rows,
-            flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? discord_js_1.MessageFlags.Ephemeral : undefined,
+            components,
+            flags: flagBitfield,
             allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
         };
     }
@@ -336,21 +310,22 @@ function preparePayload(v2, options) {
     if (v2 instanceof V2Embed) {
         return v2.toPayload(options);
     }
-    else if (v2 instanceof discord_js_1.EmbedBuilder) {
-        const rows = (options === null || options === void 0 ? void 0 : options.extraComponents) || [];
-        return {
-            embeds: [v2],
-            components: rows,
-            flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? discord_js_1.MessageFlags.Ephemeral : undefined,
-            allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
-        };
-    }
     else if (v2 instanceof discord_js_1.ContainerBuilder) {
+        const components = [v2];
+        if ((options === null || options === void 0 ? void 0 : options.extraComponents) && options.extraComponents.length > 0) {
+            for (const item of options.extraComponents) {
+                if (item)
+                    components.push(item);
+            }
+        }
         return {
-            components: [v2],
+            components,
             flags: (options === null || options === void 0 ? void 0 : options.ephemeral) ? (discord_js_1.MessageFlags.IsComponentsV2 | discord_js_1.MessageFlags.Ephemeral) : discord_js_1.MessageFlags.IsComponentsV2,
             allowedMentions: (options === null || options === void 0 ? void 0 : options.allowedMentions) || { repliedUser: false }
         };
+    }
+    else if (v2 && typeof v2.toPayload === 'function') {
+        return v2.toPayload(options);
     }
     return v2;
 }

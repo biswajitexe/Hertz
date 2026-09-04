@@ -1,5 +1,4 @@
 import {
-    EmbedBuilder,
     ContainerBuilder,
     TextDisplayBuilder,
     SectionBuilder,
@@ -45,7 +44,7 @@ export function stripEmojis(str: string): string {
 }
 
 /**
- * Modern Discord Embed and Container Builder
+ * Modern Discord Components V2 Container Builder
  * Defaults to sleek dark 0x2B2D31 styling with Hertz footer and custom asset emojis.
  */
 export class V2Embed {
@@ -159,65 +158,7 @@ export class V2Embed {
     }
 
     /**
-     * Builds a native Discord EmbedBuilder
-     */
-    public buildEmbed(): EmbedBuilder {
-        const embed = new EmbedBuilder();
-        embed.setColor(this.accentColor || config.colors.default);
-
-        if (this.authorData) {
-            embed.setAuthor({
-                name: this.authorData.name,
-                iconURL: this.authorData.iconURL,
-                url: this.authorData.url
-            });
-        }
-
-        if (this.titleText) {
-            embed.setTitle(this.titleText);
-        }
-
-        if (this.titleURL) {
-            embed.setURL(this.titleURL);
-        }
-
-        if (this.descriptionText) {
-            embed.setDescription(this.descriptionText);
-        }
-
-        if (this.thumbnailURL) {
-            embed.setThumbnail(this.thumbnailURL);
-        }
-
-        if (this.imageURL) {
-            embed.setImage(this.imageURL);
-        }
-
-        if (this.fields.length > 0) {
-            embed.addFields(this.fields);
-        }
-
-        let footerText = this.footerData?.text;
-        if (!footerText || footerText.trim() === '') {
-            footerText = "Powered by Hertz";
-        } else if (!footerText.toLowerCase().includes("powered by hertz")) {
-            footerText = `${footerText} | Powered by Hertz`;
-        }
-
-        embed.setFooter({
-            text: footerText,
-            iconURL: this.footerData?.iconURL
-        });
-
-        if (this.timestampDate) {
-            embed.setTimestamp(this.timestampDate);
-        }
-
-        return embed;
-    }
-
-    /**
-     * Compiles properties into ContainerBuilder for v2 compatibility
+     * Compiles properties into ContainerBuilder for Discord Components V2
      */
     public build(): ContainerBuilder {
         const container = new ContainerBuilder();
@@ -261,9 +202,23 @@ export class V2Embed {
                 );
             }
             const fieldTexts: string[] = [];
+            let currentInlineGroup: string[] = [];
+
             for (const field of this.fields) {
-                fieldTexts.push(`**${field.name}**\n${field.value}`);
+                if (field.inline) {
+                    currentInlineGroup.push(`**${field.name}:** ${field.value}`);
+                } else {
+                    if (currentInlineGroup.length > 0) {
+                        fieldTexts.push(currentInlineGroup.join(" • "));
+                        currentInlineGroup = [];
+                    }
+                    fieldTexts.push(`**${field.name}**\n${field.value}`);
+                }
             }
+            if (currentInlineGroup.length > 0) {
+                fieldTexts.push(currentInlineGroup.join(" • "));
+            }
+
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(fieldTexts.join("\n\n"))
             );
@@ -288,6 +243,11 @@ export class V2Embed {
             footerText = `${footerText} | Powered by Hertz`;
         }
 
+        if (this.timestampDate) {
+            const unix = Math.floor((this.timestampDate instanceof Date ? this.timestampDate.getTime() : this.timestampDate) / 1000);
+            footerText = `${footerText} • <t:${unix}:R>`;
+        }
+
         if (this.useDividers) {
             container.addSeparatorComponents(
                 new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
@@ -305,29 +265,32 @@ export class V2Embed {
     }
 
     /**
-     * Converts embed into a Discord API response payload
+     * Converts container into a Discord API response payload using Discord Components V2
      */
     public toPayload(options?: V2PayloadOptions): {
-        embeds: EmbedBuilder[];
         components: any[];
-        flags?: number;
+        flags: number;
         allowedMentions: { repliedUser: boolean };
     } {
-        const embed = this.buildEmbed();
-        const rows = [...this.actionRows];
+        let flagBitfield: number = MessageFlags.IsComponentsV2;
+        if (options?.ephemeral) {
+            flagBitfield |= MessageFlags.Ephemeral;
+        }
+
+        const container = this.build();
+        const components: any[] = [container];
 
         if (options?.extraComponents && options.extraComponents.length > 0) {
             for (const item of options.extraComponents) {
-                if (item instanceof ActionRowBuilder || (item && (item.data?.type === 1 || item.type === 1))) {
-                    rows.push(item);
+                if (item) {
+                    components.push(item);
                 }
             }
         }
 
         return {
-            embeds: [embed],
-            components: rows,
-            flags: options?.ephemeral ? MessageFlags.Ephemeral : undefined,
+            components,
+            flags: flagBitfield,
             allowedMentions: options?.allowedMentions || { repliedUser: false }
         };
     }
@@ -400,20 +363,20 @@ export function createInfoV2(description: string, title?: string, user?: User | 
 function preparePayload(v2: V2Embed | ContainerBuilder | any, options?: V2PayloadOptions): any {
     if (v2 instanceof V2Embed) {
         return v2.toPayload(options);
-    } else if (v2 instanceof EmbedBuilder) {
-        const rows = options?.extraComponents || [];
-        return {
-            embeds: [v2],
-            components: rows,
-            flags: options?.ephemeral ? MessageFlags.Ephemeral : undefined,
-            allowedMentions: options?.allowedMentions || { repliedUser: false }
-        };
     } else if (v2 instanceof ContainerBuilder) {
+        const components: any[] = [v2];
+        if (options?.extraComponents && options.extraComponents.length > 0) {
+            for (const item of options.extraComponents) {
+                if (item) components.push(item);
+            }
+        }
         return {
-            components: [v2],
+            components,
             flags: options?.ephemeral ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2,
             allowedMentions: options?.allowedMentions || { repliedUser: false }
         };
+    } else if (v2 && typeof v2.toPayload === 'function') {
+        return v2.toPayload(options);
     }
     return v2;
 }
